@@ -44,6 +44,7 @@
 
 .directory {
   margin-top: 58px;
+  margin-inline: -24px;
 }
 
 .directoryHeading {
@@ -52,6 +53,7 @@
   justify-content: space-between;
   gap: 24px;
   margin-bottom: 20px;
+  padding-inline: 24px;
 }
 
 .tableWrap {
@@ -97,5 +99,13 @@
 @media (max-width: 850px) {
   .invitePanel {
     grid-template-columns: 1fr;
+  }
+
+  .directory {
+    margin-inline: 0;
+  }
+
+  .directoryHeading {
+    padding-inline: 0;
   }
 }
