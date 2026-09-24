@@ -2,17 +2,12 @@ name: Land Club checks
 on:
   push:
     branches: [main]
-    paths: ['land-club-app/**', '.github/workflows/land-club.yml']
-  pull_request:
-    paths: ['land-club-app/**', '.github/workflows/land-club.yml']
+  pull_request: {}
 permissions:
   contents: read
 jobs:
   validate:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: land-club-app
     services:
       postgres:
         image: postgres:16
@@ -34,7 +29,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: land-club-app/package-lock.json
+          cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm test
       - run: npm run build

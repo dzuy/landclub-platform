@@ -1,0 +1,13 @@
+node_modules
+.next
+.data
+.env
+.env.*
+.git
+*.tsbuildinfo
+npm-debug.log*
+
+# Local design references and generated artifacts
+land-club-prototype/
+.slide-build/
+output/

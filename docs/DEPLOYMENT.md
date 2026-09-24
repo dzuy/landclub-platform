@@ -30,8 +30,8 @@ Set the service settings **before the first deployment**:
 | --- | --- |
 | Source repository | `dzuy/landclub-platform` |
 | Deployment branch | `main` |
-| Root Directory | `/land-club-app` |
-| Config file path | `/land-club-app/railway.json` |
+| Root Directory | Leave blank (repository root) |
+| Config file path | `/railway.json` |
 | Automatic deployments | Enabled |
 | Wait for CI | Disabled initially; enable after activating the optional workflow below |
 
@@ -73,7 +73,7 @@ After this one-time setup, **push to `main` → Railway build and tests → migr
 
 ## Optional: activate GitHub CI
 
-The complete workflow is provided in [deployment/github-actions.yml](deployment/github-actions.yml) as a template. It is not active: the current GitHub push credential cannot create workflow files.
+The complete workflow is provided in [deployment/github-actions.yml](../deployment/github-actions.yml) as a template. It is not active: the current GitHub push credential cannot create workflow files.
 
 Using GitHub's web editor, create `.github/workflows/land-club.yml` at the repository root with the template contents and commit it to `main`. Alternatively, copy the template to that path locally and push with a credential authorized to write workflows. Once the **Land Club checks** workflow passes, enable Railway's **Wait for CI** setting. No secrets are required for these tests; they use a disposable PostgreSQL service.
 
