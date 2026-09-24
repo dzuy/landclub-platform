@@ -9,4 +9,4 @@ export async function proxy(request:NextRequest){
  try{await client.auth.getUser();}catch{/* Staff authorization independently fails closed. */}
  return response;
 }
-export const config={matcher:['/staff/:path*','/signin']};
+export const config={matcher:['/((?!api|_next/static|_next/image|images|vendor|favicon.svg).*)']};

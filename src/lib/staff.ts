@@ -1,12 +1,12 @@
 import 'server-only';
-import {headers} from 'next/headers';
+import {headers,cookies} from 'next/headers';
 import {localStaffAllowed} from './local-access';
 import {authClient} from './auth/client';
 import {isStaffUser,authConfigured} from './auth/policy';
 export class StaffAccessError extends Error{constructor(){super('Please sign in with an authorized staff account.');}}
 export async function staffIdentity(){
  const h=await headers();
- if(localStaffAllowed(process.env.NODE_ENV,process.env.LAND_CLUB_LOCAL_STAFF,h.get('host')||''))return {id:'local-developer',name:'Local editor',local:true};
+ if(localStaffAllowed(process.env.NODE_ENV,process.env.LAND_CLUB_LOCAL_STAFF,h.get('host')||'')&&(await cookies()).get('land-club-local-signed-out')?.value!=='1')return {id:'local-developer',name:'Local editor',local:true};
  if(!authConfigured())return null;
  try{const {data:{user},error}=await (await authClient()).auth.getUser();if(error||!user||!isStaffUser(user,process.env.STAFF_USER_IDS))return null;return {id:user.id,name:user.email||'Staff member',local:false};}catch{return null;}
 }

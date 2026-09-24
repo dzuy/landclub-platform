@@ -9,3 +9,9 @@ Member ownership, stays, documents, events, directory entries, maintenance repor
 Property content at `/staff/properties` retains its database-backed editing, publication, and revision history. Administration links to this existing editor.
 
 Next implementation steps are persistent member profiles and property associations, document storage and access rules, booking availability and conflict enforcement, event registration, and maintenance workflows. Each needs server-side authorization before replacing its preview.
+
+## Account navigation
+
+The header shows Sign in to signed-out visitors and the appropriate account link to signed-in visitors. The staff sidebar and the ordinary account page provide Sign out. Local preview sign-out suppresses the automatic development shortcut for that browser session; a development-only button restores preview access. The shortcut is still unavailable in production.
+
+Registration remains invitation-only in Supabase. The Create account tab explains the invitation process; it does not submit public sign-ups. Confirmed non-staff users can sign in to `/account`, without gaining access to staff pages or property editing.
