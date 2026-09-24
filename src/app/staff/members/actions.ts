@@ -27,6 +27,6 @@ export async function sendInvitation(_previous:InvitationState,form:FormData):Pr
   if(error||!data.user){await repository.markFailed(id,error?.message||'Provider did not create an invited user.');return {error:'The invitation could not be sent. The address may already have an account.'};}
   await repository.markPending(id,data.user.id);
  }catch(error){await repository.markFailed(id,error instanceof Error?error.message:'Invitation delivery failed.');return {error:'Invitation delivery is unavailable. Please try again later.'};}
- revalidatePath('/staff/administration');
+ revalidatePath('/staff/members');
  return {error:'',message:`Invitation sent to ${email}.`};
 }

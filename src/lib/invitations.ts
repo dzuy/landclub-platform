@@ -3,6 +3,7 @@ import type {ClubRole} from './roles';
 
 export type InvitationStatus='sending'|'pending'|'accepted'|'failed';
 export type Invitation={id:string;email:string;roles:ClubRole[];status:InvitationStatus;authUserId:string|null;invitedBy:string;failureReason:string|null;createdAt:string;sentAt:string|null;acceptedAt:string|null};
+export type UserRoleAssignment={userId:string;role:ClubRole};
 type InvitationRow={id:string;email:string;roles:ClubRole[];status:InvitationStatus;auth_user_id:string|null;invited_by:string;failure_reason:string|null;created_at:string|Date;sent_at:string|Date|null;accepted_at:string|Date|null};
 const schema=`
 CREATE TABLE IF NOT EXISTS invitations (
@@ -28,6 +29,7 @@ export class InvitationRepository{
  async markPending(id:string,authUserId:string){await this.db.query('UPDATE invitations SET status=\'pending\',auth_user_id=$2,sent_at=now(),failure_reason=NULL WHERE id=$1',[id,authUserId]);}
  async markFailed(id:string,reason:string){await this.db.query('UPDATE invitations SET status=\'failed\',failure_reason=$2 WHERE id=$1',[id,reason.slice(0,500)]);}
  async list(){const result=await this.db.query<InvitationRow>('SELECT * FROM invitations ORDER BY created_at DESC LIMIT 100');return result.rows.map(invitation);}
+ async roleAssignments(){const result=await this.db.query<{user_id:string;role:ClubRole}>('SELECT user_id,role FROM user_roles ORDER BY created_at');return result.rows.map(row=>({userId:row.user_id,role:row.role}));}
  async pendingForUser(userId:string,email:string){const result=await this.db.query<InvitationRow>('SELECT * FROM invitations WHERE auth_user_id=$1 AND lower(email)=lower($2) AND status=\'pending\' ORDER BY created_at DESC LIMIT 1',[userId,email]);return result.rows[0]?invitation(result.rows[0]):null;}
  async accept(id:string,userId:string){
   return this.db.transaction(async tx=>{

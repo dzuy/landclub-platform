@@ -79,7 +79,7 @@ Verify on the actual domain:
 - `/api/health` returns `{ "status": "ok", ... }`.
 - `/staff/properties` redirects an anonymous visitor to `/signin`.
 - An approved staff account can sign in; an unapproved account cannot access the editor.
-- A staff user can invite an email from `/staff/administration`, assign one or more roles, and the recipient can create an account only through the invitation sent to that email. Invitations default to `Member`.
+- A staff user can invite an email from `/staff/members`, assign one or more roles, and review member identity, status, and activity in the directory. The recipient can create an account only through the invitation sent to that email. Invitations default to `Member`.
 - Save a draft, preview it, publish it, then verify the public page updates. Unpublish removes it from the collection and detail route.
 - Sign out and confirm staff access is gone.
 
