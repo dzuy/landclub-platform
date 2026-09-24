@@ -19,5 +19,6 @@ test('invitations bind roles to the invited auth user',async()=>{
  assert.equal(await repository.pendingForUser('33333333-3333-3333-3333-333333333333','other@example.com'),null);
  await repository.accept('11111111-1111-1111-1111-111111111111','33333333-3333-3333-3333-333333333333');
  assert.equal(await repository.hasRole('33333333-3333-3333-3333-333333333333','owner'),true);assert.equal(await repository.hasRole('33333333-3333-3333-3333-333333333333','admin'),false);
+ assert.deepEqual(await repository.rolesForUser('33333333-3333-3333-3333-333333333333'),['member','owner']);
  await db.close();
 });

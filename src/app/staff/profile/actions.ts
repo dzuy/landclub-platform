@@ -1,7 +1,7 @@
 'use server';
 import {revalidatePath} from 'next/cache';
 import {authClient} from '@/lib/auth/client';
-import {isStaffUser} from '@/lib/auth/policy';
+import {clubUserAuthorized} from '@/lib/staff';
 import {profileSchema,profileMetadata,type Profile} from '@/lib/profile';
 export type ProfileResult={error?:string;saved?:Profile};
 export async function saveProfile(input:Profile):Promise<ProfileResult>{
@@ -10,7 +10,7 @@ export async function saveProfile(input:Profile):Promise<ProfileResult>{
  try{
   const client=await authClient();
   const {data:{user},error:identityError}=await client.auth.getUser();
-  if(identityError||!isStaffUser(user,process.env.STAFF_USER_IDS))return {error:'Sign in with your staff account to save your profile.'};
+  if(identityError||!await clubUserAuthorized(user))return {error:'Sign in with your Land Club account to save your profile.'};
   // Only self-service profile metadata is accepted. Roles and account identity
   // are never derived from editable user metadata.
   const {error}=await client.auth.updateUser({data:profileMetadata(parsed.data)});
