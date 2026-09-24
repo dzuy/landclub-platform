@@ -51,4 +51,4 @@ Image selection uses the supplied library; uploads and private file storage rema
 
 - [Product requirements](docs/PRD.md)
 - [Technology decisions](docs/TECH-STACK.md)
-- [Planning backlog](docs/BACKLOG.md)
+- [Implementation and planning backlog](docs/BACKLOG.md)

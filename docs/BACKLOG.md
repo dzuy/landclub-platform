@@ -1,6 +1,56 @@
-# Land Club Platform — Technical Planning Backlog
+# Land Club Platform — Backlog
 
-Last updated: 2026-09-17
+Last updated: 2026-09-23
+
+## Current implementation backlog
+
+These are the next requested product tasks, in the order listed. All are **To do**; recording an item does not start implementation. The technical planning backlog below is retained as background and has not been re-audited against the current build.
+
+### APP-001 — Match the property page schema to Notion
+
+**Status:** To do
+
+**Related planning:** STACK-021 — Define the canonical property schema
+
+Compare the current property model, staff editor, and public property page with the schema in Notion. Start with the [Property Discovery Interface — Build Prompt](https://app.notion.com/p/3ded020ec9d481c7ade2cba16e9b867f) and its referenced property schema; confirm the authoritative schema before implementation.
+
+**Acceptance criteria**
+
+- [ ] Document the field mapping, missing fields, types, required values, and public versus private visibility.
+- [ ] Align storage, validation, the staff editor, and property page rendering with the agreed schema.
+- [ ] Migrate existing property content without losing edits and verify a complete property through editing and publication.
+
+### APP-002 — Build invitation-based account creation
+
+**Status:** To do
+
+Let authorized staff invite a person to create a Land Club account. Keep public self-registration disabled, as requested on September 23, 2026.
+
+**Acceptance criteria**
+
+- [ ] Staff can send invitations and see pending, accepted, expired, and revoked states, with resend and revoke actions.
+- [ ] Recipients can securely accept an invitation, establish credentials, and sign in; expired, revoked, and reused invitations are handled clearly.
+- [ ] Ordinary invitations do not grant staff privileges or property access; any access assignment requires explicit authorization.
+- [ ] Verify invitation delivery, acceptance, sign-in/sign-out, and access boundaries end to end.
+
+### APP-003 — Remove demo content
+
+**Status:** To do
+
+**Dependency:** Verified replacement content or designed empty states
+
+Remove invented properties, buyer details, sample member identities, ownership, stays, documents, events, and operational records from the live product. Until this task is implemented, retain the current demo labels.
+
+**Acceptance criteria**
+
+- [ ] Inventory seeded database content and hard-coded dashboard samples; distinguish them from real staff edits and account records.
+- [ ] Replace samples with verified content or useful empty states, and remove preview-only actions and obsolete demo labels.
+- [ ] Disable production demo seeding so later deployments cannot restore removed samples; retain isolated test fixtures where needed.
+- [ ] Back up and review affected records before removing demo database content; preserve real content and verify public and authenticated pages after cleanup.
+
+---
+
+## Earlier technical planning
 
 ## Purpose
 
