@@ -3,7 +3,8 @@ import {redirect} from 'next/navigation';
 import {cookies,headers} from 'next/headers';
 import {z} from 'zod';
 import {authClient} from '@/lib/auth/client';
-import {isStaffUser,authConfigured} from '@/lib/auth/policy';
+import {authConfigured} from '@/lib/auth/policy';
+import {staffUserAuthorized} from '@/lib/staff';
 import {recoveryRedirectUrl} from '@/lib/auth/recovery';
 export type AuthState={error:string;message?:string};
 const credentials=z.object({email:z.email().max(254),password:z.string().min(1).max(1024)});
@@ -15,7 +16,7 @@ export async function signIn(_previous:AuthState,form:FormData):Promise<AuthStat
  try{
   const client=await authClient();const {data,error}=await client.auth.signInWithPassword(input.data);
   if(error||!data.user)return {error:'Unable to sign in. Check your email and password, and confirm your email if you recently created an account.'};
-  staff=isStaffUser(data.user,process.env.STAFF_USER_IDS);
+  staff=await staffUserAuthorized(data.user);
   (await cookies()).set('land-club-local-signed-out','1',{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',path:'/'});
  }catch{return {error:'Sign-in is unavailable. Please try again later.'};}
  redirect(staff?'/staff':'/account');

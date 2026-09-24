@@ -26,7 +26,8 @@ Follow [deployment guide](docs/DEPLOYMENT.md) once to create Supabase, connect R
 - A non-root, multi-stage Docker build with lockfile installation, tests and standalone output.
 - Railway pre-deploy validation, transactional migrations and optional non-destructive demo import.
 - Database-backed readiness and restart configuration.
-- Supabase email/password staff sign-in with verified identity, confirmed email, an explicit UUID allowlist, secure HTTP-only cookies, session refresh and sign-out.
+- Supabase email/password staff sign-in with verified identity, confirmed email, bootstrap UUID allowlisting, database-backed Admin access, secure HTTP-only cookies, session refresh and sign-out.
+- Staff-managed email invitations with exact-email acceptance and multi-role assignment across Member, Prospect, Investor, Owner and Admin.
 - An optional GitHub CI template with PostgreSQL and production-container smoke tests.
 
 Automatic deployment becomes active only after Railway's native GitHub connection is configured. This repo does not create accounts or connect external projects by itself.
@@ -45,7 +46,7 @@ TEST_DATABASE_URL=postgresql://... npm run test:postgres
 
 ## Current scope
 
-Image selection uses the supplied library; uploads and private file storage remain future work. Staff provisioning remains administrator managed; signed-in access supports email password recovery. Member invitations, Google sign-in, MFA enrollment, bookings, follows, inquiries, payments, events and maintenance workflows are not implemented. Demo prices, ownership terms and booking rules are not operational policies. The original prototype remains a separate design reference.
+Image selection uses the supplied library; uploads and private file storage remain future work. Staff can invite users and assign multiple roles; `Member` is the default. Signed-in access supports email password recovery. Google sign-in, MFA enrollment, bookings, follows, inquiries, payments, events and maintenance workflows are not implemented. Demo prices, ownership terms and booking rules are not operational policies. The original prototype remains a separate design reference.
 
 ## Product documentation
 

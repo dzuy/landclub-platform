@@ -13,7 +13,7 @@ test('hosted staff must be explicitly allowed and have a confirmed email',()=>{
  assert.equal(isStaffUser(null,'staff-1'),false);
 });
 test('deployment rejects missing config and local bypass',()=>{
- const env={DATABASE_URL:'postgresql://test:example@localhost/test',SUPABASE_URL:'https://example.supabase.co',SUPABASE_PUBLISHABLE_KEY:'test',STAFF_USER_IDS:'00000000-0000-0000-0000-000000000001',LAND_CLUB_SITE_URL:'https://land.example'};
+ const env={DATABASE_URL:'postgresql://test:example@localhost/test',SUPABASE_URL:'https://example.supabase.co',SUPABASE_PUBLISHABLE_KEY:'test',SUPABASE_SECRET_KEY:'secret',STAFF_USER_IDS:'00000000-0000-0000-0000-000000000001',LAND_CLUB_SITE_URL:'https://land.example'};
  assert.doesNotThrow(()=>validateEnvironment(env));
  assert.throws(()=>validateEnvironment({...env,DATABASE_URL:''}));
  assert.throws(()=>validateEnvironment({...env,LAND_CLUB_LOCAL_STAFF:'1'}));

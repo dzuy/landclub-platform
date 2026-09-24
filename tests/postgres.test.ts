@@ -12,7 +12,7 @@ test('production migrations and seeding are repeatable and preserve edited conte
   await seedDemo(db);
   const record=(await db.query("SELECT draft,published FROM properties WHERE draft->>'slug'='norden-cross'")).rows[0];
   assert.equal(record.draft.name,'Staff edited title');assert.equal(record.published,null);
-  assert.equal((await db.query('SELECT count(*)::int AS n FROM schema_migrations')).rows[0].n,2);
+  assert.equal((await db.query('SELECT count(*)::int AS n FROM schema_migrations')).rows[0].n,3);
   const rls=await db.query("SELECT relrowsecurity FROM pg_class WHERE oid='land_club.properties'::regclass");assert.equal(rls.rows[0].relrowsecurity,true);
  }finally{await db.end();}
 });

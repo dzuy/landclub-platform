@@ -1,5 +1,5 @@
 export function validateEnvironment(env){
- const required=['DATABASE_URL','SUPABASE_URL','SUPABASE_PUBLISHABLE_KEY','STAFF_USER_IDS','LAND_CLUB_SITE_URL'];
+ const required=['DATABASE_URL','SUPABASE_URL','SUPABASE_PUBLISHABLE_KEY','SUPABASE_SECRET_KEY','STAFF_USER_IDS','LAND_CLUB_SITE_URL'];
  const missing=required.filter(key=>!env[key]?.trim());
  if(missing.length)throw new Error(`Missing required variables: ${missing.join(', ')}`);
  if(!/^postgres(ql)?:$/.test(new URL(env.DATABASE_URL).protocol))throw new Error('DATABASE_URL must be a PostgreSQL connection string.');

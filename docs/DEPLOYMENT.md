@@ -8,17 +8,19 @@ Use a staging project first. Obtain:
 
 - The PostgreSQL connection URL from **Connect**. For Railway, use the Supabase **session pooler** connection if the direct endpoint is not reachable over IPv4. Do not use the transaction pooler: migration advisory locks and the app's session search path require session semantics. Use the database-owning server credential for this initial deployment, kept only in Railway variables. Retain TLS certificate verification; do not set `rejectUnauthorized: false`.
 - The project URL, such as `https://<project>.supabase.co`.
-- The publishable API key (the legacy anon key is also accepted by the SDK). Do not use a service-role API key for staff sign-in.
+- The publishable API key (the legacy anon key is also accepted by the SDK) for browser authentication.
+- A server-only Supabase secret API key for sending invitations. Never expose this key to client code or commit it.
 
 Under Authentication:
 
 1. Disable public sign-ups. There is no self-registration path in this app.
 2. Provision the initial staff account through Supabase's supported administrator flow. The account needs a confirmed email and password. Have the staff user set/reset their own password through a secure provider flow; do not commit or share passwords in the repo.
 3. Copy the staff user's UUID. Add additional approved staff UUIDs as needed.
-4. Set Supabase's production Site URL to the Railway HTTPS domain and add `https://<your-domain>/auth/callback` to the allowed redirect URLs. The app implements email/password sign-in, sign-out, and password recovery; invitation acceptance remains provider/admin managed.
-5. Keep Supabase's authentication rate limits enabled. This release has no Google sign-in or MFA enrollment UI; add those before broader member/financial operations.
+4. Set Supabase's production Site URL to the Railway HTTPS domain and allow both `https://<your-domain>/auth/callback` and `https://<your-domain>/auth/confirm` as redirect URLs.
+5. Change the **Invite user** email template to link to `{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=invite`. The `/auth/confirm` route verifies that token and the pending invitation before allowing a password to be created.
+6. Keep Supabase's authentication rate limits enabled. This release has no Google sign-in or MFA enrollment UI; add those before broader member/financial operations.
 
-Every staff page and mutation checks a server-verified Supabase user, confirmed email, and the exact `STAFF_USER_IDS` allowlist. Removing an ID takes effect after Railway applies the environment change/restarts the deployment. The UUID is also recorded in content revision history. A user editing their metadata cannot grant themselves access.
+Every staff page and mutation checks a server-verified Supabase user and confirmed email. Bootstrap administrators can be listed in `STAFF_USER_IDS`; accepted users with an authoritative `admin` database role also receive staff access. Roles and invitations live in the private database schema, so a user editing their Supabase metadata cannot grant themselves access.
 
 ## 2. Connect Railway to GitHub
 
@@ -53,6 +55,7 @@ These changes are currently staged in Railway, awaiting the database connection 
 | `DATABASE_URL` | Supabase PostgreSQL direct/session-pooler connection URL |
 | `SUPABASE_URL` | Supabase HTTPS project URL |
 | `SUPABASE_PUBLISHABLE_KEY` | Supabase publishable API key |
+| `SUPABASE_SECRET_KEY` | Server-only Supabase secret API key used to create invited Auth users and send invitation emails |
 | `STAFF_USER_IDS` | Comma-separated verified Supabase staff user UUIDs |
 | `LAND_CLUB_SITE_URL` | Required canonical HTTPS origin used in password-recovery links, such as `https://landclub.up.railway.app` |
 | `SEED_DEMO_CONTENT` | Optional: `true` to import the five labeled demo properties |
@@ -76,6 +79,7 @@ Verify on the actual domain:
 - `/api/health` returns `{ "status": "ok", ... }`.
 - `/staff/properties` redirects an anonymous visitor to `/signin`.
 - An approved staff account can sign in; an unapproved account cannot access the editor.
+- A staff user can invite an email from `/staff/administration`, assign one or more roles, and the recipient can create an account only through the invitation sent to that email. Invitations default to `Member`.
 - Save a draft, preview it, publish it, then verify the public page updates. Unpublish removes it from the collection and detail route.
 - Sign out and confirm staff access is gone.
 
