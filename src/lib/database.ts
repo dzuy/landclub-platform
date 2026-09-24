@@ -25,4 +25,5 @@ CREATE TABLE IF NOT EXISTS property_revisions (
  action text NOT NULL CHECK(action IN ('created','saved','published','unpublished')),
  actor text NOT NULL, version integer NOT NULL, snapshot jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE UNIQUE INDEX IF NOT EXISTS properties_notion_source ON properties ((draft->'source'->>'pageId')) WHERE draft->'source'->>'pageId' IS NOT NULL;
 `;

@@ -4,11 +4,13 @@ Last updated: 2026-09-23
 
 ## Current implementation backlog
 
-These are the next requested product tasks, in the order listed. All are **To do**; recording an item does not start implementation. The technical planning backlog below is retained as background and has not been re-audited against the current build.
+These are the next requested product tasks, in the order listed. Statuses are recorded per item; recording an item does not start implementation. The technical planning backlog below is retained as background and has not been re-audited against the current build.
 
 ### APP-001 — Match the property page schema to Notion
 
-**Status:** To do
+**Status:** Implemented locally; source-content reconciliation remains before publication
+
+[Approved decisions and initial import results](PROPERTY-SCHEMA-DECISIONS.md). The local database now holds the initial Notion import; existing public snapshots remain unchanged.
 
 **Related planning:** STACK-021 — Define the canonical property schema
 
@@ -16,8 +18,8 @@ Compare the current property model, staff editor, and public property page with 
 
 **Acceptance criteria**
 
-- [ ] Document the field mapping, missing fields, types, required values, and public versus private visibility.
-- [ ] Align storage, validation, the staff editor, and property page rendering with the agreed schema.
+- [x] Document the field mapping, missing fields, types, required values, and public versus private visibility.
+- [x] Align storage, validation, the staff editor, and property page rendering with the agreed schema.
 - [ ] Migrate existing property content without losing edits and verify a complete property through editing and publication.
 
 ### APP-002 — Build invitation-based account creation

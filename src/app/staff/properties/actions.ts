@@ -11,3 +11,13 @@ export async function saveProperty(id:string,version:number,input:unknown){try{c
 export async function publishProperty(id:string,version:number){try{const actor=await requireStaff();reference.parse({id,version});const p=await (await store()).publish(id,version,actor.id);revalidatePath('/properties','layout');revalidatePath('/staff/properties');revalidatePath('/');return {ok:true as const,record:JSON.parse(JSON.stringify(p))};}catch(e){return {ok:false as const,error:message(e)};}}
 export async function unpublishProperty(id:string,version:number){try{const actor=await requireStaff();reference.parse({id,version});const p=await (await store()).unpublish(id,version,actor.id);revalidatePath('/properties','layout');revalidatePath('/staff/properties');revalidatePath('/');return {ok:true as const,record:JSON.parse(JSON.stringify(p))};}catch(e){return {ok:false as const,error:message(e)};}}
 export async function createProperty(){try{const actor=await requireStaff();const suffix=crypto.randomUUID().slice(0,8);const p=await (await store()).create({name:'Untitled property',slug:'new-property-'+suffix,region:'Location to be confirmed',category:'Mountains',status:'Draft',headline:'A new place to discover.',summary:'Add a description before publishing.',intro:'Tell the story of this property.',hero:'/images/landscape.png',imageAlt:'Regional landscape reference',isDemo:true,gallery:[],sections:[]},actor.id);revalidatePath('/staff/properties');revalidatePath('/');return {ok:true as const,id:p.id};}catch(e){return {ok:false as const,error:message(e)};}}
+
+export async function syncNotionProperties(){try{
+ const actor=await requireStaff();
+ const {fetchNotionProperties}=await import('@/lib/notion-live');
+ const {syncNotionRecords}=await import('@/lib/notion-sync');
+ const source=await fetchNotionProperties();
+ const result=await syncNotionRecords(await store(),source.rows,source.dataSourceId,actor.id);
+ revalidatePath('/staff/properties','layout');
+ return {ok:true as const,...result};
+ }catch(e){const {NotionSyncError}=await import('@/lib/notion-live');return {ok:false as const,error:e instanceof NotionSyncError?e.message:message(e)};}}

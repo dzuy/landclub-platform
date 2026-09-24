@@ -9,3 +9,6 @@ node_modules/
 land-club-prototype/
 .slide-build/
 output/
+
+# Reviewed source exports can contain private prospective-property records.
+data/notion-properties-*.json

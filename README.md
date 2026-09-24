@@ -53,3 +53,7 @@ Image selection uses the supplied library; uploads and private file storage rema
 - [Product requirements](docs/PRD.md)
 - [Technology decisions](docs/TECH-STACK.md)
 - [Implementation and planning backlog](docs/BACKLOG.md)
+
+## Property schema and Notion import
+
+See [approved schema decisions and import results](docs/PROPERTY-SCHEMA-DECISIONS.md) for the initial Notion snapshot, structured property fields, publication rules, import commands and remaining content review. Public pages serve saved database records. Staff can explicitly fetch current database fields using [live Notion sync](docs/NOTION-SYNC.md), once its server-side connection is configured.
