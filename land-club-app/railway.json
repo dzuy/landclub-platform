@@ -1,0 +1,15 @@
+{
+  "$schema": "https://railway.com/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "Dockerfile",
+    "watchPatterns": ["/land-club-app/**"]
+  },
+  "deploy": {
+    "preDeployCommand": ["node scripts/check-environment.mjs && node scripts/migrate.mjs && node scripts/seed-demo.mjs"],
+    "healthcheckPath": "/api/health",
+    "healthcheckTimeout": 120,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 3
+  }
+}

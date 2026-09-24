@@ -1,1 +1,38 @@
-{"name":"land-club-app","version":"0.1.0","private":true,"scripts":{"dev":"next dev --hostname 127.0.0.1 --port 3000","build":"next build","start":"next start --hostname 0.0.0.0 --port ${PORT:-3000}","typecheck":"tsc --noEmit","test":"node --import tsx --test tests/*.test.ts"},"dependencies":{"next":"^16.0.0","react":"^19.0.0","react-dom":"^19.0.0","@supabase/ssr":"^0.7.0","@supabase/supabase-js":"^2.0.0","@electric-sql/pglite":"^0.3.0","pg":"^8.16.0","zod":"^4.0.0","server-only":"^0.0.1"},"devDependencies":{"typescript":"^5.9.0","@types/node":"^22.0.0","@types/react":"^19.0.0","@types/react-dom":"^19.0.0","@types/pg":"^8.15.0","tsx":"^4.0.0"}}
+{
+  "name": "land-club-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1 --port 3000",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0 --port ${PORT:-3000}",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:seed-demo": "node scripts/seed-demo.mjs",
+    "deploy:check": "node scripts/check-environment.mjs",
+    "test:postgres": "node --import tsx --test tests/postgres.test.ts"
+  },
+  "dependencies": {
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "^2.0.0",
+    "@electric-sql/pglite": "^0.3.0",
+    "pg": "^8.16.0",
+    "zod": "^4.0.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/pg": "^8.15.0",
+    "tsx": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=22 <23"
+  }
+}

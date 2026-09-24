@@ -8,7 +8,7 @@ export function embeddedDatabase(db:PGlite):Database{return {query:(sql,params)=
 const globalDb=globalThis as unknown as {landClubDb?:Database};
 export function database():Database{
  if(globalDb.landClubDb)return globalDb.landClubDb;
- if(process.env.DATABASE_URL){const pool=new Pool({connectionString:process.env.DATABASE_URL,max:5});const adapter=(client:Pool|PoolClient):Queryable=>({query:async<T>(sql:string,params?:unknown[])=>({rows:(await client.query(sql,params)).rows as T[]})});globalDb.landClubDb={...adapter(pool),transaction:async work=>{const c=await pool.connect();try{await c.query('BEGIN');const result=await work(adapter(c));await c.query('COMMIT');return result;}catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}}};}
+ if(process.env.DATABASE_URL){const pool=new Pool({connectionString:process.env.DATABASE_URL,max:5,options:'-c search_path=land_club',connectionTimeoutMillis:5000,statement_timeout:10000});const adapter=(client:Pool|PoolClient):Queryable=>({query:async<T>(sql:string,params?:unknown[])=>({rows:(await client.query(sql,params)).rows as T[]})});globalDb.landClubDb={...adapter(pool),transaction:async work=>{const c=await pool.connect();try{await c.query('BEGIN');const result=await work(adapter(c));await c.query('COMMIT');return result;}catch(e){await c.query('ROLLBACK');throw e;}finally{c.release();}}};}
  else{if(process.env.NODE_ENV==='production')throw new Error('DATABASE_URL is required in production.');mkdirSync(path.join(process.cwd(),'.data'),{recursive:true});globalDb.landClubDb=embeddedDatabase(new PGlite(path.join(process.cwd(),'.data','land-club')));}
  return globalDb.landClubDb;
 }

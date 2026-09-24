@@ -1,10 +1,10 @@
-# Land Club — working content application
+# Land Club application
 
-First local implementation slice: **staff property content management**. This is a separate Next.js/TypeScript application; `../land-club-prototype` remains the visual prototype. The hosted prototype has not been changed by this work.
+Next.js / TypeScript property discovery and staff content management. The public home preserves the prototype's landscape chapters and reads published PostgreSQL content. Staff can create properties, edit sections and gallery metadata, save/preview drafts, publish/unpublish, and review revision history. Concurrent editor writes are protected by revision checks.
 
-## Run
+## Local development
 
-Requires Node 20.9+ (tested with Node 22).
+Requires Node 22.
 
 ```sh
 npm ci
@@ -12,49 +12,37 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Open http://127.0.0.1:3000/staff/properties. The server binds to loopback only. Five labeled demo properties are imported into an empty local database as drafts. Nothing is automatically published. The first interactive QA run published Norden Cross locally to demonstrate the working flow.
+- Home: http://127.0.0.1:3000/
+- Staff: http://127.0.0.1:3000/staff/properties
 
-## What works
+With no `DATABASE_URL`, development uses persistent PGlite in `.data/land-club/`. Five demo properties are initially imported as drafts; publishing is explicit. The local staff shortcut requires `LAND_CLUB_LOCAL_STAFF=1`, development mode and the loopback host. It never authorizes production requests. Do not tunnel the local editor to the internet.
 
-- Create properties and edit name, URL slug, location, landscape, status and editorial introduction.
-- Add, reorder and remove content sections and structured specification rows.
-- Select supplied images; edit accessible descriptions, captions and image classifications.
-- Save drafts to a persistent embedded PostgreSQL database (PGlite).
-- Preview saved drafts behind the staff gate.
-- Publish a separate content snapshot, or unpublish without deleting the draft/history.
-- Serve real server-rendered public routes using only the published snapshot.
-- Record create/save/publish/unpublish operations with revision numbers and snapshots.
-- Reject stale writes and stale publication attempts from competing editor windows.
-- Enforce unique draft and published URL slugs; validate inputs server-side.
+To back up local data, stop the dev server and copy the entire `.data/land-club/` directory. Do not delete it to troubleshoot. Local data and `.env.local` are ignored by Git and Docker.
 
-## Local data and access
+## Deploy to Railway
 
-The local database is stored in `.data/land-club/`, ignored by Git. Edits survive page reloads and server restarts. Do not delete that directory to troubleshoot. For a filesystem backup, stop the dev server and copy the complete `.data/land-club/` directory, then restart it. Database files are local to this computer; there is no synchronization or managed backup yet.
+Follow [DEPLOYMENT.md](DEPLOYMENT.md) once to create Supabase, connect Railway to GitHub `main`, and set the service root/config path and variables. The repository includes:
 
-`LAND_CLUB_LOCAL_STAFF=1` enables a **development-only local editor**, not real authentication. Every staff read and mutation checks this flag, `NODE_ENV=development`, and a loopback Host on port 3000. Next.js Server Actions enforce same-origin mutation requests. There is no role switcher or browser-controlled staff role. Production staff access always fails closed until actual authentication is implemented. Never tunnel or reverse-proxy the local editor to the internet.
+- A non-root, multi-stage Docker build with lockfile installation, tests and standalone output.
+- Railway pre-deploy validation, transactional migrations and optional non-destructive demo import.
+- Database-backed readiness and restart configuration.
+- Supabase email/password staff sign-in with verified identity, confirmed email, an explicit UUID allowlist, secure HTTP-only cookies, session refresh and sign-out.
+- An optional GitHub CI template with PostgreSQL and production-container smoke tests.
 
-The app can use PostgreSQL via `DATABASE_URL`, but hosted deployment is intentionally not enabled. Production requires a database URL and cannot fall back to local PGlite. Schema initialization is currently a local foundation; versioned deployment migrations, least-privilege database roles, RLS and identity-based authorization must be completed before connecting production data.
+Automatic deployment becomes active only after Railway's native GitHub connection is configured. This repo does not create accounts or connect external projects by itself.
 
-## Validation
+## Checks
 
 ```sh
 npm test
 npm run build
 npm run typecheck
+# Dedicated, disposable PostgreSQL database only:
+TEST_DATABASE_URL=postgresql://... npm run test:postgres
 ```
 
-Tests exercise actual embedded PostgreSQL transactions: draft/public isolation, publication, unpublication, audit history, stale revision rejection, URL uniqueness, input validation and the local access gate. Build verifies TypeScript and Next.js route compilation. Browser QA covers a persisted draft change, local publication, the public page, and the editor.
+`npm test` skips the external PostgreSQL test when its URL is absent. The optional CI workflow supplies it once activated. The integration test creates and changes demo records and must never target a production database.
 
-## Deliberately not implemented yet
+## Current scope
 
-- Supabase invitations, staff sign-in, MFA, roles, Railway deployment and hosted backups.
-- Image uploads / private file storage (the editor uses the supplied image library).
-- Multi-user staff attribution, audit restoration UI, scheduled publishing, approval roles.
-- Member accounts, follows, inquiries, bookings, payments, email, events and maintenance workflows.
-- Full migration of every prototype page or its map interactions.
-
-The next slice is invitation-only staff identity and authorization against Supabase, then staging on Railway, following `../TECH-STACK.md` and `../PRD.md`. Keep demo property data visibly labeled until verified replacement content is supplied. No ownership or booking rules in the brochure are authoritative operational policies.
-
-## Home-page parity
-
-The root `/` is the public “Find your kind of somewhere” discovery home, preserving the prototype's landscape chapters, photography and regional map. `/properties` shows the same collection. Staff management remains at `/staff/properties`. The collection reads only published database snapshots. During this update, the four untouched demo seed drafts were explicitly published locally to restore the complete five-property collection; edited drafts were not published. Future unpublishing removes a property from the home page as well as its detail route. Following and land-introduction actions remain deferred until their real workflows exist.
+Image selection uses the supplied library; uploads and private file storage remain future work. Staff provisioning/password recovery are administrator/provider managed. Member invitations, Google sign-in, MFA enrollment, bookings, follows, inquiries, payments, events and maintenance workflows are not implemented. Demo prices, ownership terms and booking rules are not operational policies. The original prototype remains a separate design reference.
