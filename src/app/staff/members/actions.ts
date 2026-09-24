@@ -11,7 +11,9 @@ import {authAdminClient} from '@/lib/auth/admin';
 import {canonicalSiteUrl} from '@/lib/auth/recovery';
 
 export type InvitationState={error:string;message?:string};
+export type RoleUpdateState={error:string;message?:string};
 const emailSchema=z.email().max(254);
+const roleTargetSchema=z.object({kind:z.enum(['user','invitation']),id:z.uuid()});
 export async function sendInvitation(_previous:InvitationState,form:FormData):Promise<InvitationState>{
  const actor=await requireStaff();
  const emailResult=emailSchema.safeParse(form.get('email'));
@@ -29,4 +31,20 @@ export async function sendInvitation(_previous:InvitationState,form:FormData):Pr
  }catch(error){await repository.markFailed(id,error instanceof Error?error.message:'Invitation delivery failed.');return {error:'Invitation delivery is unavailable. Please try again later.'};}
  revalidatePath('/staff/members');
  return {error:'',message:`Invitation sent to ${email}.`};
+}
+
+export async function updateMemberRoles(_previous:RoleUpdateState,form:FormData):Promise<RoleUpdateState>{
+ const actor=await requireStaff();
+ const target=roleTargetSchema.safeParse({kind:form.get('targetKind'),id:form.get('targetId')});
+ if(!target.success)return {error:'This member could not be identified.'};
+ const roles=readRoles(form.getAll('roles'));
+ const bootstrap=new Set((process.env.STAFF_USER_IDS||'').split(',').map(value=>value.trim()).filter(Boolean));
+ if(target.data.kind==='user'&&bootstrap.has(target.data.id))return {error:'This Admin role is managed by the deployment configuration.'};
+ try{
+  const repository=new InvitationRepository(database());await repository.initialize();
+  if(target.data.kind==='invitation')await repository.updatePendingRoles(target.data.id,roles);
+  else await repository.replaceUserRoles(target.data.id,roles,actor.id);
+ }catch{return {error:'Roles could not be updated. Refresh the page and try again.'};}
+ revalidatePath('/staff/members');
+ return {error:'',message:'Roles updated.'};
 }

@@ -96,6 +96,82 @@
   gap: 5px;
 }
 
+.roleEditor {
+  min-width: 285px;
+}
+
+.roleEditor fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.roleEditor label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  background: #fffdf7;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.roleEditor input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+}
+
+.roleEditorActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.roleEditorActions button {
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.roleError,
+.roleSuccess,
+.lockedRole {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+}
+
+.roleError {
+  color: #8d2f20;
+}
+
+.roleSuccess {
+  color: var(--green);
+}
+
+.lockedRole {
+  color: var(--muted);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 @media (max-width: 850px) {
   .invitePanel {
     grid-template-columns: 1fr;

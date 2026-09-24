@@ -17,8 +17,12 @@ test('invitations bind roles to the invited auth user',async()=>{
  await repository.markPending('11111111-1111-1111-1111-111111111111','33333333-3333-3333-3333-333333333333');
  assert.equal((await repository.pendingForUser('33333333-3333-3333-3333-333333333333','person@example.com'))?.email,'person@example.com');
  assert.equal(await repository.pendingForUser('33333333-3333-3333-3333-333333333333','other@example.com'),null);
+ await repository.updatePendingRoles('11111111-1111-1111-1111-111111111111',['member','investor']);
  await repository.accept('11111111-1111-1111-1111-111111111111','33333333-3333-3333-3333-333333333333');
- assert.equal(await repository.hasRole('33333333-3333-3333-3333-333333333333','owner'),true);assert.equal(await repository.hasRole('33333333-3333-3333-3333-333333333333','admin'),false);
- assert.deepEqual(await repository.rolesForUser('33333333-3333-3333-3333-333333333333'),['member','owner']);
+ assert.equal(await repository.hasRole('33333333-3333-3333-3333-333333333333','investor'),true);assert.equal(await repository.hasRole('33333333-3333-3333-3333-333333333333','admin'),false);
+ assert.deepEqual(await repository.rolesForUser('33333333-3333-3333-3333-333333333333'),['member','investor']);
+ await repository.replaceUserRoles('33333333-3333-3333-3333-333333333333',['prospect','admin'],'staff-2');
+ assert.deepEqual(await repository.rolesForUser('33333333-3333-3333-3333-333333333333'),['prospect','admin']);
+ assert.equal(await repository.hasRole('33333333-3333-3333-3333-333333333333','member'),false);
  await db.close();
 });

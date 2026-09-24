@@ -28,9 +28,11 @@ export class InvitationRepository{
  }
  async markPending(id:string,authUserId:string){await this.db.query('UPDATE invitations SET status=\'pending\',auth_user_id=$2,sent_at=now(),failure_reason=NULL WHERE id=$1',[id,authUserId]);}
  async markFailed(id:string,reason:string){await this.db.query('UPDATE invitations SET status=\'failed\',failure_reason=$2 WHERE id=$1',[id,reason.slice(0,500)]);}
+ async updatePendingRoles(id:string,roles:ClubRole[]){const result=await this.db.query<{id:string}>('UPDATE invitations SET roles=$2 WHERE id=$1 AND status IN (\'sending\',\'pending\') RETURNING id',[id,roles]);if(!result.rows[0])throw new Error('Invitation is no longer pending.');}
  async list(){const result=await this.db.query<InvitationRow>('SELECT * FROM invitations ORDER BY created_at DESC LIMIT 100');return result.rows.map(invitation);}
  async roleAssignments(){const result=await this.db.query<{user_id:string;role:ClubRole}>('SELECT user_id,role FROM user_roles ORDER BY created_at');return result.rows.map(row=>({userId:row.user_id,role:row.role}));}
  async rolesForUser(userId:string){const result=await this.db.query<{role:ClubRole}>('SELECT role FROM user_roles WHERE user_id=$1 ORDER BY created_at',[userId]);return result.rows.map(row=>row.role);}
+ async replaceUserRoles(userId:string,roles:ClubRole[],grantedBy:string){await this.db.transaction(async tx=>{await tx.query('DELETE FROM user_roles WHERE user_id=$1',[userId]);for(const role of roles)await tx.query('INSERT INTO user_roles(user_id,role,granted_by) VALUES($1,$2,$3)',[userId,role,grantedBy]);});}
  async pendingForUser(userId:string,email:string){const result=await this.db.query<InvitationRow>('SELECT * FROM invitations WHERE auth_user_id=$1 AND lower(email)=lower($2) AND status=\'pending\' ORDER BY created_at DESC LIMIT 1',[userId,email]);return result.rows[0]?invitation(result.rows[0]):null;}
  async accept(id:string,userId:string){
   return this.db.transaction(async tx=>{
