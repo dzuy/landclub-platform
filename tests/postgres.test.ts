@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import pg from 'pg';
+import {readdir} from 'node:fs/promises';
 import {migrate} from '../scripts/migrate.mjs';
 import {seedDemo} from '../scripts/seed-demo.mjs';
 test('production migrations and seeding are repeatable and preserve edited content',{skip:!process.env.TEST_DATABASE_URL},async()=>{
@@ -12,7 +13,7 @@ test('production migrations and seeding are repeatable and preserve edited conte
   await seedDemo(db);
   const record=(await db.query("SELECT draft,published FROM properties WHERE draft->>'slug'='norden-cross'")).rows[0];
   assert.equal(record.draft.name,'Staff edited title');assert.equal(record.published,null);
-  assert.equal((await db.query('SELECT count(*)::int AS n FROM schema_migrations')).rows[0].n,3);
+  assert.equal((await db.query('SELECT count(*)::int AS n FROM schema_migrations')).rows[0].n,(await readdir(new URL('../migrations/',import.meta.url))).filter(name=>name.endsWith('.sql')).length);
   const rls=await db.query("SELECT relrowsecurity FROM pg_class WHERE oid='land_club.properties'::regclass");assert.equal(rls.rows[0].relrowsecurity,true);
  }finally{await db.end();}
 });
