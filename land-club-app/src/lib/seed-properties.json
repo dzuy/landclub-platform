@@ -1,0 +1,624 @@
+[
+  {
+    "name": "Norden Cross",
+    "slug": "norden-cross",
+    "region": "Donner Summit · California",
+    "category": "Mountains",
+    "status": "Development vision · sample brochure",
+    "headline": "A little closer to the wild. A place to make your own.",
+    "summary": "The Norden Cross vision begins on Donner Summit, in the setting of Sugar Bowl’s snowbound village and Van Norden Meadow. A mountain landscape first; a place to gather and return to, shaped over time.",
+    "intro": "The Norden Cross vision begins on Donner Summit, in the setting of Sugar Bowl’s snowbound village and Van Norden Meadow. A mountain landscape first; a place to gather and return to, shaped over time.\n\nThis is a fictional buyer brochure prepared for design review. Parcel measurements, condition, pricing, budgets, availability, policies and dates are invented examples, not verified listing facts or an offer. The regional setting is sourced separately. Cabins and lodge are proposed and unbuilt; the map and photographs do not identify an actual parcel.",
+    "hero": "/images/landscape.png",
+    "imageAlt": "Donner Lake and the surrounding Sierra Nevada",
+    "isDemo": true,
+    "gallery": [
+      {
+        "src": "/images/landscape.png",
+        "alt": "Donner Lake and the surrounding Sierra Nevada",
+        "caption": "Donner Lake regional photograph. Not a verified view from Norden Cross.",
+        "type": "Regional"
+      },
+      {
+        "src": "/images/cabin.jpg",
+        "alt": "A timber cabin surrounded by forest",
+        "caption": "An architectural reference elsewhere. Not an existing or proposed Norden Cross building.",
+        "type": "Inspiration"
+      },
+      {
+        "src": "/images/interior.jpg",
+        "alt": "Warm timber interior opening toward a forest",
+        "caption": "Kulhaus Cabin Tahoe interior reference. Not a Land Club property or approved design.",
+        "type": "Inspiration"
+      }
+    ],
+    "sections": [
+      {
+        "id": "current",
+        "eyebrow": "THE STARTING POINT",
+        "title": "Eight acres. A new beginning.",
+        "body": "In this illustrative property story, 8.6 acres of mountain woodland open onto southwest-facing clearings. A gravel arrival and a small equipment shed provide a modest starting point. The residential vision is still ahead.",
+        "facts": [
+          {
+            "label": "Current condition 1",
+            "value": "Sample current condition: vacant land, with no habitable residences."
+          },
+          {
+            "label": "Current condition 2",
+            "value": "Gravel approach, four parking spaces and a 120 sq ft equipment shed."
+          },
+          {
+            "label": "Current condition 3",
+            "value": "No connected residential water, wastewater or power service assumed."
+          },
+          {
+            "label": "Current condition 4",
+            "value": "Existing conditions must be replaced with a verified site inventory before launch."
+          }
+        ]
+      },
+      {
+        "id": "next-0",
+        "eyebrow": "DUE DILIGENCE / WINTER 2026–SPRING 2027",
+        "title": "Know the ground. Shape the plan.",
+        "body": "Complete land, access and environmental studies before finalizing the cabin locations or committing to the acquisition.",
+        "facts": [
+          {
+            "label": "Work",
+            "value": "Boundary and topographic survey, title, soils, well and septic feasibility."
+          },
+          {
+            "label": "Team",
+            "value": "Land-use consultant, surveyor, civil engineer and architect; appointments not made."
+          },
+          {
+            "label": "Budget",
+            "value": "Included in the $300,000 design, engineering and permitting allowance."
+          },
+          {
+            "label": "Decision gate",
+            "value": "Confirm legal access, allowable use, utilities and a viable construction budget."
+          }
+        ]
+      },
+      {
+        "id": "next-1",
+        "eyebrow": "DESIGN & INFRASTRUCTURE / SUMMER–FALL 2027",
+        "title": "Make a thoughtful arrival.",
+        "body": "Develop the four-cabin layout, submit the permit package and plan the road, utilities and common spaces around the landscape.",
+        "facts": [
+          {
+            "label": "Scope",
+            "value": "10 parking spaces, well and septic systems, power connection and site drainage."
+          },
+          {
+            "label": "Budget",
+            "value": "$450,000 infrastructure allowance; subject to engineering and contractor bids."
+          },
+          {
+            "label": "Dependency",
+            "value": "Agency approvals and seasonal site conditions; no permits have been submitted."
+          },
+          {
+            "label": "Decision gate",
+            "value": "Approve final contracts and funding before construction begins."
+          }
+        ]
+      },
+      {
+        "id": "next-2",
+        "eyebrow": "CONSTRUCTION / TARGET SUMMER 2028",
+        "title": "Open the first shared chapter.",
+        "body": "Build and furnish the cabins and lodge, complete inspections and establish the operating team before owner stays begin.",
+        "facts": [
+          {
+            "label": "Program",
+            "value": "Four 1,100 sq ft cabins plus a 1,800 sq ft lodge; 6,200 sq ft total enclosed space."
+          },
+          {
+            "label": "Budget",
+            "value": "$2.95m combined cabin and lodge allowance, plus $450,000 construction contingency."
+          },
+          {
+            "label": "Opening",
+            "value": "Summer 2028 planning target only; weather, approvals and construction may shift dates."
+          },
+          {
+            "label": "Before stays",
+            "value": "Occupancy approvals, insurance, staff readiness and adopted ownership policies."
+          }
+        ]
+      },
+      {
+        "id": "spec-0",
+        "eyebrow": "PROPERTY DETAILS · ILLUSTRATIVE",
+        "title": "The parcel",
+        "body": "Fictional specifications for design review.",
+        "facts": [
+          {
+            "label": "Property type",
+            "value": "Vacant mountain land · proposed shared retreat"
+          },
+          {
+            "label": "Land area",
+            "value": "8.60 acres / 374,616 sq ft"
+          },
+          {
+            "label": "Elevation",
+            "value": "6,970–7,240 ft above sea level"
+          },
+          {
+            "label": "Topography",
+            "value": "Rolling terrain; approximately 8–24% slopes"
+          },
+          {
+            "label": "Orientation & outlook",
+            "value": "Southwest-facing clearings, forest and granite ridgeline views"
+          },
+          {
+            "label": "Conceptual building area",
+            "value": "1.4 acres; remainder retained as landscape"
+          },
+          {
+            "label": "Existing improvements",
+            "value": "Gravel approach, gated entry and a 120 sq ft storage shed"
+          },
+          {
+            "label": "Existing residential area",
+            "value": "0 sq ft · no habitable home, bedrooms or bathrooms"
+          },
+          {
+            "label": "Brochure reference",
+            "value": "LC-NX-DEMO-01 · sample ID, not an APN"
+          },
+          {
+            "label": "Address & parcel record",
+            "value": "Donner Summit / Norden area; exact address and legal parcel to be supplied"
+          }
+        ]
+      },
+      {
+        "id": "spec-1",
+        "eyebrow": "PROPERTY DETAILS · ILLUSTRATIVE",
+        "title": "Access & services",
+        "body": "Fictional specifications for design review.",
+        "facts": [
+          {
+            "label": "Arrival",
+            "value": "900 ft private gravel approach from a maintained local road"
+          },
+          {
+            "label": "Parking",
+            "value": "4 gravel spaces today; 10 total spaces in the proposal"
+          },
+          {
+            "label": "Winter access",
+            "value": "Contracted plowing proposed; AWD and chain preparedness anticipated"
+          },
+          {
+            "label": "Electricity",
+            "value": "Concept assumes service at road; 400 A connection and trenching budgeted"
+          },
+          {
+            "label": "Water",
+            "value": "Proposed shared well with storage; yield and potability tests required"
+          },
+          {
+            "label": "Wastewater",
+            "value": "Proposed engineered septic; soil testing and capacity approval required"
+          },
+          {
+            "label": "Internet",
+            "value": "Satellite broadband proposed; service and coverage to be tested"
+          },
+          {
+            "label": "Heating & energy",
+            "value": "All-electric heat pumps; induction cooking and EV-ready conduit proposed"
+          },
+          {
+            "label": "Land use",
+            "value": "Low-density retreat concept; zoning and multi-cabin use require confirmation"
+          },
+          {
+            "label": "Easements & amenities",
+            "value": "Title and road rights subject to review; no ski, lake or resort privileges included"
+          }
+        ]
+      },
+      {
+        "id": "ownership",
+        "eyebrow": "OWNERSHIP",
+        "title": "A shared way forward.",
+        "body": "Illustrative 10% company interest: $625,000. Estimated closing allowance: $12,500. Total initial cost: $637,500. Four proposed 1,100 sq ft cabins plus a 1,800 sq ft lodge; 6,200 enclosed sq ft, 8 bedrooms and 8 full + 2 half baths. All buildings are unbuilt.",
+        "facts": [
+          {
+            "label": "Land acquisition",
+            "value": "$2,100,000"
+          },
+          {
+            "label": "Four furnished cabins",
+            "value": "$2,200,000"
+          },
+          {
+            "label": "Shared lodge",
+            "value": "$750,000"
+          },
+          {
+            "label": "Access & utility infrastructure",
+            "value": "$450,000"
+          },
+          {
+            "label": "Design, engineering & permitting",
+            "value": "$300,000"
+          },
+          {
+            "label": "Construction contingency",
+            "value": "$450,000"
+          }
+        ]
+      },
+      {
+        "id": "costs",
+        "eyebrow": "SAMPLE COSTS",
+        "title": "The cost of keeping it well.",
+        "body": "$840 per month / $10,080 per year per interest after opening. Turnover cleaning $225 per stay; pet cleaning $50 extra. Loan payments and special assessments excluded. Figures are fictional planning allowances.",
+        "facts": [
+          {
+            "label": "Property tax allowance",
+            "value": "$225 / month"
+          },
+          {
+            "label": "Property & liability insurance",
+            "value": "$100 / month"
+          },
+          {
+            "label": "Management & administration",
+            "value": "$135 / month"
+          },
+          {
+            "label": "Utilities & connectivity",
+            "value": "$90 / month"
+          },
+          {
+            "label": "Grounds, snow & routine maintenance",
+            "value": "$140 / month"
+          },
+          {
+            "label": "Long-term replacement reserve",
+            "value": "$150 / month"
+          }
+        ]
+      },
+      {
+        "id": "use",
+        "eyebrow": "PROPOSED POLICY",
+        "title": "Room for your rituals.",
+        "body": "21 nights per interest per year, including up to 7 peak nights. One cabin for four people. Reservations 3–7 nights, up to 180 days ahead. Two future reservations at a time. Rotating holiday priority. Two dogs by advance arrangement. No third-party rentals. Illustrative future policy only.",
+        "facts": []
+      },
+      {
+        "id": "review",
+        "eyebrow": "BUYER REVIEW",
+        "title": "Before you commit.",
+        "body": "These are review requirements, not completed reports. No real offering, approved plans or verified parcel records are available.",
+        "facts": [
+          {
+            "label": "Survey & title",
+            "value": "Before acquisition — Boundary survey, recorded road easements, title exceptions and legal access."
+          },
+          {
+            "label": "Land use & permits",
+            "value": "Not submitted — Confirm allowable use, setbacks, density, building envelopes and agency approvals."
+          },
+          {
+            "label": "Water & septic",
+            "value": "Testing required — Well yield, water quality, percolation results and a permitted wastewater design."
+          },
+          {
+            "label": "Ground & habitat",
+            "value": "Study required — Geotechnical review, drainage, tree survey, habitat and any wetland constraints."
+          },
+          {
+            "label": "Fire, snow & insurance",
+            "value": "Quotes required — Fire access, defensible space, structural snow loads and insurability before commitment."
+          },
+          {
+            "label": "Ownership documents",
+            "value": "Illustrative terms only — Operating agreement, capital obligations, use policy, transfer restrictions and management contract."
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Shelter Cove",
+    "slug": "shelter-cove",
+    "region": "Coastal home · Location unconfirmed",
+    "category": "Coast",
+    "status": "Completed-home example",
+    "headline": "More horizon. Less hurry.",
+    "summary": "The draft describes Shelter Cove as a finished, five-suite oceanfront home. Here the story starts with the home today, with a lighter layer of possible improvements.",
+    "intro": "The draft describes Shelter Cove as a finished, five-suite oceanfront home. Here the story starts with the home today, with a lighter layer of possible improvements.\n\nThe five-suite description comes from the working draft, not a verified listing. Building photographs, amenities, condition, availability, and ownership relationship are awaiting confirmation. The hero is a Point Reyes reference, not Shelter Cove.",
+    "hero": "/images/coast.jpg",
+    "imageAlt": "Cliffs and Pacific Ocean at Point Reyes",
+    "isDemo": true,
+    "gallery": [
+      {
+        "src": "/images/coast.jpg",
+        "alt": "Cliffs and Pacific Ocean at Point Reyes",
+        "caption": "Point Reyes regional reference. Not a view from Shelter Cove or a property for sale.",
+        "type": "Regional"
+      },
+      {
+        "src": "/images/interior.jpg",
+        "alt": "Warm timber interior opening toward a forest",
+        "caption": "Kulhaus Cabin Tahoe interior reference. Not a Land Club property or approved design.",
+        "type": "Inspiration"
+      }
+    ],
+    "sections": [
+      {
+        "id": "current",
+        "eyebrow": "THE STARTING POINT",
+        "title": "The home is the story.",
+        "body": "A mostly completed property changes the emphasis: understand the rooms, daily rhythms, and existing spaces first. The draft’s five-suite home is the starting point, pending a verified inventory.",
+        "facts": [
+          {
+            "label": "Current condition 1",
+            "value": "Five suites — draft description only"
+          },
+          {
+            "label": "Current condition 2",
+            "value": "Existing amenities — inventory pending"
+          },
+          {
+            "label": "Current condition 3",
+            "value": "Actual interiors and exterior photos — needed"
+          }
+        ]
+      },
+      {
+        "id": "next-0",
+        "eyebrow": "POSSIBLE IMPROVEMENTS",
+        "title": "Care for what is here.",
+        "body": "Review comfort, maintenance, and shared outdoor spaces before proposing changes. This is an illustrative improvement brief, not an approved scope.",
+        "facts": [
+          {
+            "label": "Scope",
+            "value": "To follow a condition review"
+          },
+          {
+            "label": "Budget / dates",
+            "value": "Not established"
+          },
+          {
+            "label": "Future expansion",
+            "value": "None assumed"
+          }
+        ]
+      },
+      {
+        "id": "ownership",
+        "eyebrow": "OWNERSHIP",
+        "title": "A shared way forward.",
+        "body": "A completed building does not automatically imply open bookings or available interests. Staff-confirmed access and an approved property policy are still required.",
+        "facts": []
+      }
+    ]
+  },
+  {
+    "name": "Point Reyes & Marin",
+    "slug": "point-reyes",
+    "region": "Point Reyes · Nicasio · Marin",
+    "category": "Coast",
+    "status": "Scouting area",
+    "headline": "A way of life. A wider landscape.",
+    "summary": "Coastal weather, working land, and a different pace. The draft explores a regional possibility around Point Reyes, Marin, and Nicasio, rather than promising more buildings on one parcel.",
+    "intro": "Coastal weather, working land, and a different pace. The draft explores a regional possibility around Point Reyes, Marin, and Nicasio, rather than promising more buildings on one parcel.\n\nNo property has been selected for this prototype. Renovation and agriculture are design scenarios. The draft’s no-subdivision assumption is a constraint for exploration, not a planning determination.",
+    "hero": "/images/coast.jpg",
+    "imageAlt": "Cliffs and Pacific Ocean at Point Reyes",
+    "isDemo": true,
+    "gallery": [
+      {
+        "src": "/images/coast.jpg",
+        "alt": "Cliffs and Pacific Ocean at Point Reyes",
+        "caption": "Point Reyes regional reference. Not a view from Shelter Cove or a property for sale.",
+        "type": "Regional"
+      },
+      {
+        "src": "/images/farm.jpg",
+        "alt": "Rolling green farmland in Salinas, California",
+        "caption": "California farmland reference photographed in Salinas. Not Sutter Creek or an identified Land Club property.",
+        "type": "Regional"
+      }
+    ],
+    "sections": [
+      {
+        "id": "current",
+        "eyebrow": "THE STARTING POINT",
+        "title": "A region worth getting to know.",
+        "body": "The opportunity today is to understand a place and find an appropriate property. There is no confirmed acquisition, building inventory, or stay entitlement to present.",
+        "facts": [
+          {
+            "label": "Current condition 1",
+            "value": "Specific parcel — not selected"
+          },
+          {
+            "label": "Current condition 2",
+            "value": "Agricultural and renovation feasibility — untested"
+          },
+          {
+            "label": "Current condition 3",
+            "value": "Network-wide stays — not a current benefit"
+          }
+        ]
+      },
+      {
+        "id": "next-0",
+        "eyebrow": "ON A FUTURE PROPERTY",
+        "title": "Restore, cultivate, settle in.",
+        "body": "Explore a suitable existing property, its renovation needs, and a compatible agricultural use. Do not assume subdivision or new-build capacity.",
+        "facts": [
+          {
+            "label": "First step",
+            "value": "Find and assess a property"
+          },
+          {
+            "label": "Constraints",
+            "value": "Land use, water, access, and feasibility"
+          },
+          {
+            "label": "Commitment",
+            "value": "No acquisition or works approved"
+          }
+        ]
+      },
+      {
+        "id": "next-1",
+        "eyebrow": "BEYOND THE PROPERTY",
+        "title": "Let the next chapter have a new address.",
+        "body": "If the first place works, explore complementary properties elsewhere in the area. Growth can happen across a region, without expanding the original site.",
+        "facts": [
+          {
+            "label": "Possible direction",
+            "value": "Separate future properties"
+          },
+          {
+            "label": "Timeline / portfolio size",
+            "value": "No fixed endpoint"
+          },
+          {
+            "label": "Owner access",
+            "value": "No network exchange or usage rights promised"
+          }
+        ]
+      },
+      {
+        "id": "ownership",
+        "eyebrow": "OWNERSHIP",
+        "title": "A shared way forward.",
+        "body": "Following a scouting area expresses interest only. It does not secure a share, deposit, account, or access to any future property.",
+        "facts": []
+      }
+    ]
+  },
+  {
+    "name": "Sutter Creek",
+    "slug": "sutter-creek",
+    "region": "Sierra foothills · California",
+    "category": "Farms",
+    "status": "Past project · draft record",
+    "headline": "A connection to land. A chapter already written.",
+    "summary": "Sutter Creek represents the farm chapter in the discovery story. The draft identifies it as a past, sold project, included here for context rather than as a current opportunity.",
+    "intro": "Sutter Creek represents the farm chapter in the discovery story. The draft identifies it as a past, sold project, included here for context rather than as a current opportunity.\n\nProject history and supporting materials need verification before publication. No historic returns, investment performance, or current availability are presented. Photography is Salinas farmland, not Sutter Creek.",
+    "hero": "/images/farm.jpg",
+    "imageAlt": "Rolling green farmland in Salinas, California",
+    "isDemo": true,
+    "gallery": [
+      {
+        "src": "/images/farm.jpg",
+        "alt": "Rolling green farmland in Salinas, California",
+        "caption": "California farmland reference photographed in Salinas. Not Sutter Creek or an identified Land Club property.",
+        "type": "Regional"
+      }
+    ],
+    "sections": [
+      {
+        "id": "current",
+        "eyebrow": "THE STARTING POINT",
+        "title": "A past chapter, clearly marked.",
+        "body": "A place for an eventual case study: what the project was, what happened, and what was learned, once approved source material is ready.",
+        "facts": [
+          {
+            "label": "Current condition 1",
+            "value": "No ownership opportunity shown"
+          },
+          {
+            "label": "Current condition 2",
+            "value": "No performance claims made"
+          },
+          {
+            "label": "Current condition 3",
+            "value": "Case-study materials pending"
+          }
+        ]
+      },
+      {
+        "id": "ownership",
+        "eyebrow": "OWNERSHIP",
+        "title": "A shared way forward.",
+        "body": "This past-project page does not offer interests or booking access. Explore Norden Cross for the current flagship story.",
+        "facts": []
+      }
+    ]
+  },
+  {
+    "name": "Pioneertown",
+    "slug": "pioneertown",
+    "region": "High desert · California",
+    "category": "Desert",
+    "status": "Past chapter / scouting continues",
+    "headline": "Wide skies. An open-ended story.",
+    "summary": "The desert chapter connects past-project context with an ongoing search around Pioneertown. It is a direction to explore, not a promise of a specific new property.",
+    "intro": "The desert chapter connects past-project context with an ongoing search around Pioneertown. It is a direction to explore, not a promise of a specific new property.\n\nNo current acquisition, availability, or project inventory is verified. The image shows the Joshua Tree region, not a Pioneertown site.",
+    "hero": "/images/desert.jpg",
+    "imageAlt": "Joshua tree and mountains in the California desert",
+    "isDemo": true,
+    "gallery": [
+      {
+        "src": "/images/desert.jpg",
+        "alt": "Joshua tree and mountains in the California desert",
+        "caption": "Joshua Tree regional reference. Not a photograph of a Pioneertown property.",
+        "type": "Regional"
+      }
+    ],
+    "sections": [
+      {
+        "id": "current",
+        "eyebrow": "THE STARTING POINT",
+        "title": "A landscape, not a listing.",
+        "body": "The working brief carries a desert story forward from a past project into ongoing scouting. Until a site is selected and documented, this page shows the regional direction only.",
+        "facts": [
+          {
+            "label": "Current condition 1",
+            "value": "Past-project details require verification"
+          },
+          {
+            "label": "Current condition 2",
+            "value": "No current property offered"
+          },
+          {
+            "label": "Current condition 3",
+            "value": "No stay or ownership access implied"
+          }
+        ]
+      },
+      {
+        "id": "next-0",
+        "eyebrow": "REGIONAL SCOUTING",
+        "title": "Find the right next place.",
+        "body": "Explore candidate properties and their access, services, and fit with the desert. Scope and timing follow the evidence.",
+        "facts": [
+          {
+            "label": "Property",
+            "value": "Not selected"
+          },
+          {
+            "label": "Acquisition / development",
+            "value": "Not committed"
+          },
+          {
+            "label": "Future chapters",
+            "value": "Open-ended"
+          }
+        ]
+      },
+      {
+        "id": "ownership",
+        "eyebrow": "OWNERSHIP",
+        "title": "A shared way forward.",
+        "body": "You can follow this regional direction without making a financial commitment. No property is currently offered on this page.",
+        "facts": []
+      }
+    ]
+  }
+]

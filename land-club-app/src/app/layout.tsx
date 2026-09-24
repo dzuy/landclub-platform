@@ -1,0 +1,4 @@
+import type {Metadata} from 'next';
+import './globals.css';
+export const metadata:Metadata={title:'Land Club',description:'Distinctive places. A shared sense of belonging.',robots:{index:false,follow:false}};
+export default function Layout({children}:{children:React.ReactNode}){return <html lang="en"><head><link rel="preconnect" href="https://fonts.googleapis.com"/><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Newsreader:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/><link rel="stylesheet" href="/vendor/leaflet.css"/><link rel="icon" href="/favicon.svg"/></head><body><header className="top"><a className="brand" href="/">land club<span className="brand-mark">↗</span></a><nav><a href="/">Explore properties</a><a href="/staff/properties">Staff workspace</a></nav></header>{children}<footer><a className="brand" href="/">land club ↗</a><p>Distinctive places. A shared sense of belonging.</p></footer></body></html>}

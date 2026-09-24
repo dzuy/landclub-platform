@@ -1,0 +1,1 @@
+export default function Missing(){return <main className="section"><h1>This page isn’t available.</h1><p>The property may be unpublished or its address may have changed.</p><a className="button" href="/properties">Explore properties</a></main>}

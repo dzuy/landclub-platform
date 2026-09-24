@@ -1,0 +1,3 @@
+import {requireStaff} from '@/lib/staff';
+export const dynamic='force-dynamic';
+export default async function StaffLayout({children}:{children:React.ReactNode}){await requireStaff();return <><div className="local-mode"><strong>Local development workspace</strong><span>Changes are saved on this computer. Staff sign-in and hosted access are not enabled yet.</span></div><div className="cms-shell"><aside className="cms-sidebar"><div className="eyebrow">LAND CLUB / STAFF</div><a href="/staff/properties" aria-current="page">Property content</a><a href="/properties">View published pages ↗</a><p>Local editor</p></aside><main className="cms-main">{children}</main></div></>}
