@@ -10,6 +10,7 @@ export async function migrate(client){
   await client.query('REVOKE ALL ON SCHEMA land_club FROM PUBLIC');
   await client.query('SET search_path TO land_club');
   await client.query('CREATE TABLE IF NOT EXISTS schema_migrations(name text PRIMARY KEY,checksum text NOT NULL,applied_at timestamptz NOT NULL DEFAULT now())');
+  await client.query('ALTER TABLE schema_migrations ENABLE ROW LEVEL SECURITY');
   const directory=fileURLToPath(new URL('../migrations/',import.meta.url));
   for(const name of (await readdir(directory)).filter(n=>n.endsWith('.sql')).sort()){
    const sql=await readFile(path.join(directory,name),'utf8'),checksum=createHash('sha256').update(sql).digest('hex');
