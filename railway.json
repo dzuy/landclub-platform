@@ -5,7 +5,7 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "preDeployCommand": ["node scripts/check-environment.mjs && node scripts/migrate.mjs && node scripts/seed-demo.mjs"],
+    "preDeployCommand": ["node scripts/predeploy.mjs"],
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 120,
     "restartPolicyType": "ON_FAILURE",

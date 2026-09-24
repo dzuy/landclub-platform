@@ -1,6 +1,6 @@
 # Railway deployment
 
-The repository is configured to build the app and deploy each push to `main` **after the one-time service connection below**. No Railway or Supabase project has been created or linked automatically.
+The repository is configured to build the app and deploy each push to `main` **after the one-time service connection below**. The Land Club Railway and Supabase projects now exist; see [SUPABASE-SETUP.md](SUPABASE-SETUP.md) for setup status.
 
 ## 1. Create the Supabase project
 
@@ -31,11 +31,20 @@ Set the service settings **before the first deployment**:
 | Source repository | `dzuy/landclub-platform` |
 | Deployment branch | `main` |
 | Root Directory | Leave blank (repository root) |
-| Config file path | `/railway.json` |
+| Config file path | Leave unset for new services; configure the settings below directly |
 | Automatic deployments | Enabled |
 | Wait for CI | Disabled initially; enable after activating the optional workflow below |
 
-The config file path is repository-absolute, even when Root Directory is set. The Dockerfile path inside that config is relative to the service root. Leave custom build/start commands unset; the Dockerfile builds the Next.js standalone server and starts `node server.js`. It listens on `0.0.0.0` and Railway's `PORT`.
+Railway now blocks new services from opting into legacy Config as Code. The dashboard reports that existing config files stop working on December 1, 2026. For this service, configure the following settings directly rather than relying on `railway.json`:
+
+- Builder: automatically detected root Dockerfile.
+- Pre-deploy command: `node scripts/predeploy.mjs`.
+- Healthcheck path: `/api/health`; timeout: 120 seconds.
+- Restart policy: On Failure, maximum 3 retries.
+- Leave custom build/start commands unset; Docker starts `node server.js`.
+- Set `PORT=8080` to match the existing public domain target port.
+
+These changes are currently staged in Railway, awaiting the database connection variable and deployment. `railway.json` remains a reference for the equivalent legacy configuration.
 
 ## 3. Add Railway service variables
 
