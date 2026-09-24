@@ -12,9 +12,9 @@ export async function staffUserAuthorized(user:{id:string;email_confirmed_at?:st
 }
 export async function staffIdentity(){
  const h=await headers();
- if(localStaffAllowed(process.env.NODE_ENV,process.env.LAND_CLUB_LOCAL_STAFF,h.get('host')||'')&&(await cookies()).get('land-club-local-signed-out')?.value!=='1')return {id:'local-developer',name:'Local editor',local:true};
+ if(localStaffAllowed(process.env.NODE_ENV,process.env.LAND_CLUB_LOCAL_STAFF,h.get('host')||'')&&(await cookies()).get('land-club-local-signed-out')?.value!=='1')return {id:'local-developer',name:'Local editor',local:true,admin:true as const};
  if(!authConfigured())return null;
- try{const {data:{user},error}=await (await authClient()).auth.getUser();if(error||!user||!await staffUserAuthorized(user))return null;return {id:user.id,name:user.email||'Staff member',local:false};}catch{return null;}
+ try{const {data:{user},error}=await (await authClient()).auth.getUser();if(error||!user||!await staffUserAuthorized(user))return null;return {id:user.id,name:user.email||'Staff member',local:false,admin:true as const};}catch{return null;}
 }
 export async function requireStaff(){const actor=await staffIdentity();if(!actor)throw new StaffAccessError();return actor;}
 
