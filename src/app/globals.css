@@ -30,3 +30,5 @@ dialog.cms-confirm{color:var(--ink);width:min(580px,calc(100vw - 40px));border:1
 .auth-tabs{display:flex;gap:10px;margin:28px 0}.auth-tabs button{width:auto;flex:1}.local-preview-entry{margin:25px 0}.top .auth-nav-link{display:inline-flex;border:1px solid var(--forest);padding:8px 18px;border-radius:2px;color:var(--forest)}
 @media(max-width:650px){.top nav{display:flex;gap:10px}.top nav>a:first-child{display:none}.top{gap:10px}.top .auth-nav-link{font-size:12px;padding:7px 14px}}
 .dashboard-form .profile-fields{border:0;padding:0;margin:0;display:grid;gap:18px;min-width:0}.profile-fields>p{margin:0}.dashboard-form>.row-actions{flex-wrap:wrap}
+
+.profile-email>span{font-size:14px}.profile-email>p{margin:7px 0 0;overflow-wrap:anywhere}

@@ -17,7 +17,7 @@ export function ProfileForm({initial,email}:{initial:Profile;email:string}){
  }}>
  <fieldset className="profile-fields" disabled={pending}>
  <label>Your name<input name="displayName" autoComplete="name" required maxLength={100} value={profile.displayName} onChange={e=>change('displayName',e.target.value)}/></label>
- <label>Account email<input type="email" value={email} readOnly aria-describedby="profile-email-help"/></label>
+ <div className="profile-email"><span>Account email</span><p aria-describedby="profile-email-help">{email}</p></div>
  <p id="profile-email-help" className="muted">Your verified sign-in email. Contact your administrator if it needs to change.</p>
  <label>Home region<input name="homeRegion" autoComplete="address-level1" maxLength={100} value={profile.homeRegion} onChange={e=>change('homeRegion',e.target.value)} placeholder="e.g. Pacific Northwest"/></label>
  <fieldset><legend>Communication preferences</legend>
