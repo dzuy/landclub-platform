@@ -15,7 +15,7 @@ Under Authentication:
 1. Disable public sign-ups. There is no self-registration path in this app.
 2. Provision the initial staff account through Supabase's supported administrator flow. The account needs a confirmed email and password. Have the staff user set/reset their own password through a secure provider flow; do not commit or share passwords in the repo.
 3. Copy the staff user's UUID. Add additional approved staff UUIDs as needed.
-4. Configure the production site URL and any provider recovery redirect URLs when the Railway domain is available. The app currently implements email/password sign-in and sign-out; invitation acceptance and password recovery UI remain provider/admin managed.
+4. Set Supabase's production Site URL to the Railway HTTPS domain and add `https://<your-domain>/auth/callback` to the allowed redirect URLs. The app implements email/password sign-in, sign-out, and password recovery; invitation acceptance remains provider/admin managed.
 5. Keep Supabase's authentication rate limits enabled. This release has no Google sign-in or MFA enrollment UI; add those before broader member/financial operations.
 
 Every staff page and mutation checks a server-verified Supabase user, confirmed email, and the exact `STAFF_USER_IDS` allowlist. Removing an ID takes effect after Railway applies the environment change/restarts the deployment. The UUID is also recorded in content revision history. A user editing their metadata cannot grant themselves access.
@@ -54,6 +54,7 @@ These changes are currently staged in Railway, awaiting the database connection 
 | `SUPABASE_URL` | Supabase HTTPS project URL |
 | `SUPABASE_PUBLISHABLE_KEY` | Supabase publishable API key |
 | `STAFF_USER_IDS` | Comma-separated verified Supabase staff user UUIDs |
+| `LAND_CLUB_SITE_URL` | Required canonical HTTPS origin used in password-recovery links, such as `https://landclub.up.railway.app` |
 | `SEED_DEMO_CONTENT` | Optional: `true` to import the five labeled demo properties |
 
 **Do not set `LAND_CLUB_LOCAL_STAFF` on Railway.** Deployment validation rejects that bypass. No application secrets are required at image build time. `.env*`, `.data`, and local dependencies are excluded from the Docker context.

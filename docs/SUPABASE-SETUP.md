@@ -15,7 +15,7 @@ Project: `sfrdfzxxbhcmvjgxbshp` (Land Club), Canada Central.
 1. The initial staff user has been created and confirmed. Its UUID is saved in the ignored local environment and staged in Railway as `STAFF_USER_IDS`, with the owner's explicit approval.
 2. Set Railway's `DATABASE_URL` using the session-pooler template below, substituting the existing database password and percent-encoding special characters. Do not commit passwords or paste them into chat.
 3. Set `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, and the staff allowlist as described in [DEPLOYMENT.md](DEPLOYMENT.md). Set `SEED_DEMO_CONTENT=true` for the first demo import; no property content has been imported into this hosted database yet.
-4. Once the Railway domain exists, set Supabase's Site URL to that HTTPS domain. The default localhost value is still in place; no recovery callback UI has been implemented.
+4. Set Supabase's Site URL to the Railway HTTPS domain and allow `https://landclub.up.railway.app/auth/callback` as a redirect URL. Set Railway's `LAND_CLUB_SITE_URL=https://landclub.up.railway.app` so recovery emails always use the canonical host.
 5. Verify hosted sign-in and the complete save/preview/publish flow. Neither hosted authentication nor a direct application connection has been tested yet.
 
 Session-pooler template (password placeholder only):

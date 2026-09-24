@@ -45,7 +45,7 @@ TEST_DATABASE_URL=postgresql://... npm run test:postgres
 
 ## Current scope
 
-Image selection uses the supplied library; uploads and private file storage remain future work. Staff provisioning/password recovery are administrator/provider managed. Member invitations, Google sign-in, MFA enrollment, bookings, follows, inquiries, payments, events and maintenance workflows are not implemented. Demo prices, ownership terms and booking rules are not operational policies. The original prototype remains a separate design reference.
+Image selection uses the supplied library; uploads and private file storage remain future work. Staff provisioning remains administrator managed; signed-in access supports email password recovery. Member invitations, Google sign-in, MFA enrollment, bookings, follows, inquiries, payments, events and maintenance workflows are not implemented. Demo prices, ownership terms and booking rules are not operational policies. The original prototype remains a separate design reference.
 
 ## Product documentation
 
