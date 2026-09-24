@@ -16,7 +16,7 @@ export function EventManager({initial}:{initial:ClubEvent[]}){
   const sample=samples[Math.floor(Math.random()*samples.length)];
   const start=new Date();start.setDate(start.getDate()+7+Math.floor(Math.random()*22));start.setHours(sample.hour,0,0,0);
   const end=new Date(start.getTime()+sample.duration*60000);
-  setForm({title:`[Test] ${sample.title}`,description:`${sample.description}\n\nThis is a generated test event, not a real gathering.`,start:localDate(start.toISOString()),end:localDate(end.toISOString()),location:sample.location,meetingUrl:'https://example.com/land-club-test-event',status:'scheduled'});
+  setForm({title:sample.title,description:`${sample.description}\n\nThis is a generated test event, not a real gathering.`,start:localDate(start.toISOString()),end:localDate(end.toISOString()),location:sample.location,meetingUrl:'https://example.com/land-club-test-event',status:'scheduled'});
   setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);setError('');setMessage('Test details generated. Review them, then save when ready.');
  }
  function edit(event?:ClubEvent){setEditing(event||null);setForm(event?{...event.details,start:localDate(event.details.startsAt),end:localDate(event.details.endsAt)}:empty);setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);setOpen(true);setError('');setMessage('');}
