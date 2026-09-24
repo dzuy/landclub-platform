@@ -4,7 +4,7 @@
 
 The dashboard restores the prototype's Home, My Properties, Bookings, Documents, Events, and Profile & Settings sections, along with Administration, arrival guidance, club updates, and a property issue preview.
 
-Member ownership, stays, documents, events, directory entries, maintenance reports, and preferences are labeled sample content. Their interactive previews use component state only; they do not create bookings, send notifications, store files, grant permissions, or change account settings. The visible email comes from the authenticated identity.
+Member ownership, stays, documents, events, directory entries, and maintenance reports are labeled sample content. Their interactive previews use component state only; they do not create bookings, send notifications, store files, grant permissions, or change account settings. The visible email comes from the authenticated identity.
 
 Property content at `/staff/properties` retains its database-backed editing, publication, and revision history. Administration links to this existing editor.
 
@@ -15,3 +15,9 @@ Next implementation steps are persistent member profiles and property associatio
 The header shows Sign in to signed-out visitors and the appropriate account link to signed-in visitors. The staff sidebar and the ordinary account page provide Sign out. Local preview sign-out suppresses the automatic development shortcut for that browser session; a development-only button restores preview access. The shortcut is still unavailable in production.
 
 Registration remains invitation-only in Supabase. The Create account tab explains the invitation process; it does not submit public sign-ups. Confirmed non-staff users can sign in to `/account`, without gaining access to staff pages or property editing.
+
+## Profile & Settings
+
+`/staff/profile` loads and saves the authenticated staff user's name, home region, and communication preferences in Supabase Auth user metadata. Missing preferences default to off. Email is read-only. Profile metadata is never used to determine staff authorization, which continues to use confirmed identity and the server-side UUID allowlist.
+
+Saves are validated server-side and restricted to the current account; no user ID or access fields are accepted from the form. Local preview without a real authorized session prompts for sign-in instead of pretending to save. Notification preferences persist, but email delivery is not yet implemented. Password and email changes remain administrator-managed.
