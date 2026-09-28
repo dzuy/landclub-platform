@@ -64,7 +64,7 @@
 
 .table {
   width: 100%;
-  min-width: 900px;
+  min-width: 1040px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -158,6 +158,37 @@
 
 .lockedRole {
   color: var(--muted);
+}
+
+.cancelButton {
+  white-space: nowrap;
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.cancelInvite {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-width: 210px;
+  max-width: 280px;
+  font-size: 12px;
+}
+
+.cancelInvite form {
+  margin: 0;
+}
+
+.cancelInvite button {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+
+.dangerButton {
+  border-color: #8d2f20;
+  background: #8d2f20;
+  color: white;
 }
 
 .srOnly {

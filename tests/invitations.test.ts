@@ -26,3 +26,18 @@ test('invitations bind roles to the invited auth user',async()=>{
  assert.equal(await repository.hasRole('33333333-3333-3333-3333-333333333333','member'),false);
  await db.close();
 });
+
+test('cancelling an active invitation releases the email for a replacement',async()=>{
+ const db=new PGlite(),repository=new InvitationRepository(embeddedDatabase(db));await repository.initialize();
+ const firstId='44444444-4444-4444-4444-444444444444';
+ await repository.begin(firstId,'returning@example.com',['member'],'staff-1');
+ await repository.markPending(firstId,'55555555-5555-5555-5555-555555555555');
+ assert.equal((await repository.activeById(firstId))?.email,'returning@example.com');
+ const cancelled=await repository.cancel(firstId,'staff-1');
+ assert.equal(cancelled.status,'failed');
+ assert.equal(cancelled.failureReason,'Cancelled by staff-1');
+ assert.equal(await repository.activeById(firstId),null);
+ await repository.begin('66666666-6666-6666-6666-666666666666','RETURNING@example.com',['prospect'],'staff-1');
+ await assert.rejects(repository.cancel(firstId,'staff-1'));
+ await db.close();
+});

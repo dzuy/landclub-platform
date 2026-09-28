@@ -12,6 +12,7 @@ import {canonicalSiteUrl} from '@/lib/auth/recovery';
 
 export type InvitationState={error:string;message?:string};
 export type RoleUpdateState={error:string;message?:string};
+export type CancelInvitationState={error:string;message?:string};
 const emailSchema=z.email().max(254);
 const roleTargetSchema=z.object({kind:z.enum(['user','invitation']),id:z.uuid()});
 export async function sendInvitation(_previous:InvitationState,form:FormData):Promise<InvitationState>{
@@ -47,4 +48,30 @@ export async function updateMemberRoles(_previous:RoleUpdateState,form:FormData)
  }catch{return {error:'Roles could not be updated. Refresh the page and try again.'};}
  revalidatePath('/staff/members');
  return {error:'',message:'Roles updated.'};
+}
+
+export async function cancelInvitation(_previous:CancelInvitationState,form:FormData):Promise<CancelInvitationState>{
+ const actor=await requireStaff();
+ const id=z.uuid().safeParse(form.get('invitationId'));
+ if(!id.success)return {error:'This invitation could not be identified.'};
+ const repository=new InvitationRepository(database());
+ try{
+  await repository.initialize();
+  const invitation=await repository.activeById(id.data);
+  if(!invitation)return {error:'This invitation is no longer pending.'};
+  if(invitation.authUserId){
+   const admin=authAdminClient();
+   const {data,error}=await admin.auth.admin.getUserById(invitation.authUserId);
+   if(error&&error.status!==404)throw error;
+   const invitedUser=data.user;
+   if(invitedUser?.last_sign_in_at||invitedUser?.email_confirmed_at)return {error:'This person has already created their account. Refresh the page to see their current status.'};
+   if(invitedUser){
+    const {error:deleteError}=await admin.auth.admin.deleteUser(invitation.authUserId);
+    if(deleteError&&deleteError.status!==404)throw deleteError;
+   }
+  }
+  await repository.cancel(id.data,actor.id);
+ }catch{return {error:'The invitation could not be cancelled. Refresh the page and try again.'};}
+ revalidatePath('/staff/members');
+ return {error:'',message:'Invitation cancelled. This email can now be invited again.'};
 }

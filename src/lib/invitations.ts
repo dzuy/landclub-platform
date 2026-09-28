@@ -28,6 +28,8 @@ export class InvitationRepository{
  }
  async markPending(id:string,authUserId:string){await this.db.query('UPDATE invitations SET status=\'pending\',auth_user_id=$2,sent_at=now(),failure_reason=NULL WHERE id=$1',[id,authUserId]);}
  async markFailed(id:string,reason:string){await this.db.query('UPDATE invitations SET status=\'failed\',failure_reason=$2 WHERE id=$1',[id,reason.slice(0,500)]);}
+ async activeById(id:string){const result=await this.db.query<InvitationRow>('SELECT * FROM invitations WHERE id=$1 AND status IN (\'sending\',\'pending\') LIMIT 1',[id]);return result.rows[0]?invitation(result.rows[0]):null;}
+ async cancel(id:string,actor:string){const result=await this.db.query<InvitationRow>('UPDATE invitations SET status=\'failed\',failure_reason=$2 WHERE id=$1 AND status IN (\'sending\',\'pending\') RETURNING *',[id,`Cancelled by ${actor}`.slice(0,500)]);if(!result.rows[0])throw new Error('Invitation is no longer pending.');return invitation(result.rows[0]);}
  async updatePendingRoles(id:string,roles:ClubRole[]){const result=await this.db.query<{id:string}>('UPDATE invitations SET roles=$2 WHERE id=$1 AND status IN (\'sending\',\'pending\') RETURNING id',[id,roles]);if(!result.rows[0])throw new Error('Invitation is no longer pending.');}
  async list(){const result=await this.db.query<InvitationRow>('SELECT * FROM invitations ORDER BY created_at DESC LIMIT 100');return result.rows.map(invitation);}
  async roleAssignments(){const result=await this.db.query<{user_id:string;role:ClubRole}>('SELECT user_id,role FROM user_roles ORDER BY created_at');return result.rows.map(row=>({userId:row.user_id,role:row.role}));}
