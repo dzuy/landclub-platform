@@ -37,3 +37,25 @@ Click a member's name in Members to open a right-side drawer. Admins can edit di
 Property roles are Prospect, Investor, Owner, Guest, and Property manager. Each member/property pair has one or more roles (migration `007_multiple_property_roles.sql` preserves existing assignments), stored in the private `member_properties` table (migration `006_member_properties.sql`), with version checks and the last editing admin recorded. These associations do not confer club-wide Admin access, legal ownership, booking rights, or new document permissions. Bootstrap admin roles remain deployment-managed.
 
 Reading or updating other accounts requires `SUPABASE_SECRET_KEY`. Without that credential, the signed-in admin can still load and edit their own account through their verified session; other accounts remain unavailable. Account lookup and every mutation require admin authorization.
+
+## Prepare members before inviting
+
+Admins can create a member draft from Members using their name, invitation email,
+home region, phone, and club roles. A draft sends no email and grants no access.
+Open the draft's name to edit their profile, save club roles, and assign properties
+with one or more roles per property. Save each section before selecting Send invitation.
+
+The invitation uses Supabase's existing invitation email and password-creation flow.
+Saved profile fields are attached to the invited identity, and property associations
+are transferred to that identity in the same database transaction that makes the
+invitation available for acceptance. Club roles take effect on acceptance. Members
+see the associated properties through My Properties.
+
+Draft edits are locked during delivery. A provider rejection keeps the draft editable.
+If delivery is uncertain, reopen the draft and use Check invitation status; this checks
+the original invitation without sending a duplicate email. The sending state remains
+locked if delivery cannot be confirmed.
+
+Deployment requires migration 008 (included in the normal Railway migration step),
+the existing Supabase admin secret, canonical site URL, and configured invite email.
+Local drafts work without the admin secret; sending invitations requires it.

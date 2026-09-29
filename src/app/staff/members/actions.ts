@@ -14,7 +14,7 @@ export type InvitationState={error:string;message?:string};
 export type RoleUpdateState={error:string;message?:string};
 export type CancelInvitationState={error:string;message?:string};
 const emailSchema=z.email().max(254);
-const roleTargetSchema=z.object({kind:z.enum(['user','invitation']),id:z.uuid()});
+const roleTargetSchema=z.object({kind:z.enum(['user','invitation','prepared']),id:z.uuid()});
 export async function sendInvitation(_previous:InvitationState,form:FormData):Promise<InvitationState>{
  const actor=await requireStaff();
  const emailResult=emailSchema.safeParse(form.get('email'));
@@ -43,7 +43,8 @@ export async function updateMemberRoles(_previous:RoleUpdateState,form:FormData)
  if(target.data.kind==='user'&&bootstrap.has(target.data.id))return {error:'This Admin role is managed by the deployment configuration.'};
  try{
   const repository=new InvitationRepository(database());await repository.initialize();
-  if(target.data.kind==='invitation')await repository.updatePendingRoles(target.data.id,roles);
+  if(target.data.kind==='prepared'){const {preparedMemberStore}=await import('@/lib/prepared-member-store');await (await preparedMemberStore()).saveRoles(target.data.id,roles);}
+  else if(target.data.kind==='invitation')await repository.updatePendingRoles(target.data.id,roles);
   else await repository.replaceUserRoles(target.data.id,roles,actor.id);
  }catch{return {error:'Roles could not be updated. Refresh the page and try again.'};}
  revalidatePath('/staff/members','layout');
@@ -74,4 +75,51 @@ export async function cancelInvitation(_previous:CancelInvitationState,form:Form
  }catch{return {error:'The invitation could not be cancelled. Refresh the page and try again.'};}
  revalidatePath('/staff/members');
  return {error:'',message:'Invitation cancelled. This email can now be invited again.'};
+}
+
+export async function createPreparedMember(_previous:InvitationState,form:FormData):Promise<InvitationState>{
+ const actor=await requireStaff();
+ const {preparedMemberSchema}=await import('@/lib/prepared-members');
+ const {preparedMemberStore}=await import('@/lib/prepared-member-store');
+ const input=preparedMemberSchema.safeParse({email:String(form.get('email')||'').trim().toLowerCase(),displayName:form.get('displayName'),homeRegion:form.get('homeRegion')||'',contactPhone:form.get('contactPhone')||''});
+ if(!input.success)return {error:input.error.issues[0].message};
+ try{await (await preparedMemberStore()).create(randomUUID(),input.data,readRoles(form.getAll('roles')),actor.id);}
+ catch{return {error:'Unable to prepare this member. This email may already have a prepared account.'};}
+ revalidatePath('/staff/members');return {error:'',message:`${input.data.displayName} is ready to configure. Open their name below to add properties and send their invitation.`};
+}
+
+export async function invitePreparedMember(_previous:InvitationState,form:FormData):Promise<InvitationState>{
+ const actor=await requireStaff();const parsed=z.uuid().safeParse(form.get('preparedId'));if(!parsed.success)return {error:'Member not found.'};
+ const {preparedMemberStore}=await import('@/lib/prepared-member-store');
+ const {memberPropertyStore}=await import('@/lib/member-property-store');
+ const prepared=await preparedMemberStore();
+ const invitations=new InvitationRepository(database());await invitations.initialize();await memberPropertyStore();
+ // Resolve configuration before claiming the draft, so missing settings do not lock it.
+ let admin:ReturnType<typeof authAdminClient>,redirectTo:string;
+ try{admin=authAdminClient();redirectTo=new URL('/auth/confirm',canonicalSiteUrl((await headers()).get('origin'),process.env.LAND_CLUB_SITE_URL,process.env.NODE_ENV)).toString();}
+ catch{return {error:'Invitation delivery is not configured. Your member setup is saved.'};}
+ const existing=await prepared.get(parsed.data);
+ if(existing?.status==='sending'&&existing.invitation_id){
+  try{
+   // A provider timeout may still have delivered the email. Reconcile instead of resending.
+   let page=1;
+   while(true){const {data,error}=await admin.auth.admin.listUsers({page,perPage:1000});if(error)throw error;
+    const user=data.users.find(user=>user.email?.toLowerCase()===existing.email&&user.user_metadata?.land_club_invitation_id===existing.invitation_id);
+    if(user){await prepared.finishDelivery(existing.id,user.id,existing.invitation_id);revalidatePath('/staff/members');return {error:'',message:'Invitation confirmed. Their profile and property associations are ready.'};}
+    if(data.users.length<1000)break;page++;
+   }
+  }catch{return {error:'Unable to check delivery right now. Your setup is saved; try checking again later.'};}
+  return {error:'Delivery is not yet confirmed. Your setup is saved. Check again shortly; no additional email has been sent.'};
+ }
+ const invitationId=randomUUID();
+ let member;
+ try{member=await prepared.beginDelivery(parsed.data,invitationId);}catch{return {error:'This invitation is already being sent or has been sent. Refresh the page.'};}
+ try{await invitations.begin(invitationId,member.email,member.roles,actor.id);}catch{await prepared.deliveryFailed(member.id);return {error:'This email already has an active invitation. Your setup is saved.'};}
+ const {displayName,homeRegion,contactPhone}=member.info;
+ try{
+  const {data,error}=await admin.auth.admin.inviteUserByEmail(member.email,{redirectTo,data:{display_name:displayName,home_region:homeRegion,contact_phone:contactPhone,land_club_invitation_id:invitationId}});
+  if(error||!data.user){await invitations.markFailed(invitationId,'Invitation provider rejected delivery.');await prepared.deliveryFailed(member.id);return {error:'The invitation could not be sent. This email may already have an account. Your setup is saved.'};}
+  await prepared.finishDelivery(member.id,data.user.id,invitationId);
+ }catch{return {error:'Delivery could not be confirmed. The setup is preserved and sending is paused to prevent duplicate invitations. Use Check invitation status to confirm delivery without sending another email.'};}
+ revalidatePath('/staff/members');return {error:'',message:`Invitation sent to ${member.email}. Their profile and property associations are ready.`};
 }

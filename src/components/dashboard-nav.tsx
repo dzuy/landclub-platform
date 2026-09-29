@@ -20,7 +20,7 @@ function NavIcon({name}:{name:IconName}){
  return <svg className="dashboard-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{shapes[name]}</svg>;
 }
 
-export function DashboardNav({showAdminTools}:{showAdminTools:boolean}){
+export function DashboardNav({showAdminTools,properties}:{showAdminTools:boolean;properties:{id:string;name:string}[]}){
  const path=usePathname();
  const [open,setOpen]=useState(false);
 
@@ -36,7 +36,7 @@ export function DashboardNav({showAdminTools}:{showAdminTools:boolean}){
   <button className="dashboard-menu-backdrop" type="button" aria-label="Close dashboard navigation" tabIndex={open?0:-1} onClick={()=>setOpen(false)}/>
   <div className="dashboard-sidebar-panel" id="dashboard-navigation">
    <div className="eyebrow">YOUR LAND CLUB</div>
-   <nav aria-label="Your Land Club">{links.map(([label,href,icon])=><Link key={href} href={href} aria-current={path===href?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name={icon}/><span>{label}</span></Link>)}{showAdminTools&&<><div className="dashboard-nav-divider"/><div className="eyebrow">ADMIN TOOLS</div><Link href="/staff/members" aria-current={path.startsWith('/staff/members')?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="members"/><span>Members</span></Link><Link href="/staff/properties" aria-current={path.startsWith('/staff/properties')?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="content"/><span>Property content</span></Link><Link href="/staff/manage-events" aria-current={path==='/staff/manage-events'?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="events"/><span>Manage events</span></Link></>}</nav>
+   <nav aria-label="Your Land Club">{links.map(([label,href,icon])=><div className={href==='/staff/my-properties'?'dashboard-nav-group':undefined} key={href}><Link href={href} aria-current={(href==='/staff/my-properties'?path.startsWith(href):path===href)?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name={icon}/><span>{label}</span></Link>{href==='/staff/my-properties'&&properties.length>0&&<div className="dashboard-property-subnav">{properties.map(property=><Link key={property.id} href={`/staff/my-properties/${property.id}`} aria-current={path===`/staff/my-properties/${property.id}`?'page':undefined} onClick={()=>setOpen(false)}><span>{property.name}</span></Link>)}</div>}</div>)}{showAdminTools&&<><div className="dashboard-nav-divider"/><div className="eyebrow">ADMIN TOOLS</div><Link href="/staff/members" aria-current={path.startsWith('/staff/members')?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="members"/><span>Members</span></Link><Link href="/staff/properties" aria-current={path.startsWith('/staff/properties')?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="content"/><span>Property content</span></Link><Link href="/staff/manage-events" aria-current={path==='/staff/manage-events'?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="events"/><span>Manage events</span></Link></>}</nav>
   </div>
  </aside>
 }

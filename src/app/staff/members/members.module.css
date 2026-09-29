@@ -220,3 +220,13 @@
 .memberLink{font-weight:600;text-decoration:underline;text-underline-offset:4px;color:var(--forest)}
 
 button.memberLink{background:none;border:0;padding:0;display:inline;text-align:left;font:inherit;font-weight:600;color:var(--forest);text-decoration:underline;text-underline-offset:4px}
+
+.detailRoleEditor{min-width:0}
+.detailRoleEditor>p{margin:0 0 14px;font-size:14px}
+.detailRoleEditor fieldset{gap:12px 24px}
+.detailRoleEditor label{padding:0;border:0;background:none;font-size:14px;gap:8px}
+.detailRoleEditor input{width:16px;height:16px;accent-color:var(--forest)}
+.detailRoleEditor fieldset:disabled label{cursor:default}
+.detailRoleEditor .roleEditorActions{margin-top:20px}
+.detailRoleEditor .roleEditorActions button{padding:10px 16px;font-size:14px}
+.detailRoleEditor .lockedRole{margin:14px 0 0;font-size:13px}

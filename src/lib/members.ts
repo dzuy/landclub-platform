@@ -9,7 +9,7 @@ export type AuthDirectoryUser={
  email_confirmed_at?:string;
  user_metadata?:Record<string,unknown>;
 };
-export type MemberDirectoryRow={id:string;name:string|null;email:string;roles:ClubRole[];status:'active'|'invited';joinedAt:string;lastActiveAt:string|null;roleTarget:{kind:'user'|'invitation';id:string};rolesLocked:boolean};
+export type MemberDirectoryRow={id:string;name:string|null;email:string;roles:ClubRole[];status:'active'|'invited'|'draft'|'sending';joinedAt:string;lastActiveAt:string|null;roleTarget:{kind:'user'|'invitation'|'prepared';id:string};rolesLocked:boolean};
 
 function displayName(metadata:Record<string,unknown>|undefined){
  const value=metadata?.display_name??metadata?.full_name??metadata?.name;
