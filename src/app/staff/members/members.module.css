@@ -216,3 +216,7 @@
     padding-inline: 0;
   }
 }
+
+.memberLink{font-weight:600;text-decoration:underline;text-underline-offset:4px;color:var(--forest)}
+
+button.memberLink{background:none;border:0;padding:0;display:inline;text-align:left;font:inherit;font-weight:600;color:var(--forest);text-decoration:underline;text-underline-offset:4px}

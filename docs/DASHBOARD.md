@@ -29,3 +29,11 @@ Admins manage events at `/staff/manage-events` using the Admin Tools navigation.
 Creating or editing a scheduled event immediately makes it visible to all members. Cancellation keeps the event visible with a cancellation notice; archiving hides it from members and is reversible by editing its status. Past events remain available below upcoming events. No sample events are seeded.
 
 The editor accepts a title, description, start/end, location, optional HTTPS event link, and status. Dates are entered in the admin browser's named time zone, stored as UTC instants, and displayed with the saved time zone. Changes use version checks to prevent silently overwriting another admin's edits. RSVPs, capacity limits, and email notifications are not part of this release.
+
+## Member details drawer
+
+Click a member's name in Members to open a right-side drawer. Admins can edit display name, home region, and contact phone, manage existing club-wide roles, and add/update/remove property associations. Sign-in email and credentials are not editable here. Closing the drawer refreshes the directory. A direct member URL is also available for opening in another tab.
+
+Property roles are Prospect, Investor, Owner, Guest, and Property manager. Each member/property pair has one role, stored in the private `member_properties` table (migration `006_member_properties.sql`), with version checks and the last editing admin recorded. These associations do not confer club-wide Admin access, legal ownership, booking rights, or new document permissions. Bootstrap admin roles remain deployment-managed.
+
+Reading or updating other accounts requires `SUPABASE_SECRET_KEY`. Without that credential, the signed-in admin can still load and edit their own account through their verified session; other accounts remain unavailable. Account lookup and every mutation require admin authorization.

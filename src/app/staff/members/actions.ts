@@ -46,7 +46,7 @@ export async function updateMemberRoles(_previous:RoleUpdateState,form:FormData)
   if(target.data.kind==='invitation')await repository.updatePendingRoles(target.data.id,roles);
   else await repository.replaceUserRoles(target.data.id,roles,actor.id);
  }catch{return {error:'Roles could not be updated. Refresh the page and try again.'};}
- revalidatePath('/staff/members');
+ revalidatePath('/staff/members','layout');
  return {error:'',message:'Roles updated.'};
 }
 
