@@ -230,3 +230,24 @@ button.memberLink{background:none;border:0;padding:0;display:inline;text-align:l
 .detailRoleEditor .roleEditorActions{margin-top:20px}
 .detailRoleEditor .roleEditorActions button{padding:10px 16px;font-size:14px}
 .detailRoleEditor .lockedRole{margin:14px 0 0;font-size:13px}
+
+.directoryTools{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 24px 20px}
+.search{flex:1 1 240px;margin:0;max-width:440px}
+.search input{width:100%;height:44px;padding:10px 14px;background:#fffdf7;border:1px solid var(--line);border-radius:3px;font-size:14px}
+.filter{position:relative;min-width:130px}
+.filterTrigger{display:flex;align-items:center;gap:10px;cursor:pointer;width:100%;color:var(--ink);font-weight:400;height:44px;padding:10px 14px;background:#fffdf7;border:1px solid var(--line);border-radius:3px;font-size:14px}
+.filterTrigger>span:last-child{margin-left:auto}
+.filterTrigger[aria-expanded=true]{border-color:var(--forest)}
+.filterCount{border-radius:20px;background:var(--forest);color:var(--cream);min-width:20px;text-align:center;font-size:11px}
+.filterMenu{position:absolute;top:calc(100% + 5px);left:0;z-index:4;width:260px;background:#fffdf7;border:1px solid var(--line);border-radius:3px;padding:12px;box-shadow:0 8px 24px #1721131a}
+.filterMenu fieldset{border:0;margin:0 0 10px;padding:0;max-height:260px;overflow:auto}
+.filterMenu label{display:flex;align-items:center;gap:10px;margin:0;padding:8px 4px;font-size:14px;cursor:pointer}
+.filterMenu input{width:16px;height:16px;margin:0;accent-color:var(--forest);flex-shrink:0}
+.filterMenu button,.clearFilters{padding:7px 12px;font-size:13px}
+.table th .sortButton{background:transparent;border:0;border-radius:0;color:inherit;padding:0;font:inherit;letter-spacing:inherit;text-transform:inherit;white-space:nowrap;justify-content:flex-start;width:100%}
+.sortButton span{font-size:14px;letter-spacing:0}
+.filterTrigger:focus-visible,.sortButton:focus-visible{outline:2px solid var(--forest);outline-offset:4px}
+.table .emptyDirectory{text-align:center;padding:32px}
+.emptyDirectory button{display:flex;margin:16px auto 0}
+@media(max-width:850px){.directoryTools{margin-inline:0}}
+@media(max-width:520px){.search{max-width:none;flex-basis:100%}.filter{flex:1;min-width:95px}.filterTrigger{padding:10px}.filterMenu{width:min(260px,calc(100vw - 48px))}.filter:last-of-type .filterMenu{left:auto;right:0}}

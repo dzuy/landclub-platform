@@ -7,6 +7,8 @@ import {buildMemberDirectory,type AuthDirectoryUser} from '@/lib/members';
 import {InvitationForm} from './invitation-form';
 import {preparedMemberStore} from '@/lib/prepared-member-store';
 import {MemberTable} from './member-table';
+import {store} from '@/lib/store';
+import {memberPropertyStore} from '@/lib/member-property-store';
 
 export const dynamic='force-dynamic';
 export default async function MembersPage(){
@@ -19,5 +21,7 @@ export default async function MembersPage(){
  const members=buildMemberDirectory(users,invitations,assignments,process.env.STAFF_USER_IDS);
  const drafts=await (await preparedMemberStore()).list();
  for(const draft of drafts)members.unshift({id:draft.id,name:draft.info.displayName,email:draft.email,roles:draft.roles,status:draft.status==='sending'?'sending':'draft',joinedAt:draft.created_at,lastActiveAt:null,roleTarget:{kind:'prepared',id:draft.id},rolesLocked:draft.status==='sending'});
- return <><header className="dashboard-heading"><div className="eyebrow">STAFF WORKSPACE</div><h1>Members.</h1><p>Invite people to Land Club, understand their activity, and see the roles that shape their access.</p></header><InvitationForm/><MemberTable members={members}/></>;
+ const [properties,associations]=await Promise.all([(await store()).list(),(await memberPropertyStore()).directoryAssociations()]);
+ const directoryMembers=members.map(member=>({...member,propertyIds:associations.filter(association=>association.user_id===member.id).map(association=>association.property_id)}));
+ return <><header className="dashboard-heading"><div className="eyebrow">STAFF WORKSPACE</div><h1>Members.</h1><p>Invite people to Land Club, understand their activity, and see the roles that shape their access.</p></header><InvitationForm/><MemberTable members={directoryMembers} properties={properties.map(property=>({id:property.id,name:property.draft.name}))}/></>;
 }
