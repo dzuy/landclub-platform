@@ -60,6 +60,10 @@ export async function cancelInvitation(_previous:CancelInvitationState,form:Form
   await repository.initialize();
   const invitation=await repository.activeById(id.data);
   if(!invitation)return {error:'This invitation is no longer pending.'};
+  if(invitation.status==='sending')return {error:'This invitation is still being sent. Check its delivery status before cancelling.'};
+  const {preparedMemberStore}=await import('@/lib/prepared-member-store');
+  const {memberPropertyStore}=await import('@/lib/member-property-store');
+  const prepared=await preparedMemberStore();await memberPropertyStore();
   if(invitation.authUserId){
    const admin=authAdminClient();
    const {data,error}=await admin.auth.admin.getUserById(invitation.authUserId);
@@ -71,10 +75,10 @@ export async function cancelInvitation(_previous:CancelInvitationState,form:Form
     if(deleteError&&deleteError.status!==404)throw deleteError;
    }
   }
-  await repository.cancel(id.data,actor.id);
+  await prepared.cancelInvitation(id.data,actor.id);
  }catch{return {error:'The invitation could not be cancelled. Refresh the page and try again.'};}
- revalidatePath('/staff/members');
- return {error:'',message:'Invitation cancelled. This email can now be invited again.'};
+ revalidatePath('/staff/members','layout');
+ return {error:'',message:'Invitation cancelled. Any saved member setup is available as a draft, ready to invite again.'};
 }
 
 export async function createPreparedMember(_previous:InvitationState,form:FormData):Promise<InvitationState>{
@@ -83,7 +87,11 @@ export async function createPreparedMember(_previous:InvitationState,form:FormDa
  const {preparedMemberStore}=await import('@/lib/prepared-member-store');
  const input=preparedMemberSchema.safeParse({email:String(form.get('email')||'').trim().toLowerCase(),displayName:form.get('displayName'),homeRegion:form.get('homeRegion')||'',contactPhone:form.get('contactPhone')||''});
  if(!input.success)return {error:input.error.issues[0].message};
- try{await (await preparedMemberStore()).create(randomUUID(),input.data,readRoles(form.getAll('roles')),actor.id);}
+ try{
+  const result=await (await preparedMemberStore()).createOrReuseDraft(randomUUID(),input.data,readRoles(form.getAll('roles')),actor.id);
+  if(result==='unavailable')return {error:'This email already has an invitation or account. Open the existing member in the directory.'};
+  if(result==='existing'){revalidatePath('/staff/members','layout');return {error:'',message:'Their saved member draft is ready. Open their name below to review the setup and send a new invitation.'};}
+ }
  catch{return {error:'Unable to prepare this member. This email may already have a prepared account.'};}
  revalidatePath('/staff/members');return {error:'',message:`${input.data.displayName} is ready to configure. Open their name below to add properties and send their invitation.`};
 }

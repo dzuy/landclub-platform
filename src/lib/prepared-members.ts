@@ -17,6 +17,26 @@ export class PreparedMemberRepository{
  async get(id:string){return (await this.db.query<PreparedMember>('SELECT * FROM prepared_members WHERE id=$1',[id])).rows[0]||null;}
  async list(){return (await this.db.query<PreparedMember>("SELECT * FROM prepared_members WHERE status<>'invited' ORDER BY created_at DESC")).rows;}
  async create(id:string,input:unknown,roles:ClubRole[],actor:string){const data=preparedMemberSchema.parse(input);const {email,...info}=data;await this.db.query('INSERT INTO prepared_members(id,email,info,roles,created_by) VALUES($1,$2,$3,$4,$5)',[id,email.toLowerCase(),JSON.stringify(info),readRoles(roles),actor]);}
+ async createOrReuseDraft(id:string,input:unknown,roles:ClubRole[],actor:string){
+  const {email,...info}=preparedMemberSchema.parse(input);
+  return this.db.transaction(async tx=>{
+   const inserted=await tx.query<{id:string}>('INSERT INTO prepared_members(id,email,info,roles,created_by) VALUES($1,$2,$3,$4,$5) ON CONFLICT(email) DO NOTHING RETURNING id',[id,email.toLowerCase(),JSON.stringify(info),readRoles(roles),actor]);
+   if(inserted.rows.length)return 'created' as const;
+   const existing=(await tx.query<PreparedMember>('SELECT * FROM prepared_members WHERE email=$1 FOR UPDATE',[email.toLowerCase()])).rows[0];
+   if(existing?.status==='draft')return 'existing' as const;
+   return 'unavailable' as const;
+  });
+ }
+ async cancelInvitation(invitationId:string,actor:string){return this.db.transaction(async tx=>{
+  const cancelled=(await tx.query<{id:string;auth_user_id:string|null;roles:ClubRole[]}>("UPDATE invitations SET status='failed',failure_reason=$2 WHERE id=$1 AND status='pending' RETURNING id,auth_user_id,roles",[invitationId,`Cancelled by ${actor}`.slice(0,500)])).rows[0];
+  if(!cancelled)throw new Error('This invitation is no longer pending.');
+  const member=(await tx.query<PreparedMember>("SELECT * FROM prepared_members WHERE invitation_id=$1 AND status='invited' FOR UPDATE",[invitationId])).rows[0];
+  if(!member)return false;
+  // Move saved property assignments back to the draft before clearing its link.
+  if(member.auth_user_id)await tx.query('UPDATE member_properties SET user_id=$2 WHERE user_id=$1',[member.auth_user_id,member.id]);
+  await tx.query("UPDATE prepared_members SET status='draft',auth_user_id=NULL,invitation_id=NULL,failure_reason=NULL,roles=$2 WHERE id=$1",[member.id,cancelled.roles]);
+  return true;
+ });}
  async edit<T>(id:string,work:(tx:Queryable)=>Promise<T>){return this.db.transaction(async tx=>{const row=(await tx.query<PreparedMember>('SELECT * FROM prepared_members WHERE id=$1 FOR UPDATE',[id])).rows[0];if(!row||row.status!=='draft')throw new Error('This member is no longer a draft. Refresh to continue.');return work(tx);});}
  async saveInfo(id:string,info:MemberInfo){const parsed=memberInfoSchema.parse(info);await this.edit(id,tx=>tx.query('UPDATE prepared_members SET info=$2 WHERE id=$1',[id,JSON.stringify(parsed)]));}
  async saveRoles(id:string,roles:ClubRole[]){await this.edit(id,tx=>tx.query('UPDATE prepared_members SET roles=$2 WHERE id=$1',[id,readRoles(roles)]));}
@@ -28,6 +48,6 @@ export class PreparedMemberRepository{
   await tx.query('UPDATE member_properties SET user_id=$2 WHERE user_id=$1',[id,userId]);
   const linked=await tx.query("UPDATE invitations SET status='pending',auth_user_id=$2,sent_at=now(),failure_reason=NULL WHERE id=$1 AND email=$3 AND status='sending' RETURNING id",[invitationId,userId,row.email]);
   if(!linked.rows.length)throw new Error('Invitation could not be linked.');
-  await tx.query("UPDATE prepared_members SET status='invited',auth_user_id=$2 WHERE id=$1",[id,userId]);
+  await tx.query("UPDATE prepared_members SET status='invited',auth_user_id=$2,invitation_id=$3 WHERE id=$1",[id,userId,invitationId]);
  });}
 }
