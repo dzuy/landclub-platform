@@ -9,7 +9,7 @@ import {store} from './store';
 import {memberPropertyStore} from './member-property-store';
 export async function loadMemberDetail(id:string){
  const repo=new InvitationRepository(database());await repo.initialize();const invitations=await repo.list();
- if(id.startsWith('invitation:')){const invitation=invitations.find(i=>`invitation:${i.id}`===id);if(!invitation)throw new Error('Member not found.');return {kind:'invitation' as const,id:invitation.id,email:invitation.email,roles:invitation.roles};}
+ if(id.startsWith('invitation:')){const invitation=invitations.find(i=>`invitation:${i.id}`===id);if(!invitation)throw new Error('Member not found.');return {kind:'invitation' as const,id:invitation.id,email:invitation.email,roles:invitation.roles,joinedAt:invitation.createdAt};}
  z.uuid().parse(id);const prepared=await (await preparedMemberStore()).get(id);
  if(prepared&&prepared.status!=='invited')return {kind:'prepared' as const,prepared,properties:(await (await store()).list()).map(p=>({id:p.id,name:p.draft.name})),associations:await (await memberPropertyStore()).list(id)};
  const user=await managedMember(id);

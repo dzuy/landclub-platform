@@ -7,9 +7,7 @@ import {RoleEditor} from './role-editor';
 import {CancelInvitation} from './cancel-invitation';
 import styles from './members.module.css';
 
-const dateFormatter=new Intl.DateTimeFormat('en',{year:'numeric',month:'short',day:'numeric'});
-function date(value:string|null){return value?dateFormatter.format(new Date(value)):'Never';}
-const columns:{key:MemberColumn;label:string}[]=[{key:'name',label:'Name'},{key:'email',label:'Email'},{key:'roles',label:'Roles'},{key:'status',label:'Status'},{key:'lastActiveAt',label:'Last active'},{key:'joinedAt',label:'Joined'},{key:'actions',label:'Actions'}];
+const columns:{key:MemberColumn;label:string}[]=[{key:'name',label:'Name'},{key:'email',label:'Email'},{key:'roles',label:'Roles'},{key:'status',label:'Status'},{key:'actions',label:'Actions'}];
 
 function MultiFilter({label,options,selected,onChange}:{label:string;options:{id:string;name:string}[];selected:string[];onChange:(values:string[])=>void}){
  const container=useRef<HTMLDivElement>(null),trigger=useRef<HTMLButtonElement>(null);
@@ -23,7 +21,7 @@ function MultiFilter({label,options,selected,onChange}:{label:string;options:{id
 
 export function MemberTable({members,properties}:{members:DirectoryMember[];properties:{id:string;name:string}[]}){
  const [search,setSearch]=useState(''),[selectedProperties,setProperties]=useState<string[]>([]),[selectedRoles,setRoles]=useState<string[]>([]),[selectedStatuses,setStatuses]=useState<string[]>([]);
- const [sort,setSort]=useState<{column:MemberColumn;direction:'asc'|'desc'}>({column:'joinedAt',direction:'desc'});
+ const [sort,setSort]=useState<{column:MemberColumn;direction:'asc'|'desc'}>({column:'name',direction:'asc'});
  const visible=memberDirectoryView(members,{search,properties:selectedProperties,roles:selectedRoles,statuses:selectedStatuses},sort);
  const filtered=!!(search||selectedProperties.length||selectedRoles.length||selectedStatuses.length);
  function clear(){setSearch('');setProperties([]);setRoles([]);setStatuses([]);}
@@ -37,7 +35,7 @@ export function MemberTable({members,properties}:{members:DirectoryMember[];prop
    {filtered&&<button type="button" className={`secondary ${styles.clearFilters}`} onClick={clear}>Clear all</button>}
   </div>
   <div className={styles.tableWrap}><table className={styles.table}><thead><tr>{columns.map(column=><th scope="col" key={column.key} aria-sort={sort.column===column.key?(sort.direction==='asc'?'ascending':'descending'):'none'}><button type="button" className={styles.sortButton} onClick={()=>setSort({column:column.key,direction:sort.column===column.key&&sort.direction==='asc'?'desc':'asc'})}>{column.label}<span aria-hidden="true">{sort.column===column.key?(sort.direction==='asc'?'↑':'↓'):'↕'}</span></button></th>)}</tr></thead>
-   <tbody>{visible.map(member=><tr key={member.id}><td><MemberDrawerLink id={member.id} name={member.name||member.email}/></td><td>{member.email}</td><td><RoleEditor key={member.roles.join(',')} roles={member.roles} target={member.roleTarget} locked={member.rolesLocked}/></td><td><span className={`badge ${member.status==='active'?'':'sand'}`}>{memberStatusLabels[member.status]}</span></td><td>{date(member.lastActiveAt)}</td><td>{date(member.joinedAt)}</td><td>{memberAction(member)?<CancelInvitation id={member.roleTarget.id} email={member.email}/>:<span className="muted">—</span>}</td></tr>)}{!visible.length&&<tr><td colSpan={columns.length} className={styles.emptyDirectory}>{members.length?'No members match your search and filters.':'No members or invitations yet.'}{filtered&&<button type="button" className="secondary" onClick={clear}>Clear search and filters</button>}</td></tr>}</tbody>
+   <tbody>{visible.map(member=><tr key={member.id}><td><MemberDrawerLink id={member.id} name={member.name||member.email}/></td><td>{member.email}</td><td><RoleEditor key={member.roles.join(',')} roles={member.roles} target={member.roleTarget} locked={member.rolesLocked}/></td><td><span className={`badge ${member.status==='active'?'':'sand'}`}>{memberStatusLabels[member.status]}</span></td><td>{memberAction(member)?<CancelInvitation id={member.roleTarget.id} email={member.email}/>:<span className="muted">—</span>}</td></tr>)}{!visible.length&&<tr><td colSpan={columns.length} className={styles.emptyDirectory}>{members.length?'No members match your search and filters.':'No members or invitations yet.'}{filtered&&<button type="button" className="secondary" onClick={clear}>Clear search and filters</button>}</td></tr>}</tbody>
   </table></div>
  </section>;
 }
