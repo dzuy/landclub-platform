@@ -4,7 +4,8 @@ import {currentUser} from '@/lib/auth/identity';
 import {database} from '@/lib/database';
 import {InvitationRepository} from '@/lib/invitations';
 import {buildMemberDirectory,type AuthDirectoryUser} from '@/lib/members';
-import {InvitationForm} from './invitation-form';
+import {NewMemberModal} from './new-member-modal';
+import styles from './members.module.css';
 import {preparedMemberStore} from '@/lib/prepared-member-store';
 import {MemberTable} from './member-table';
 import {store} from '@/lib/store';
@@ -23,5 +24,5 @@ export default async function MembersPage(){
  for(const draft of drafts)members.unshift({id:draft.id,name:draft.info.displayName,email:draft.email,roles:draft.roles,status:draft.status==='sending'?'sending':'draft',joinedAt:draft.created_at,lastActiveAt:null,roleTarget:{kind:'prepared',id:draft.id},rolesLocked:draft.status==='sending'});
  const [properties,associations]=await Promise.all([(await store()).list(),(await memberPropertyStore()).directoryAssociations()]);
  const directoryMembers=members.map(member=>({...member,propertyIds:associations.filter(association=>association.user_id===member.id).map(association=>association.property_id)}));
- return <><header className="dashboard-heading"><h1>Members</h1></header><InvitationForm/><MemberTable members={directoryMembers} properties={properties.map(property=>({id:property.id,name:property.draft.name}))}/></>;
+ return <><header className={`dashboard-heading ${styles.pageHeading}`}><h1>Members</h1><NewMemberModal/></header><MemberTable members={directoryMembers} properties={properties.map(property=>({id:property.id,name:property.draft.name}))}/></>;
 }

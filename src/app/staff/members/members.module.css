@@ -43,7 +43,7 @@
 }
 
 .directory {
-  margin-top: 58px;
+  margin-top: 24px;
   margin-inline: -24px;
 }
 
@@ -251,3 +251,14 @@ button.memberLink{background:none;border:0;padding:0;display:inline;text-align:l
 .emptyDirectory button{display:flex;margin:16px auto 0}
 @media(max-width:850px){.directoryTools{margin-inline:0}}
 @media(max-width:520px){.search{max-width:none;flex-basis:100%}.filter{flex:1;min-width:95px}.filterTrigger{padding:10px}.filterMenu{width:min(260px,calc(100vw - 48px))}.filter:last-of-type .filterMenu{left:auto;right:0}}
+
+.pageHeading{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.pageHeading h1{margin:0}
+.newMemberModal{position:fixed;inset:0;margin:auto;width:min(640px,calc(100vw - 40px));max-width:none;max-height:calc(100dvh - 40px);padding:36px;border:1px solid var(--line);border-radius:6px;background:var(--cream);color:var(--ink);box-shadow:0 20px 80px #17211333;overflow:auto}
+.newMemberModal::backdrop{background:#17211380}
+.newMemberModal .invitePanel{display:block;margin:0;padding:0;border:0;background:transparent}
+.newMemberModal .invitePanel h2{margin:0 48px 8px 0;font-size:30px}
+.newMemberModal .invitePanel p{margin:0 0 24px}
+.newMemberModal .inviteForm{margin-top:24px}
+.newMemberModal .modalClose{position:absolute;top:24px;right:24px;width:36px;height:36px;padding:0;font-size:26px;line-height:1}
+@media(max-width:520px){.newMemberModal{padding:24px}.newMemberModal .modalClose{top:18px;right:18px}.newMemberModal .invitePanel h2{font-size:26px}.pageHeading>button{padding:10px 14px}}
