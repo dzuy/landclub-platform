@@ -1,36 +1,53 @@
 'use client';
-import {useActionState} from 'react';
+import {useActionState,useEffect,useRef,useState,type ReactNode} from 'react';
 import {invitePreparedMember} from './actions';
 import type {MemberDetail} from '@/lib/member-detail';
 import {RoleEditor} from './role-editor';
 import {MemberInfoEditor,MemberProperties} from './[id]/editor';
 import styles from './members.module.css';
+import {MemberDocuments} from '@/components/member-documents';
+import {propertyRoleLabels} from '@/lib/member-properties';
+import {roleLabels} from '@/lib/roles';
+const documentSuggestions=(properties:{name:string}[])=>[...properties.map(p=>'Property: '+p.name),...[...new Set([...Object.values(propertyRoleLabels),...Object.values(roleLabels)])].map(role=>'Role: '+role)];
 
-const dateFormatter=new Intl.DateTimeFormat('en',{year:'numeric',month:'short',day:'numeric'});
-function MemberActivity({joinedAt,lastActiveAt}:{joinedAt:string;lastActiveAt:string|null}){
- return <dl className={styles.memberActivity}><div><dt>Last active</dt><dd>{lastActiveAt?<time dateTime={lastActiveAt}>{dateFormatter.format(new Date(lastActiveAt))}</time>:'Never'}</dd></div><div><dt>Joined</dt><dd><time dateTime={joinedAt}>{dateFormatter.format(new Date(joinedAt))}</time></dd></div></dl>;
+function DetailSection({title,children}:{title:string;children:ReactNode}){
+ const section=useRef<HTMLDetailsElement>(null),restored=useRef(false),lastOpen=useRef(true);
+ const storageKey=`land-club:member-details:section:${title}`;
+ useEffect(()=>{
+  const element=section.current;if(!element)return;
+  try{const saved=localStorage.getItem(storageKey);if(saved==='closed'||saved==='open')element.open=saved==='open';}catch{/* Keep sections usable if browser storage is unavailable. */}
+  lastOpen.current=element.open;restored.current=true;
+ },[storageKey]);
+ return <details ref={section} className={styles.detailSection} open onToggle={event=>{
+  const expanded=event.currentTarget.open;
+  if(!restored.current||expanded===lastOpen.current)return;
+  lastOpen.current=expanded;
+  try{localStorage.setItem(storageKey,expanded?'open':'closed');}catch{/* Toggling still works without local storage. */}
+ }}><summary><h2>{title}</h2><svg aria-hidden="true" viewBox="0 0 20 20" width="20" height="20"><path d="m5 7.5 5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.5"/></svg></summary><div className={styles.detailSectionBody}>{children}</div></details>;
 }
-export function MemberDetailContent({detail}:{detail:MemberDetail}){
- if(detail.kind==='prepared')return <PreparedMemberContent detail={detail}/>;
- if(detail.kind==='invitation')return <><p>{detail.email}</p><MemberActivity joinedAt={detail.joinedAt} lastActiveAt={null}/><section className="panel"><h2>Club roles</h2><RoleEditor detail roles={detail.roles} target={{kind:'invitation',id:detail.id}} locked={false}/></section><p>Member information and property associations become available once the invitation has an account linked to it.</p></>;
+type SaveBeforeClose=(save:(()=>Promise<boolean>)|null)=>void;
+export function MemberDetailContent({detail,onSaveBeforeClose}:{detail:MemberDetail;onSaveBeforeClose?:SaveBeforeClose}){
+ if(detail.kind==='prepared')return <PreparedMemberContent detail={detail} onSaveBeforeClose={onSaveBeforeClose}/>;
+ if(detail.kind==='invitation')return <div className={styles.memberDetails}><DetailSection title="Member Info"><div className={styles.memberEmail}><span>Email</span><span>{detail.email}</span></div><p className="muted">Member information becomes available once the invitation has an account linked to it.</p><h3>Club Roles</h3><RoleEditor detail roles={detail.roles} target={{kind:'invitation',id:detail.id}} locked={false}/></DetailSection><DetailSection title="Properties"><p className="muted">Property associations become available once the invitation has an account linked to it.</p></DetailSection><DetailSection title="Documents"><p className="muted">Documents can be added once this invitation has a member account linked to it.</p></DetailSection></div>;
  const {member,info,properties,associations}=detail;
- return <><p>{member.email} · {member.status==='invited'?'Invitation pending':'Active account'}</p><MemberActivity joinedAt={member.joinedAt} lastActiveAt={member.lastActiveAt}/><section className="panel"><h2>Member information</h2><p className="muted">Sign-in email: {member.email}. Email and credential changes are managed separately through account security.</p><MemberInfoEditor userId={member.id} initial={info}/></section><section className="panel"><h2>Club roles</h2><p>These roles apply across Land Club. Admin grants access to member and content management.</p><RoleEditor detail key={member.roles.join(',')} roles={member.roles} target={member.roleTarget} locked={member.rolesLocked}/></section><section className="panel"><h2>Associated properties</h2><MemberProperties userId={member.id} initial={associations} properties={properties}/></section></>;
+ return <div className={styles.memberDetails}><DetailSection title="Member Info"><MemberInfoEditor email={member.email} userId={member.id} initial={info} onSaveBeforeClose={onSaveBeforeClose}/><h3>Club Roles</h3><RoleEditor detail key={member.roles.join(',')} roles={member.roles} target={member.roleTarget} locked={member.rolesLocked}/></DetailSection><DetailSection title="Properties"><MemberProperties userId={member.id} initial={associations} properties={properties}/></DetailSection><DetailSection title="Documents"><MemberDocuments memberId={member.id} suggestions={documentSuggestions(properties)}/></DetailSection></div>;
 }
 
-function PreparedMemberContent({detail}:{detail:Extract<MemberDetail,{kind:'prepared'}>}){
+function PreparedMemberContent({detail,onSaveBeforeClose}:{detail:Extract<MemberDetail,{kind:'prepared'}>;onSaveBeforeClose?:SaveBeforeClose}){
  const {prepared,properties,associations}=detail;
  const [state,action,pending]=useActionState(invitePreparedMember,{error:''});
+ const [infoUnsaved,setInfoUnsaved]=useState(false);
  const frozen=prepared.status!=='draft'||!!state.message||pending;
- return <><p>{prepared.email} · {prepared.status==='draft'?'Draft member — invitation not sent':'Invitation in progress'}</p><MemberActivity joinedAt={prepared.created_at} lastActiveAt={null}/>
+ return <div className={styles.memberDetails}>
  <fieldset disabled={frozen} className="prepared-member-fields">
- <section className="panel"><h2>Member information</h2><p className="muted">Invitation email: {prepared.email}</p><MemberInfoEditor userId={prepared.id} initial={prepared.info}/></section>
- <section className="panel"><h2>Club roles</h2><p>Choose their access across Land Club. Admin includes member and content management.</p><RoleEditor detail roles={prepared.roles} target={{kind:'prepared',id:prepared.id}} locked={false}/></section>
- <section className="panel"><h2>Associated properties</h2><MemberProperties userId={prepared.id} initial={associations} properties={properties}/></section>
+ <DetailSection title="Member Info"><MemberInfoEditor email={prepared.email} userId={prepared.id} initial={prepared.info} onSaveBeforeClose={onSaveBeforeClose} onUnsavedChange={setInfoUnsaved}/><h3>Club Roles</h3><RoleEditor detail roles={prepared.roles} target={{kind:'prepared',id:prepared.id}} locked={false}/></DetailSection>
+ <DetailSection title="Properties"><MemberProperties userId={prepared.id} initial={associations} properties={properties}/></DetailSection>
+ <DetailSection title="Documents"><MemberDocuments memberId={prepared.id} suggestions={documentSuggestions(properties)}/></DetailSection>
  </fieldset>
- <section className="panel"><h2>Ready to welcome them?</h2><p>Save any changes above before sending. Their profile, club roles, and property associations will be ready when they accept the invitation and choose a password.</p>
+ <section className={styles.memberInvite}><h2>Ready to welcome them?</h2><p>Save any changes above before sending. Their profile, club roles, and property associations will be ready when they accept the invitation and choose a password.</p>
  {prepared.failure_reason&&<p role="status" className="muted">{prepared.failure_reason}</p>}
- <form action={action}><input type="hidden" name="preparedId" value={prepared.id}/><button disabled={pending||!!state.message}>{pending?'Sending invitation…':state.message?'Invitation sent':prepared.status==='sending'?'Check invitation status':'Send invitation'}</button></form>
+ <form action={action}><input type="hidden" name="preparedId" value={prepared.id}/><button disabled={pending||infoUnsaved||!!state.message}>{pending?'Sending invitation…':state.message?'Invitation sent':prepared.status==='sending'?'Check invitation status':'Send invitation'}</button></form>
  {prepared.status==='sending'&&<p role="status">Invitation delivery is in progress. Refresh to check its status.</p>}
  {state.error&&<p role="alert" className="cms-error">{state.error}</p>}{state.message&&<p role="status" className="cms-success">{state.message}</p>}
- </section></>;
+ </section></div>;
 }

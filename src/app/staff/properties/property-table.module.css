@@ -1,0 +1,16 @@
+.thumbnail,.placeholder{width:48px;height:40px;border-radius:3px;object-fit:cover;display:block}
+.placeholder{display:grid;place-items:center;background:#eae6dd;border:1px solid var(--line);color:var(--muted)}
+.placeholder svg{width:19px;height:19px}
+.title{font-weight:600}
+.edit{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:4px;color:var(--forest)}
+.edit:hover{background:#e5e0d4}
+.edit svg{width:17px;height:17px}
+
+
+.published{background:#dceedd;color:#245c32}
+.draft{background:#fff0b3;color:#715500}
+
+.searchBar{margin-bottom:20px}
+.searchBar input{width:100%;max-width:440px;height:44px;padding:10px 14px;background:#fffdf7;border:1px solid var(--line);border-radius:3px;font-size:14px}
+
+.clickableRow{cursor:pointer}

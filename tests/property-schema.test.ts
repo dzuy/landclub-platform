@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {PGlite} from '@electric-sql/pglite';
 import {embeddedDatabase} from '../src/lib/database';
 import {PropertyRepository} from '../src/lib/repository';
-import {draftSchema,publicationSchema,readDraft} from '../src/lib/schema';
+import {draftSchema,publicationSchema,propertyDisplay,readDraft} from '../src/lib/schema';
 import {formatFact,travelTime} from '../src/lib/property-facts';
 import {mapNotionProperty} from '../src/lib/notion-property-import';
 import {importPropertyRecords} from '../src/lib/import-property-records';
@@ -16,12 +16,17 @@ const rows=[
 const actual=(value:string|number|boolean)=>({state:'Actual' as const,value});
 const unknown={state:'Not yet determined' as const,value:null};
 function available(){return readDraft({...seeds[0],offeringStatus:'Available',facts:{county:actual('Placer'),total_acres:actual(20),elevation:actual(0),topography:actual('mixed'),road_access:actual('gravel'),development_stage:actual('raw'),shares_available:actual(0),share_price:actual(0),gated:actual(false)},proximity:['airport','town'].map(kind=>({id:kind,kind,name:kind,minutes:actual(0),miles:unknown,notes:''}))});}
-test('Available publication enforces core and nearby logistics; zero and false survive',()=>{
- const p=available();assert.equal(publicationSchema.safeParse(p).success,true);
- assert.equal(publicationSchema.safeParse({...p,facts:{...p.facts,county:unknown}}).success,false);
- assert.equal(publicationSchema.safeParse({...p,proximity:p.proximity.slice(1)}).success,false);
- assert.equal(publicationSchema.safeParse({...p,proximity:p.proximity.map(v=>({...v,minutes:unknown}))}).success,false);
- assert.equal(publicationSchema.safeParse({...p,recordType:'scouting-area'}).success,false);
+test('Incomplete listings can publish; zero and false survive',()=>{
+ const p=available();
+ const incomplete={...p,name:'',headline:'',summary:'',intro:'',region:'',imageAlt:'',hero:'',offeringStatus:null,category:'Unclassified',facts:{},proximity:[]};
+ assert.equal(publicationSchema.safeParse(incomplete).success,true);
+ const display=propertyDisplay(draftSchema.parse(incomplete));
+ assert.equal(display.name,'Untitled property');assert.equal(display.summary,'Details coming soon.');assert.equal(display.region,'Location to be confirmed');
+ assert.equal(publicationSchema.safeParse({...incomplete,slug:''}).success,false);assert.equal(publicationSchema.safeParse(p).success,true);
+ assert.equal(publicationSchema.safeParse({...p,facts:{...p.facts,county:unknown}}).success,true);
+ assert.equal(publicationSchema.safeParse({...p,proximity:p.proximity.slice(1)}).success,true);
+ assert.equal(publicationSchema.safeParse({...p,proximity:p.proximity.map(v=>({...v,minutes:unknown}))}).success,true);
+ assert.equal(publicationSchema.safeParse({...p,recordType:'scouting-area'}).success,true);
  assert.equal(publicationSchema.safeParse({...p,offeringStatus:'Scouting',recordType:'scouting-area',facts:{},proximity:[]}).success,true);
  assert.equal(publicationSchema.safeParse({...p,offeringStatus:'Past Project',facts:{},proximity:[]}).success,true);
  assert.equal(formatFact(p.facts.gated!),'No');assert.equal(travelTime(135),'2 hr 15 min');

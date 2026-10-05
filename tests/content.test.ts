@@ -22,3 +22,24 @@ test('draft/publication isolation, conflicts, unique slugs, audit and unpublish'
 test('demo seed validates; invalid image URLs and duplicate sections rejected',()=>{for(const seed of seeds)draftSchema.parse(seed);assert.equal(draftSchema.safeParse({...seeds[0],hero:'javascript:alert(1)'}).success,false);assert.equal(draftSchema.safeParse({...seeds[0],sections:[seeds[0].sections[0],seeds[0].sections[0]]}).success,false);});
 
 test('staff shortcut only works on explicit loopback development',async()=>{const {localStaffAllowed}=await import('../src/lib/local-access');assert.equal(localStaffAllowed('development','1','127.0.0.1:3000'),true);assert.equal(localStaffAllowed('development','1','localhost:3000'),true);for(const [mode,flag,host] of [['production','1','localhost:3000'],['development','0','localhost:3000'],['development','1','app.land.club'],['development','1','localhost:3000.attacker.test']])assert.equal(localStaffAllowed(mode,flag,host),false);});
+
+test('editor saves update active pages atomically while drafts stay private',async()=>{
+ const db=new PGlite(),repo=new PropertyRepository(embeddedDatabase(db));
+ try{
+  await repo.initialize();
+  const initial=await repo.create(seeds[0],'test-staff');
+  const draft=await repo.save(initial.id,initial.version,{...initial.draft,name:'Draft edit'},'test-staff',true);
+  assert.equal(draft.published,null);assert.equal((await repo.publicList()).length,0);
+  const active=await repo.publish(draft.id,draft.version,'test-staff');
+  const saved=await repo.save(active.id,active.version,{...active.draft,name:'Live edit',slug:'live-new-address'},'test-staff',true);
+  assert.deepEqual(saved.published,saved.draft);
+  assert.equal((await repo.publicBySlug('live-new-address'))?.name,'Live edit');
+  assert.equal(await repo.publicBySlug(initial.draft.slug),null);
+  await assert.rejects(repo.save(active.id,active.version,active.draft,'stale-window',true),ConflictError);
+  await assert.rejects(repo.save(saved.id,saved.version,{...saved.draft,hero:'javascript:alert(1)'},'test-staff',true));
+  assert.deepEqual(await repo.get(saved.id),saved);
+  const offline=await repo.unpublish(saved.id,saved.version,'test-staff');
+  const privateEdit=await repo.save(offline.id,offline.version,{...offline.draft,name:'Private again'},'test-staff',true);
+  assert.equal(privateEdit.published,null);assert.equal((await repo.publicList()).length,0);
+ }finally{await db.close();}
+});

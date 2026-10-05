@@ -1,0 +1,34 @@
+.home{max-width:1280px;margin:0 auto;padding-bottom:40px}
+.heading{padding:8px 0 38px;border-bottom:1px solid var(--line);margin-bottom:34px}
+.eyebrow{font-size:10px;font-weight:600;letter-spacing:1.7px;color:var(--muted)}
+.heading h1{font:400 clamp(38px,4.3vw,60px)/1.1 Newsreader,serif!important;letter-spacing:-1.8px;margin:14px 0}
+.heading p{font-size:15px;color:var(--muted);margin:0}
+.layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(260px,1fr);gap:40px}
+.sectionHeading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px}
+.sectionHeading h2{font:400 32px/1.2 Newsreader,serif;margin:8px 0 0;letter-spacing:-.7px}
+.sectionHeading>a{font-size:12px;white-space:nowrap}
+.count{font:400 12px Manrope,sans-serif;vertical-align:middle;border:1px solid var(--line);border-radius:50%;display:inline-grid;place-items:center;width:24px;height:24px;margin-left:6px;letter-spacing:0}
+.properties{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:26px 20px}
+.property{display:block;min-width:0}
+.property:hover{text-decoration:none}
+.image{aspect-ratio:1.45;position:relative;overflow:hidden;background:#e9e6db;border-radius:3px}
+.image>img{width:100%;height:100%;object-fit:cover;transition:transform .2s}
+.property:hover .image>img{transform:scale(1.035)}
+.open{position:absolute;right:10px;bottom:10px;width:30px;height:30px;display:grid;place-items:center;background:var(--cream);border-radius:50%}
+.noImage{height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;color:#747b67;text-align:center;gap:12px;background:linear-gradient(140deg,#e7e6d9,#dcded1)}
+.noImage svg{width:48px;height:48px}.noImage span{font-size:10px;max-width:80%}
+.propertyBody{padding:16px 0 0}
+.location{font-size:11px;color:var(--muted);margin:0 0 5px}
+.propertyBody h3{font:400 26px/1.2 Newsreader,serif;letter-spacing:-.5px;margin:0 0 12px}
+.roles{display:flex;gap:6px;flex-wrap:wrap}.roles span{font-size:10px;padding:3px 8px;border:1px solid var(--line);border-radius:2px}
+.side{border-left:1px solid var(--line);padding-left:28px}
+.events{display:grid}.event{display:grid;grid-template-columns:48px 1fr;gap:16px;padding:20px 0;border-bottom:1px solid var(--line)}
+.event:first-child{padding-top:0}.event:hover{text-decoration:none}.event:hover h3{text-decoration:underline;text-underline-offset:4px}
+.date{border:1px solid var(--line);border-radius:3px;height:64px;text-align:center;padding:4px;background:#eeeade}.date span{display:block;font-size:10px;text-transform:uppercase}.date strong{font:400 29px Newsreader,serif}
+.event h3{font:500 16px/1.4 Manrope,sans-serif;margin:0 0 7px}.event p{font-size:11px;margin:3px 0;color:var(--muted)}.eventLink{display:block;font-size:11px;margin-top:12px}
+.allEvents{display:flex;justify-content:space-between;font-size:12px;padding:18px 0}
+.account{margin-top:32px;padding:22px;background:#eeeade;border-radius:3px}.account>a{display:flex;justify-content:space-between;font-size:13px;margin-top:10px}.account p{font-size:11px;color:var(--muted);margin:6px 0 0}
+.empty{border:1px solid var(--line);padding:32px}.empty h3,.eventEmpty h3{font:400 24px/1.2 Newsreader,serif;margin:0 0 12px}.empty p,.eventEmpty p{font-size:13px;color:var(--muted)}.empty a{font-size:13px}.eventEmpty{padding:20px 0;border-bottom:1px solid var(--line)}
+.stays{display:flex;align-items:flex-start;gap:16px;margin-top:32px;padding:24px 0;border-top:1px solid var(--line)}.stayIcon{flex-shrink:0;padding:10px;background:#e8eadf;border-radius:50%}.stayIcon svg{width:22px;height:22px;display:block}.stays h3{font:400 23px Newsreader,serif;margin:0 0 8px}.stays p{font-size:12px;color:var(--muted);margin:0;max-width:350px}.stays>a{font-size:11px;white-space:nowrap;margin-left:auto}
+@media(max-width:1100px){.layout{grid-template-columns:1fr}.side{border-left:0;border-top:1px solid var(--line);padding:28px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:32px}.account{align-self:start;margin-top:0}}
+@media(max-width:600px){.properties,.side{grid-template-columns:1fr}.heading{padding-bottom:26px}.stays{flex-wrap:wrap}.stays>a{margin-left:58px}.sectionHeading h2{font-size:29px}.image{aspect-ratio:1.6}}

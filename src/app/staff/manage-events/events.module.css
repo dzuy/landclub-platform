@@ -1,0 +1,7 @@
+.heading{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:28px}.heading h1{margin:0}
+.tools{display:flex;align-items:center;gap:20px;margin-bottom:20px}.tools input{max-width:440px;height:44px;font-size:14px;background:#fffdf7}.tools>span{margin-left:auto;white-space:nowrap}
+.row{cursor:pointer}.title{display:inline;padding:0;background:none;border:0;color:inherit;font-size:14px;font-weight:600;text-align:left}.title:hover{text-decoration:underline;text-underline-offset:4px;filter:none}
+.edit{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:0;background:none;color:var(--forest)}.edit:hover{background:#e5e0d4}
+.zone{display:block;font-size:11px;color:var(--muted);margin-top:3px}.scheduled{background:#dceedd;color:#245c32}.cancelled{background:#f4ded9;color:#8d2f20}.archived{background:#e7e5df;color:#64675f}
+.form{max-width:680px;margin:16px auto 0}.save{display:flex;justify-content:flex-end;margin-bottom:24px}.fields{display:grid;gap:18px;padding:0;border:0;margin:0;min-width:0}.fields label{display:grid;gap:6px;font-size:14px}.fields input,.fields textarea,.fields select{font-size:14px;background:#fffdf7}.fields p{margin:0}
+@media(max-width:600px){.heading h1{font-size:36px}.heading :global(.row-actions){flex-wrap:wrap}.tools{align-items:flex-start;flex-direction:column;gap:10px}.tools>span{margin-left:0}}

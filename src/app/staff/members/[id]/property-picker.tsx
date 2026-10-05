@@ -36,7 +36,7 @@ export function PropertyPicker({properties, value, onChange, disabled}: {
       <input id={id} role="combobox" autoComplete="off" disabled={disabled}
         aria-expanded={expanded} aria-controls={`${id}-options`} aria-autocomplete="list"
         aria-activedescendant={expanded && results[active] ? `${id}-option-${active}` : undefined}
-        placeholder={expanded ? 'Search properties…' : 'Choose a property'}
+        placeholder={expanded ? 'Search properties…' : ''}
         value={expanded ? query : selected?.name || ''}
         onFocus={() => {setQuery(''); setActive(0); setOpen(true);}}
         onClick={() => {if (!open) {setQuery(''); setActive(0); setOpen(true);}}}

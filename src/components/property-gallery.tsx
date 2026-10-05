@@ -7,7 +7,7 @@ type GalleryImage = {src:string; alt:string; caption:string; label:string};
 
 export function PropertyGallery({property}:{property:PropertyDraft}) {
  const groups:{name:string;images:GalleryImage[]}[] = [
-  {name:'Photos',images:property.gallery.map(image=>({...image,label:image.type}))},
+  {name:'Photos',images:[...property.gallery.map(image=>({...image,label:image.type})),...property.media.filter(image=>image.role==='gallery'&&image.kind==='image').map(image=>({src:image.url,alt:image.alt,caption:image.caption,label:image.state}))]},
   {name:'Aerial',images:property.media.filter(image=>image.role==='aerial'&&image.kind==='image').map(image=>({src:image.url,alt:image.alt,caption:image.caption,label:image.state}))},
   {name:'Site Plan',images:property.media.filter(image=>image.role==='site_plan'&&image.kind==='image').map(image=>({src:image.url,alt:image.alt,caption:image.caption,label:image.state}))},
  ].filter(group=>group.images.length>0);

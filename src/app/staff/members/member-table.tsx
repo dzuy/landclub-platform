@@ -1,23 +1,15 @@
 'use client';
-import {useEffect,useId,useRef,useState} from 'react';
+import {useState} from 'react';
+import {MultiFilter} from '@/components/table-filter';
 import {MemberDrawerLink} from './member-drawer';
-import {memberAction,memberDirectoryView,memberStatusLabels,type DirectoryMember,type MemberColumn} from '@/lib/member-directory-view';
+import {memberDirectoryView,memberStatusLabels,type DirectoryMember,type MemberColumn} from '@/lib/member-directory-view';
 import {roleLabels,roleValues} from '@/lib/roles';
 import {RoleEditor} from './role-editor';
-import {CancelInvitation} from './cancel-invitation';
+import {DataTable,type TableColumn} from '@/components/data-table';
 import styles from './members.module.css';
 
-const columns:{key:MemberColumn;label:string}[]=[{key:'name',label:'Name'},{key:'email',label:'Email'},{key:'roles',label:'Roles'},{key:'status',label:'Status'},{key:'actions',label:'Actions'}];
+const columns:TableColumn<MemberColumn>[]=[{key:'name',label:'Name',width:180,min:140},{key:'email',label:'Email',width:210,min:150},{key:'roles',label:'Roles',width:180,min:150},{key:'status',label:'Status',width:100,min:90}];
 
-function MultiFilter({label,options,selected,onChange}:{label:string;options:{id:string;name:string}[];selected:string[];onChange:(values:string[])=>void}){
- const container=useRef<HTMLDivElement>(null),trigger=useRef<HTMLButtonElement>(null);
- const [open,setOpen]=useState(false);const menuId=useId();
- useEffect(()=>{if(!open)return;function outside(event:PointerEvent){if(!container.current?.contains(event.target as Node))setOpen(false);}document.addEventListener('pointerdown',outside);return()=>document.removeEventListener('pointerdown',outside);},[open]);
- return <div ref={container} className={styles.filter} onKeyDown={event=>{if(event.key==='Escape'){setOpen(false);trigger.current?.focus();}}}>
-  <button ref={trigger} type="button" className={styles.filterTrigger} aria-expanded={open} aria-controls={menuId} onClick={()=>setOpen(value=>!value)}>{label}{selected.length>0&&<span className={styles.filterCount}>{selected.length}</span>}<span aria-hidden="true">⌄</span></button>
-  {open&&<div id={menuId} className={styles.filterMenu}><fieldset><legend className={styles.srOnly}>Filter by {label.toLowerCase()}</legend>{options.length?options.map(option=><label key={option.id}><input type="checkbox" checked={selected.includes(option.id)} onChange={event=>onChange(event.target.checked?[...selected,option.id]:selected.filter(id=>id!==option.id))}/>{option.name}</label>):<p>No options available.</p>}</fieldset><button type="button" className="secondary" disabled={!selected.length} onClick={()=>onChange([])}>Clear {label.toLowerCase()}</button></div>}
- </div>;
-}
 
 export function MemberTable({members,properties}:{members:DirectoryMember[];properties:{id:string;name:string}[]}){
  const [search,setSearch]=useState(''),[selectedProperties,setProperties]=useState<string[]>([]),[selectedRoles,setRoles]=useState<string[]>([]),[selectedStatuses,setStatuses]=useState<string[]>([]);
@@ -26,7 +18,7 @@ export function MemberTable({members,properties}:{members:DirectoryMember[];prop
  const filtered=!!(search||selectedProperties.length||selectedRoles.length||selectedStatuses.length);
  function clear(){setSearch('');setProperties([]);setRoles([]);setStatuses([]);}
  return <section className={styles.directory} aria-label="Member directory">
-  <div className={styles.directoryHeading}><span className="eyebrow">MEMBER DIRECTORY</span><span className="muted" role="status">{filtered?`${visible.length} of ${members.length}`:members.length} {members.length===1?'person':'people'}</span></div>
+  <div className={styles.directoryHeading}><span className="muted" role="status">{filtered?`${visible.length} of ${members.length}`:members.length} {members.length===1?'person':'people'}</span></div>
   <div className={styles.directoryTools}>
    <label className={styles.search}><span className={styles.srOnly}>Search members</span><input type="search" placeholder="Search by name or email" value={search} onChange={event=>setSearch(event.target.value)}/></label>
    <MultiFilter label="Properties" options={[...properties].sort((a,b)=>a.name.localeCompare(b.name))} selected={selectedProperties} onChange={setProperties}/>
@@ -34,8 +26,13 @@ export function MemberTable({members,properties}:{members:DirectoryMember[];prop
    <MultiFilter label="Status" options={Object.entries(memberStatusLabels).map(([id,name])=>({id,name}))} selected={selectedStatuses} onChange={setStatuses}/>
    {filtered&&<button type="button" className={`secondary ${styles.clearFilters}`} onClick={clear}>Clear all</button>}
   </div>
-  <div className={styles.tableWrap}><table className={styles.table}><thead><tr>{columns.map(column=><th scope="col" key={column.key} aria-sort={sort.column===column.key?(sort.direction==='asc'?'ascending':'descending'):'none'}><button type="button" className={styles.sortButton} onClick={()=>setSort({column:column.key,direction:sort.column===column.key&&sort.direction==='asc'?'desc':'asc'})}>{column.label}<span aria-hidden="true">{sort.column===column.key?(sort.direction==='asc'?'↑':'↓'):'↕'}</span></button></th>)}</tr></thead>
-   <tbody>{visible.map(member=><tr key={member.id}><td><MemberDrawerLink id={member.id} name={member.name||member.email}/></td><td>{member.email}</td><td><RoleEditor key={member.roles.join(',')} roles={member.roles} target={member.roleTarget} locked={member.rolesLocked}/></td><td><span className={`badge ${member.status==='active'?'':'sand'}`}>{memberStatusLabels[member.status]}</span></td><td>{memberAction(member)?<CancelInvitation id={member.roleTarget.id} email={member.email}/>:<span className="muted">—</span>}</td></tr>)}{!visible.length&&<tr><td colSpan={columns.length} className={styles.emptyDirectory}>{members.length?'No members match your search and filters.':'No members or invitations yet.'}{filtered&&<button type="button" className="secondary" onClick={clear}>Clear search and filters</button>}</td></tr>}</tbody>
-  </table></div>
+  <DataTable columns={columns} label="Members" widthStorageKey="land-club:members:column-widths" sort={sort} onSort={column=>setSort({column,direction:sort.column===column&&sort.direction==='asc'?'desc':'asc'})}>
+   {visible.map(member=><tr key={member.id} className={styles.clickableRow} onClick={event=>{
+    if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+    if(event.target instanceof Element&&event.target.closest('a,button,input,select,textarea,label,form,dialog'))return;
+    if(window.getSelection()?.toString())return;
+    event.currentTarget.querySelector<HTMLButtonElement>('[data-member-drawer-trigger]')?.click();
+   }}><td><MemberDrawerLink id={member.id} name={member.name||member.email}/></td><td>{member.email}</td><td><RoleEditor key={member.roles.join(',')} roles={member.roles} target={member.roleTarget} locked={member.rolesLocked}/></td><td><span className={`badge ${member.status==='active'?'':'sand'}`}>{memberStatusLabels[member.status]}</span></td></tr>)}{!visible.length&&<tr><td colSpan={columns.length} className={styles.emptyDirectory}>{members.length?'No members match your search and filters.':'No members or invitations yet.'}{filtered&&<button type="button" className="secondary" onClick={clear}>Clear search and filters</button>}</td></tr>}
+  </DataTable>
  </section>;
 }

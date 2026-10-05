@@ -1,0 +1,5 @@
+.heading{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:0 0 24px;padding:0}
+.heading .title{font:400 32px/1.15 Newsreader,serif;letter-spacing:-.8px;margin:0;color:var(--ink)}
+.heading .description{font:400 14px/1.6 Manrope,sans-serif;color:var(--muted);margin:10px 0 0}
+.actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+.actions :global(.property-library-actions){margin:0}

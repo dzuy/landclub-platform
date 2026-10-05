@@ -11,7 +11,9 @@
     "db:migrate": "node scripts/migrate.mjs",
     "db:seed-demo": "node scripts/seed-demo.mjs",
     "deploy:check": "node scripts/check-environment.mjs",
-    "test:postgres": "node --import tsx --test tests/postgres.test.ts"
+    "test:postgres": "node --import tsx --test tests/postgres.test.ts",
+    "photos:import": "node --import tsx scripts/import-property-photos.ts",
+    "photos:bucket": "node --import tsx scripts/setup-photo-bucket.ts"
   },
   "dependencies": {
     "next": "^16.0.0",

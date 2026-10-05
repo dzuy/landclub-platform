@@ -54,40 +54,6 @@
   margin-bottom: 20px;
 }
 
-.tableWrap {
-  overflow-x: auto;
-  border: 1px solid var(--line);
-  background: #fff8;
-}
-
-.table {
-  width: 100%;
-  min-width: 820px;
-  border-collapse: collapse;
-  text-align: left;
-}
-
-.table th {
-  padding: 13px 16px;
-  border-bottom: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-}
-
-.table td {
-  padding: 17px 16px;
-  border-bottom: 1px solid var(--line);
-  font-size: 14px;
-  vertical-align: middle;
-}
-
-.table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
 .roles {
   display: flex;
   flex-wrap: wrap;
@@ -95,13 +61,13 @@
 }
 
 .roleEditor {
-  min-width: 285px;
+  min-width: 0;
 }
 
 .roleEditor fieldset {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 7px 16px;
   margin: 0;
   padding: 0;
   border: 0;
@@ -112,9 +78,9 @@
   align-items: center;
   gap: 5px;
   margin: 0;
-  padding: 5px 8px;
-  border: 1px solid var(--line);
-  background: #fffdf7;
+  padding: 5px 0;
+  border: 0;
+  background: none;
   font-size: 12px;
   cursor: pointer;
 }
@@ -169,7 +135,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 7px;
-  min-width: 210px;
+  min-width: 0;
   max-width: 280px;
   font-size: 12px;
 }
@@ -208,9 +174,9 @@
 
 }
 
-.memberLink{font-weight:600;text-decoration:underline;text-underline-offset:4px;color:var(--forest)}
+.memberLink{font-weight:600;text-decoration:none;color:var(--forest)}
 
-button.memberLink{background:none;border:0;padding:0;display:inline;text-align:left;font:inherit;font-weight:600;color:var(--forest);text-decoration:underline;text-underline-offset:4px}
+button.memberLink{background:none;border:0;padding:0;display:inline;text-align:left;font:inherit;font-weight:600;color:var(--forest);text-decoration:none}
 
 .detailRoleEditor{min-width:0}
 .detailRoleEditor>p{margin:0 0 14px;font-size:14px}
@@ -235,10 +201,8 @@ button.memberLink{background:none;border:0;padding:0;display:inline;text-align:l
 .filterMenu label{display:flex;align-items:center;gap:10px;margin:0;padding:8px 4px;font-size:14px;cursor:pointer}
 .filterMenu input{width:16px;height:16px;margin:0;accent-color:var(--forest);flex-shrink:0}
 .filterMenu button,.clearFilters{padding:7px 12px;font-size:13px}
-.table th .sortButton{background:transparent;border:0;border-radius:0;color:inherit;padding:0;font:inherit;letter-spacing:inherit;text-transform:inherit;white-space:nowrap;justify-content:flex-start;width:100%}
-.sortButton span{font-size:14px;letter-spacing:0}
-.filterTrigger:focus-visible,.sortButton:focus-visible{outline:2px solid var(--forest);outline-offset:4px}
-.table .emptyDirectory{text-align:center;padding:32px}
+.filterTrigger:focus-visible{outline:2px solid var(--forest);outline-offset:4px}
+.emptyDirectory{text-align:center;padding:32px}
 .emptyDirectory button{display:flex;margin:16px auto 0}
 @media(max-width:520px){.search{max-width:none;flex-basis:100%}.filter{flex:1;min-width:95px}.filterTrigger{padding:10px}.filterMenu{width:min(260px,calc(100vw - 48px))}.filter:last-of-type .filterMenu{left:auto;right:0}}
 
@@ -256,3 +220,63 @@ button.memberLink{background:none;border:0;padding:0;display:inline;text-align:l
 .memberActivity{display:flex;flex-wrap:wrap;gap:20px 48px;margin:20px 0 28px;padding:16px 0;border-block:1px solid var(--line)}
 .memberActivity dt{font-size:12px;color:var(--muted)}
 .memberActivity dd{margin:4px 0 0;font-size:14px}
+
+.memberLink:hover,button.memberLink:hover{text-decoration:underline;text-underline-offset:4px}
+
+.clickableRow{cursor:pointer}
+.clickableRow dialog{cursor:auto}
+
+.memberDetails{min-width:0}
+.memberDetails>p{margin:12px 0;font-size:14px;color:var(--muted)}
+.memberDetails .memberActivity{gap:12px 36px;margin:0;padding:0 0 18px;border:0}
+.detailSection{border-top:1px solid var(--line)}
+.detailSection>summary{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 0;cursor:pointer;list-style:none}
+.detailSection>summary::-webkit-details-marker{display:none}
+.detailSection>summary h2{margin:0;font-size:25px;line-height:1.2;letter-spacing:-.5px}
+.detailSection>summary svg{flex:none;transition:transform .15s ease}
+.detailSection:not([open])>summary svg{transform:rotate(-90deg)}
+.detailSection>summary:focus-visible{outline:2px solid var(--forest);outline-offset:3px}
+.detailSectionBody{padding:0 0 22px;min-width:0}
+.detailSectionBody>p{margin:0 0 14px;font-size:13px;color:var(--muted)}
+.memberDetails .detailSection :global(.form){max-width:none;margin:0}
+.memberDetails .detailSection :global(.member-detail-fields){grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 20px;border:0;padding:0;margin:0 0 16px}
+.memberEmail{display:flex;flex-direction:column;justify-content:flex-start;gap:8px;min-width:0;font-size:13px}
+.memberEmail>span:last-child{display:flex;align-items:center;min-height:46px;font-size:14px;overflow-wrap:anywhere}
+.propertyTableWrap{margin:0 0 20px}
+.addPropertyBox{width:100%;padding:16px;border:1px solid var(--line);background:#eeeee3}
+.memberDetails .addPropertyBox h3{margin:0 0 14px;font-size:20px}
+.addPropertyBox>p{margin:0;font-size:13px}
+.addPropertyActions{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.addPropertyActions>fieldset{flex:1}
+.addPropertyActions>button{flex:none;white-space:nowrap}
+.propertyAssociations{width:100%;min-width:480px;line-height:1.5}
+.propertyAssociations thead th{padding:14px 16px;font-size:12px;color:var(--ink)}
+.propertyAssociations th:first-child{width:30%}
+.propertyAssociations th:last-child{width:52px}
+.propertyAssociations td:last-child:not([colspan]){padding:8px;text-align:center}
+.associationRoles{display:flex;flex-wrap:wrap;gap:7px 16px;min-width:0;margin:0;padding:0;border:0}
+.associationRoles label{display:inline-flex;align-items:center;gap:5px;font-size:12px;cursor:pointer}
+.associationRoles input{width:14px;height:14px;margin:0}
+.associationConfirmation{display:flex;flex-direction:column;gap:10px;font-size:13px;text-align:left}
+.memberDetails .detailSection .removeAssociation{width:36px;height:36px;padding:8px;border:0;background:transparent;color:var(--muted)}
+.memberDetails .detailSection .removeAssociation:hover{background:var(--surface);color:#9b342b}
+.memberDetails .detailSection :global(.form) label{margin:0;font-size:13px}
+.memberDetails .detailSection :global(.form) input{min-width:0}
+.memberDetails .detailSection :global(.member-property-row){grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px 20px;padding:16px 0}
+.memberDetails .detailSection :global(.member-property-row) h3{font-size:22px;margin:0 0 4px}
+.memberDetails .detailSection :global(.member-property-row) :global(.row-actions){grid-column:1/-1}
+.memberDetails .detailSection :global(.property-role-picker){padding:0;border:0}
+.memberDetails .detailSection :global(.property-role-picker) legend:not(.srOnly){padding:0;margin-bottom:8px;font-size:13px}
+.memberDetails .detailSection :global(.property-role-picker)>p{margin:0 0 8px;font-size:12px}
+.memberDetails .detailSection :global(.member-property-add-grid){grid-template-columns:1fr;gap:16px;margin-bottom:0;align-items:start}
+.memberDetails .detailSection :global(.notice){padding:0;border:0;background:none;font-size:13px}
+.memberDetails .detailSection button{padding:8px 12px;font-size:13px}
+.memberDetails .detailSectionBody>h3{font-size:22px;margin:20px 0 12px}
+.memberInvite{border-top:1px solid var(--line);padding:20px 0}
+.memberInvite h2{margin:0 0 12px;font-size:25px}
+.memberInvite p{font-size:14px}
+@media(max-width:520px){
+ .memberDetails .detailSection :global(.member-detail-fields),.memberDetails .detailSection :global(.member-property-row),.memberDetails .detailSection :global(.member-property-add-grid){grid-template-columns:1fr}
+ .detailSection>summary{padding:16px 0}
+}
+@media(prefers-reduced-motion:reduce){.detailSection>summary svg{transition:none}}

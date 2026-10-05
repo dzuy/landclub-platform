@@ -1,7 +1,8 @@
+import {PageHeading} from '@/components/page-heading';
 import {notFound} from 'next/navigation';
 import {DashboardPage} from '@/components/dashboard-page';
 import {currentUser} from '@/lib/auth/identity';
 import {readProfile} from '@/lib/profile';
 import {requireMemberPage} from '@/lib/staff';
 const sections=['my-properties','bookings','documents','stay','updates','maintenance','administration'];
-export default async function Page({params}:{params:Promise<{section:string}>}){const actor=await requireMemberPage();const {section}=await params;if(!sections.includes(section))notFound();const user=await currentUser();const savedName=user?readProfile(user.user_metadata).displayName:'';return <DashboardPage section={section} name={savedName||actor.name||''}/>;}
+export default async function Page({params}:{params:Promise<{section:string}>}){const actor=await requireMemberPage();const {section}=await params;if(!sections.includes(section))notFound();if(section==='bookings')return <PageHeading title="Bookings" description="Coming soon."/>;const user=await currentUser();const savedName=user?readProfile(user.user_metadata).displayName:'';return <DashboardPage section={section} name={savedName||actor.name||''}/>;}
