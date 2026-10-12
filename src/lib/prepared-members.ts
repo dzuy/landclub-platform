@@ -15,6 +15,7 @@ export class PreparedMemberRepository{
  constructor(private db:Database){}
  async initialize(){await this.db.query(preparedMembersMigration);await this.db.query('ALTER TABLE prepared_members ADD COLUMN IF NOT EXISTS invitation_id uuid');}
  async get(id:string){return (await this.db.query<PreparedMember>('SELECT * FROM prepared_members WHERE id=$1',[id])).rows[0]||null;}
+ async getByEmail(email:string){return (await this.db.query<PreparedMember>('SELECT * FROM prepared_members WHERE email=$1',[email.toLowerCase()])).rows[0]||null;}
  async list(){return (await this.db.query<PreparedMember>("SELECT * FROM prepared_members WHERE status<>'invited' ORDER BY created_at DESC")).rows;}
  async create(id:string,input:unknown,roles:ClubRole[],actor:string){const data=preparedMemberSchema.parse(input);const {email,...info}=data;await this.db.query('INSERT INTO prepared_members(id,email,info,roles,created_by) VALUES($1,$2,$3,$4,$5)',[id,email.toLowerCase(),JSON.stringify(info),readRoles(roles),actor]);}
  async createOrReuseDraft(id:string,input:unknown,roles:ClubRole[],actor:string){

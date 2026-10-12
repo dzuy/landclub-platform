@@ -11,6 +11,7 @@ import {authAdminClient} from '@/lib/auth/admin';
 import {canonicalSiteUrl} from '@/lib/auth/recovery';
 
 export type InvitationState={error:string;message?:string};
+export type PreparedMemberState=InvitationState&{member?:{id:string;name:string}};
 export type RoleUpdateState={error:string;message?:string};
 export type CancelInvitationState={error:string;message?:string};
 const emailSchema=z.email().max(254);
@@ -102,19 +103,22 @@ export async function cancelInvitation(_previous:CancelInvitationState,form:Form
  return {error:'',message:'Invitation cancelled. Any saved member setup is available as a draft, ready to invite again.'};
 }
 
-export async function createPreparedMember(_previous:InvitationState,form:FormData):Promise<InvitationState>{
+export async function createPreparedMember(_previous:PreparedMemberState,form:FormData):Promise<PreparedMemberState>{
  const actor=await requireStaff();
  const {preparedMemberSchema}=await import('@/lib/prepared-members');
  const {preparedMemberStore}=await import('@/lib/prepared-member-store');
  const input=preparedMemberSchema.safeParse({email:String(form.get('email')||'').trim().toLowerCase(),displayName:form.get('displayName'),homeRegion:form.get('homeRegion')||'',contactPhone:form.get('contactPhone')||''});
  if(!input.success)return {error:input.error.issues[0].message};
  try{
-  const result=await (await preparedMemberStore()).createOrReuseDraft(randomUUID(),input.data,readRoles(form.getAll('roles')),actor.id);
+  const repository=await preparedMemberStore();
+  const result=await repository.createOrReuseDraft(randomUUID(),input.data,readRoles(form.getAll('roles')),actor.id);
   if(result==='unavailable')return {error:'This email already has an invitation or account. Open the existing member in the directory.'};
-  if(result==='existing'){revalidatePath('/staff/members','layout');return {error:'',message:'Their saved member draft is ready. Open their name below to review the setup and send a new invitation.'};}
+  const draft=await repository.getByEmail(input.data.email);
+  if(!draft)throw new Error('Member draft unavailable.');
+  revalidatePath('/staff/members','layout');
+  return {error:'',message:result==='existing'?'Their saved member draft is ready.':'Member draft created.',member:{id:draft.id,name:draft.info.displayName}};
  }
  catch{return {error:'Unable to prepare this member. This email may already have a prepared account.'};}
- revalidatePath('/staff/members');return {error:'',message:`${input.data.displayName} is ready to configure. Open their name below to add properties and send their invitation.`};
 }
 
 export async function invitePreparedMember(_previous:InvitationState,form:FormData):Promise<InvitationState>{
@@ -151,4 +155,26 @@ export async function invitePreparedMember(_previous:InvitationState,form:FormDa
   await prepared.finishDelivery(member.id,data.user.id,invitationId);
  }catch{return {error:'Delivery could not be confirmed. The setup is preserved and sending is paused to prevent duplicate invitations. Use Check invitation status to confirm delivery without sending another email.'};}
  revalidatePath('/staff/members');return {error:'',message:`Invitation sent to ${member.email}. Their profile and property associations are ready.`};
+}
+
+export async function deleteMember(_previous:{error:string;deleted?:boolean;self?:boolean},form:FormData):Promise<{error:string;deleted?:boolean;self?:boolean}>{
+ const actor=await requireStaff();
+ const id=z.uuid().safeParse(form.get('userId'));
+ if(!id.success)return {error:'This member could not be identified.'};
+ if(form.get('confirmation')!=='DELETE')return {error:'Type DELETE to confirm.'};
+ try{
+  const admin=authAdminClient();
+  const {preparedMemberStore}=await import('@/lib/prepared-member-store');
+  const {memberPropertyStore}=await import('@/lib/member-property-store');
+  const {memberDocumentStore}=await import('@/lib/member-document-store');
+  await new InvitationRepository(database()).initialize();
+  await preparedMemberStore();await memberPropertyStore();await memberDocumentStore();
+  const {deleteMemberAccount}=await import('@/lib/delete-member');
+  await deleteMemberAccount(database(),actor,id.data,'DELETE',async()=>{
+   const {error}=await admin.auth.admin.deleteUser(id.data);
+   if(error&&error.status!==404)throw error;
+  });
+ }catch{return {error:'The account could not be deleted. Please try again.'};}
+ revalidatePath('/staff','layout');
+ return {error:'',deleted:true,self:actor.id===id.data};
 }

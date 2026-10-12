@@ -1,11 +1,13 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
 import {useRouter} from 'next/navigation';
+import {MemberDrawerLink} from './member-drawer';
 import {InvitationForm} from './invitation-form';
 import styles from './members.module.css';
 
 export function NewMemberModal(){
  const [open,setOpen]=useState(false);
+ const [createdMember,setCreatedMember]=useState<{id:string;name:string}|null>(null);
  const dialog=useRef<HTMLDialogElement>(null),trigger=useRef<HTMLButtonElement>(null);
  const outsidePress=useRef(false);const router=useRouter();
  useEffect(()=>{
@@ -23,7 +25,8 @@ export function NewMemberModal(){
  return <><button ref={trigger} type="button" onClick={()=>setOpen(true)}>+ Create a New Member</button>
   {open&&<dialog ref={dialog} className={styles.newMemberModal} aria-labelledby="new-member-title" onCancel={event=>{event.preventDefault();close();}} onPointerDown={event=>{outsidePress.current=outside(event);}} onPointerCancel={()=>{outsidePress.current=false;}} onClick={event=>{if(outsidePress.current&&outside(event))close();outsidePress.current=false;}}>
    <button type="button" className={`secondary ${styles.modalClose}`} aria-label="Close new member setup" onClick={close}>×</button>
-   <InvitationForm/>
+   <InvitationForm onSuccess={member=>{close();setCreatedMember(member);}}/>
   </dialog>}
+  {createdMember&&<MemberDrawerLink key={createdMember.id} id={createdMember.id} name={createdMember.name} initiallyOpen hideTrigger onClosed={()=>{setCreatedMember(null);trigger.current?.focus();}}/>}
  </>;
 }
