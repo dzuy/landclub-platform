@@ -1,3 +1,4 @@
+import {fetchPlatformProperties,PLATFORM_SOURCE,INTERNAL_SOURCE,normalizeId,type PlatformRow} from './notion-platform';
 import {z} from 'zod';
 import {notionRowSchema} from './notion-property-import';
 export class NotionSyncError extends Error{}
@@ -6,12 +7,15 @@ const textProperty=z.object({type:z.literal('rich_text'),rich_text:rich});
 const selections=z.object({type:z.literal('multi_select'),multi_select:z.array(z.object({name:z.string()}))});
 const pageSchema=z.object({object:z.literal('page'),id:z.string(),url:z.url(),last_edited_time:z.string(),archived:z.boolean().optional(),in_trash:z.boolean().optional(),properties:z.object({Name:z.object({type:z.literal('title'),title:rich}),Location:textProperty,Acreage:textProperty,Status:selections,Tags:selections,'Existing Structures':selections})});
 const responseSchema=z.object({object:z.literal('list'),results:z.array(pageSchema),has_more:z.boolean(),next_cursor:z.string().nullable()});
-export type LiveNotionRow=z.infer<typeof notionRowSchema>&{lastEditedAt:string};
+export type LegacyNotionRow=z.infer<typeof notionRowSchema>&{lastEditedAt:string};
+export type LiveNotionRow=LegacyNotionRow|PlatformRow;
 export async function fetchNotionProperties({token=process.env.NOTION_TOKEN,dataSourceId=process.env.NOTION_DATA_SOURCE_ID,request=fetch}:{token?:string;dataSourceId?:string;request?:typeof fetch}={}){
  if(!token)throw new NotionSyncError('Notion sync is not connected. Set the server-only NOTION_TOKEN and grant that connection read access to the Properties database.');
  if(!dataSourceId)throw new NotionSyncError('Notion sync is not connected. Set the server-only NOTION_DATA_SOURCE_ID for the Properties database.');
  if(!/^[a-f0-9-]{32,36}$/i.test(dataSourceId))throw new NotionSyncError('NOTION_DATA_SOURCE_ID is invalid.');
- const rows:LiveNotionRow[]=[],cursors=new Set<string>(),ids=new Set<string>();let cursor:string|undefined;
+ if(normalizeId(dataSourceId)===INTERNAL_SOURCE)throw new NotionSyncError('Sync is configured for the private internal Properties database. Configure Platform Properties and connect both Platform Properties and Property Proximity to Land Club Platform. No data was changed.');
+ if(normalizeId(dataSourceId)===PLATFORM_SOURCE){try{return await fetchPlatformProperties(token,request);}catch(e){throw new NotionSyncError(e instanceof z.ZodError?'Platform Properties or Proximity fields differ from the configured mapping. No data was changed.':e instanceof Error?e.message:'Notion sync failed. No data was changed.');}}
+ const rows:LegacyNotionRow[]=[],cursors=new Set<string>(),ids=new Set<string>();let cursor:string|undefined;
  // Complete and validate every page before the caller is allowed to mutate records.
  do{
   let response:Response;

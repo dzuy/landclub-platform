@@ -3,13 +3,13 @@ import assert from 'node:assert/strict';
 import {PGlite} from '@electric-sql/pglite';
 import {embeddedDatabase} from '../src/lib/database';
 import {PropertyRepository} from '../src/lib/repository';
-import {fetchNotionProperties,type LiveNotionRow} from '../src/lib/notion-live';
+import {fetchNotionProperties,type LegacyNotionRow} from '../src/lib/notion-live';
 import {syncNotionRecords} from '../src/lib/notion-sync';
 import {applySyncedField} from '../src/lib/notion-sync-fields';
 import {importPropertyRecords} from '../src/lib/import-property-records';
 const dataSourceId='cccccccc-cccc-cccc-cccc-cccccccccccc';
 const ds=dataSourceId.replaceAll('-','');
-const row:LiveNotionRow={pageId:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',url:'https://www.notion.so/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',name:'Test farm',location:'Napa County, CA',acreage:'12 acres',status:['Prospective'],tags:['Farm'],existingStructures:['house'],lastEditedAt:'2026-09-23T12:00:00Z'};
+const row:LegacyNotionRow={pageId:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',url:'https://www.notion.so/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',name:'Test farm',location:'Napa County, CA',acreage:'12 acres',status:['Prospective'],tags:['Farm'],existingStructures:['house'],lastEditedAt:'2026-09-23T12:00:00Z'};
 const text=(s:string)=>({type:'rich_text',rich_text:[{plain_text:s}]}),multi=(v:string[])=>({type:'multi_select',multi_select:v.map(name=>({name}))});
 function page(r=row){return {object:'page',id:r.pageId,url:r.url,last_edited_time:r.lastEditedAt,properties:{Name:{type:'title',title:[{plain_text:r.name}]},Location:text(r.location),Acreage:text(r.acreage),Status:multi(r.status),Tags:multi(r.tags),'Existing Structures':multi(r.existingStructures)}};}
 const response=(results:unknown[],has_more=false,next_cursor:string|null=null)=>new Response(JSON.stringify({object:'list',results,has_more,next_cursor}));
