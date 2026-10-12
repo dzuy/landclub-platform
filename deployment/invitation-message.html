@@ -1,0 +1,5 @@
+<!-- Insert immediately before the invitation button in Supabase's Invite user template.
+     Go's HTML template engine escapes each line; do not use raw/safe HTML helpers. -->
+{{ with .Data.land_club_invitation_message_lines }}
+<p style="margin:0 0 30px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:26px;color:#353941;overflow-wrap:anywhere;">{{ range $index, $line := . }}{{ if $index }}<br>{{ end }}{{ $line }}{{ end }}</p>
+{{ end }}

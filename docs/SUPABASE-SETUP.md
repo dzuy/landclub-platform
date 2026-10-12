@@ -11,6 +11,7 @@ Project: `sfrdfzxxbhcmvjgxbshp` (Land Club), Canada Central.
 - Saved the project URL and publishable key in the ignored local `.env.local`. Local development still uses PGlite.
 - Confirmed the production Site URL and allowed both `https://landclub.up.railway.app/auth/callback` and `https://landclub.up.railway.app/auth/confirm`.
 - Saved the branded **Invite user** template using `{{ .RedirectTo }}`, `{{ .TokenHash }}`, and the `invite` verification type.
+- Added the optional personal-message block from [deployment/invitation-message.html](../deployment/invitation-message.html) above the invitation button. The app supplies `land_club_invitation_message_lines` in user metadata; the template escapes each line and preserves paragraph breaks. Empty messages omit the block. Resending keeps the original message.
 
 ## Remaining setup
 

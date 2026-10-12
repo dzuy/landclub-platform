@@ -10,6 +10,7 @@ import styles from './members.module.css';
 import {MemberDocuments} from '@/components/member-documents';
 import {propertyRoleLabels} from '@/lib/member-properties';
 import {roleLabels} from '@/lib/roles';
+import {INVITATION_MESSAGE_MAX_LENGTH} from '@/lib/invitation-message';
 const documentSuggestions=(properties:{name:string}[])=>[...properties.map(p=>'Property: '+p.name),...[...new Set([...Object.values(propertyRoleLabels),...Object.values(roleLabels)])].map(role=>'Role: '+role)];
 
 function DetailSection({title,children}:{title:string;children:ReactNode}){
@@ -39,6 +40,7 @@ function PreparedMemberContent({detail,onSaveBeforeClose}:{detail:Extract<Member
  const {prepared,properties,associations}=detail;
  const [state,action,pending]=useActionState(invitePreparedMember,{error:''});
  const [infoUnsaved,setInfoUnsaved]=useState(false);
+ const [invitationMessage,setInvitationMessage]=useState('');
  const frozen=prepared.status!=='draft'||!!state.message||pending;
  return <div className={styles.memberDetails}>
  <fieldset disabled={frozen} className="prepared-member-fields">
@@ -48,7 +50,7 @@ function PreparedMemberContent({detail,onSaveBeforeClose}:{detail:Extract<Member
  </fieldset>
  <section className={styles.memberInvite}><h2>Ready to welcome them?</h2><p>Save any changes above before sending. Their profile, club roles, and property associations will be ready when they accept the invitation and choose a password.</p>
  {prepared.failure_reason&&<p role="status" className="muted">{prepared.failure_reason}</p>}
- <form action={action}><input type="hidden" name="preparedId" value={prepared.id}/><button disabled={pending||infoUnsaved||!!state.message}>{pending?'Sending invitation…':state.message?'Invitation sent':prepared.status==='sending'?'Check invitation status':'Send invitation'}</button></form>
+ <form action={action} className="form"><input type="hidden" name="preparedId" value={prepared.id}/>{prepared.status==='draft'&&<label>Personal message (optional)<textarea name="invitationMessage" rows={5} maxLength={INVITATION_MESSAGE_MAX_LENGTH} value={invitationMessage} onChange={event=>setInvitationMessage(event.target.value)} disabled={frozen} placeholder="Add a personal welcome to their invitation email." aria-describedby="invitation-message-help"/><span id="invitation-message-help" className="muted">Included above the invitation button in their email. {invitationMessage.length}/{INVITATION_MESSAGE_MAX_LENGTH} characters.</span></label>}<button disabled={pending||infoUnsaved||!!state.message}>{pending?'Sending invitation…':state.message?'Invitation sent':prepared.status==='sending'?'Check invitation status':'Send invitation'}</button></form>
  {prepared.status==='sending'&&<p role="status">Invitation delivery is in progress. Refresh to check its status.</p>}
  {state.error&&<p role="alert" className="cms-error">{state.error}</p>}{state.message&&<p role="status" className="cms-success">{state.message}</p>}
  </section></div>;

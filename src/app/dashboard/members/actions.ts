@@ -9,6 +9,7 @@ import {InvitationRepository} from '@/lib/invitations';
 import {readRoles} from '@/lib/roles';
 import {authAdminClient} from '@/lib/auth/admin';
 import {canonicalSiteUrl} from '@/lib/auth/recovery';
+import {invitationMessageSchema,invitationMessageData} from '@/lib/invitation-message';
 
 export type InvitationState={error:string;message?:string};
 export type PreparedMemberState=InvitationState&{member?:{id:string;name:string}};
@@ -18,6 +19,8 @@ const emailSchema=z.email().max(254);
 const roleTargetSchema=z.object({kind:z.enum(['user','invitation','prepared']),id:z.uuid()});
 export async function sendInvitation(_previous:InvitationState,form:FormData):Promise<InvitationState>{
  const actor=await requireStaff();
+ const message=invitationMessageSchema.safeParse(form.get('invitationMessage')??'');
+ if(!message.success)return {error:message.error.issues[0].message};
  const emailResult=emailSchema.safeParse(form.get('email'));
  if(!emailResult.success)return {error:'Enter a valid email address.'};
  const email=emailResult.data.trim().toLowerCase(),roles=readRoles(form.getAll('roles'));
@@ -27,7 +30,7 @@ export async function sendInvitation(_previous:InvitationState,form:FormData):Pr
  try{
   const siteUrl=canonicalSiteUrl((await headers()).get('origin'),process.env.LAND_CLUB_SITE_URL,process.env.NODE_ENV);
   const redirectTo=new URL('/auth/confirm',siteUrl).toString();
-  const {data,error}=await authAdminClient().auth.admin.inviteUserByEmail(email,{redirectTo,data:{land_club_invitation_id:id,land_club_roles:roles}});
+  const {data,error}=await authAdminClient().auth.admin.inviteUserByEmail(email,{redirectTo,data:{land_club_invitation_id:id,land_club_roles:roles,...invitationMessageData(message.data)}});
   if(error||!data.user){await repository.markFailed(id,error?.message||'Provider did not create an invited user.');return {error:'The invitation could not be sent. The address may already have an account.'};}
   await repository.markPending(id,data.user.id);
  }catch(error){await repository.markFailed(id,error instanceof Error?error.message:'Invitation delivery failed.');return {error:'Invitation delivery is unavailable. Please try again later.'};}
@@ -47,7 +50,7 @@ export async function resendInvitation(_previous:InvitationState,form:FormData):
    if(error||!data.user)throw new Error('The invited account could not be found. Refresh the directory.');
    if(data.user.email_confirmed_at||data.user.last_sign_in_at)throw new Error('This person has already verified their account. They should sign in or use Forgot password.');
    if(data.user.email?.toLowerCase()!==invitation.email)throw new Error('The invited email no longer matches this account.');
-   const result=await admin.auth.admin.inviteUserByEmail(invitation.email,{redirectTo});
+   const result=await admin.auth.admin.inviteUserByEmail(invitation.email,{redirectTo,data:data.user.user_metadata});
    if(result.error||result.data.user?.id!==invitation.authUserId)throw new Error('Invitation delivery could not be confirmed. Please wait a minute before trying again.');
   });
  }catch(error){return {error:error instanceof Error&&['This invitation','Please wait','The invited','This person','Invitation delivery'].some(prefix=>error.message.startsWith(prefix))?error.message:'The invitation could not be resent. Please try again later.'};}
@@ -123,6 +126,8 @@ export async function createPreparedMember(_previous:PreparedMemberState,form:Fo
 
 export async function invitePreparedMember(_previous:InvitationState,form:FormData):Promise<InvitationState>{
  const actor=await requireStaff();const parsed=z.uuid().safeParse(form.get('preparedId'));if(!parsed.success)return {error:'Member not found.'};
+ const message=invitationMessageSchema.safeParse(form.get('invitationMessage')??'');
+ if(!message.success)return {error:message.error.issues[0].message};
  const {preparedMemberStore}=await import('@/lib/prepared-member-store');
  const {memberPropertyStore}=await import('@/lib/member-property-store');
  const prepared=await preparedMemberStore();
@@ -150,7 +155,7 @@ export async function invitePreparedMember(_previous:InvitationState,form:FormDa
  try{await invitations.begin(invitationId,member.email,member.roles,actor.id);}catch{await prepared.deliveryFailed(member.id);return {error:'This email already has an active invitation. Your setup is saved.'};}
  const {displayName,homeRegion,contactPhone}=member.info;
  try{
-  const {data,error}=await admin.auth.admin.inviteUserByEmail(member.email,{redirectTo,data:{display_name:displayName,home_region:homeRegion,contact_phone:contactPhone,land_club_invitation_id:invitationId}});
+  const {data,error}=await admin.auth.admin.inviteUserByEmail(member.email,{redirectTo,data:{display_name:displayName,home_region:homeRegion,contact_phone:contactPhone,land_club_invitation_id:invitationId,...invitationMessageData(message.data)}});
   if(error||!data.user){await invitations.markFailed(invitationId,'Invitation provider rejected delivery.');await prepared.deliveryFailed(member.id);return {error:'The invitation could not be sent. This email may already have an account. Your setup is saved.'};}
   await prepared.finishDelivery(member.id,data.user.id,invitationId);
  }catch{return {error:'Delivery could not be confirmed. The setup is preserved and sending is paused to prevent duplicate invitations. Use Check invitation status to confirm delivery without sending another email.'};}
