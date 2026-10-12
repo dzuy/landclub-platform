@@ -58,5 +58,5 @@ jobs:
           curl --fail --silent http://127.0.0.1:3000/api/health
           curl --fail --silent http://127.0.0.1:3000/ --output /tmp/land-club-home
           grep -q 'Find your' /tmp/land-club-home
-          curl --silent --dump-header /tmp/staff-headers --output /dev/null http://127.0.0.1:3000/staff/properties
+          curl --silent --dump-header /tmp/staff-headers --output /dev/null http://127.0.0.1:3000/dashboard/properties
           grep -qi 'location: /signin' /tmp/staff-headers

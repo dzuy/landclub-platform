@@ -6,7 +6,7 @@ import styles from './members.module.css';
 export function DeleteMemberControl({id,email}:{id:string;email:string}){
  const [confirming,setConfirming]=useState(false),[confirmation,setConfirmation]=useState('');
  const [state,action,pending]=useActionState(deleteMember,{error:''});
- useEffect(()=>{if(state.deleted)window.location.assign(state.self?'/signin':'/staff/members');},[state.deleted,state.self]);
+ useEffect(()=>{if(state.deleted)window.location.assign(state.self?'/signin':'/dashboard/members');},[state.deleted,state.self]);
  return <section className={styles.memberInvite} aria-label="Delete user">
  {!confirming?<button type="button" className={styles.dangerButton} onClick={()=>setConfirming(true)}>Delete user</button>:
  <form action={action} className={styles.cancelInvite}>

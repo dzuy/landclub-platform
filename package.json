@@ -14,7 +14,8 @@
     "test:postgres": "node --import tsx --test tests/postgres.test.ts",
     "photos:import": "node --import tsx scripts/import-property-photos.ts",
     "photos:bucket": "node --import tsx scripts/setup-photo-bucket.ts",
-    "photos:optimize": "node --import tsx scripts/optimize-property-photos.ts"
+    "photos:optimize": "node --import tsx scripts/optimize-property-photos.ts",
+    "photos:thumbnails": "node --import tsx scripts/backfill-photo-thumbnails.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.0",

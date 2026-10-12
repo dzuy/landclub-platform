@@ -13,7 +13,7 @@ npm run dev
 ```
 
 - Home: http://127.0.0.1:3000/
-- Staff: http://127.0.0.1:3000/staff/properties
+- Staff: http://127.0.0.1:3000/dashboard/properties
 
 With no `DATABASE_URL`, development uses persistent PGlite in `.data/land-club/`. Five demo properties are initially imported as drafts; publishing is explicit. The local staff shortcut requires `LAND_CLUB_LOCAL_STAFF=1`, development mode and the loopback host. It never authorizes production requests. Do not tunnel the local editor to the internet.
 

@@ -3,13 +3,10 @@
 import {useEffect, useRef} from 'react';
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
-import {usePropertyTheme} from './use-property-theme';
 import {signOut} from '@/app/signin/actions';
 
 export function AccountMenu({authenticated=true,photoUrl}: {photoUrl?:string|null;authenticated?:boolean}) {
   const pathname=usePathname();
-  const showTheme=pathname.startsWith('/properties/')||pathname.startsWith('/staff/my-properties/');
-  const {dark,toggleTheme}=usePropertyTheme();
   const menuRef = useRef<HTMLDetailsElement>(null);
 
   useEffect(() => {
@@ -45,8 +42,7 @@ export function AccountMenu({authenticated=true,photoUrl}: {photoUrl?:string|nul
         </svg>}</span>
       </summary>
       <div className="account-menu-panel">
-        {authenticated&&<Link href="/staff/profile" aria-current={pathname==='/staff/profile'?'page':undefined} onClick={()=>{if(menuRef.current)menuRef.current.open=false;}}>Profile &amp; Settings</Link>}
-        {showTheme&&<button type="button" className="account-menu-theme" onClick={toggleTheme} aria-pressed={dark}>Dark mode <span aria-hidden="true">{dark?'On':'Off'}</span></button>}
+        {authenticated&&<Link href="/dashboard/profile" aria-current={pathname==='/dashboard/profile'?'page':undefined} onClick={()=>{if(menuRef.current)menuRef.current.open=false;}}>Profile &amp; Settings</Link>}
         {authenticated?<form action={signOut}><button className="account-menu-signout">Sign out</button></form>:<a href="/signin">Sign in</a>}
       </div>
     </details>

@@ -42,10 +42,10 @@ export function PropertyTable({rows}:{rows:PropertyRow[]}){
     setSelected(row);
    }}>
    <td>{row.thumbnail&&!failedImages.has(row.id)?<img className={styles.thumbnail} src={photoThumbnailUrl(row.thumbnail,160)} loading="lazy" decoding="async" alt={row.imageAlt||row.title} onError={()=>setFailedImages(current=>new Set(current).add(row.id))}/>:<span className={styles.placeholder} role="img" aria-label="No thumbnail"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/></svg></span>}</td>
-   <td><a onClick={event=>{if(!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey){event.preventDefault();setSelected(row);}}} className={styles.title} href={'/staff/properties/'+row.id}>{row.title}</a></td>
+   <td><a onClick={event=>{if(!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey){event.preventDefault();setSelected(row);}}} className={styles.title} href={'/dashboard/properties/'+row.id}>{row.title}</a></td>
    <td>{row.location}</td>
    <td><span className={`badge ${row.status==='Active'?styles.published:row.status==='Draft'?styles.draft:''}`}>{row.status}</span></td>
-   <td><a onClick={event=>{if(!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey){event.preventDefault();setSelected(row);}}} className={styles.edit} href={'/staff/properties/'+row.id} aria-label={`Edit ${row.title}`} title={`Edit ${row.title}`}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6L16 3Z"/><path d="m13 6 5 5"/></svg></a></td>
+   <td><a onClick={event=>{if(!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey){event.preventDefault();setSelected(row);}}} className={styles.edit} href={'/dashboard/properties/'+row.id} aria-label={`Edit ${row.title}`} title={`Edit ${row.title}`}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6L16 3Z"/><path d="m13 6 5 5"/></svg></a></td>
   </tr>)}{!sorted.length&&<tr><td colSpan={columns.length}>{rows.length?'No properties match your search and filters.':'No properties yet.'}</td></tr>}
  </DataTable>{selected&&<PropertyDrawer key={selected.id} id={selected.id} title={selected.title} onClose={()=>setSelected(null)}/>}</>;
 }

@@ -10,6 +10,7 @@ export const draftSchema=z.object({
  region:text(160),category:z.enum(categories),status:text(120),
  headline:text(200),summary:text(1200),intro:text(6000),hero:z.union([imagePath,z.literal('')]),imageAlt:text(250),isDemo:z.boolean(),
  gallery:z.array(z.object({src:imagePath,alt:text(250).min(1),caption:text(500),type:z.enum(['Regional','Inspiration','Current property','Proposed'])})).max(20),
+ photoTags:z.record(imagePath,z.array(text(40).min(1)).max(12)).optional(),
  sections:z.array(z.object({id:z.string().regex(/^[a-z0-9-]+$/).max(80),eyebrow:text(120),title:text(200).min(1),body:text(12000),facts:z.array(z.object({label:text(160).min(1),value:text(2000).min(1)})).max(40)})).max(30)
 }).superRefine((data,ctx)=>{if(new Set(data.sections.map(s=>s.id)).size!==data.sections.length)ctx.addIssue({code:'custom',message:'Section identifiers must be unique.',path:['sections']});});
 export type PropertyDraft=z.infer<typeof draftSchema>;

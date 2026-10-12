@@ -314,3 +314,19 @@ body:has(.property-dark) .account-menu summary{color:#faf8f4;border-color:#faf8f
 .property-nearby-link{text-decoration:underline;text-underline-offset:4px}.property-nearby-link:hover{opacity:.7}
 
 .property-area.property-area-no-map{grid-template-columns:1fr}
+
+.property-photo-card{min-width:0;border:1px solid var(--line);border-radius:4px;background:var(--cream)}
+.property-photo-card .property-photo-tile{border:0}
+.property-photo-tags{display:grid;gap:8px;padding:12px;min-width:0}
+.property-photo-tag-list{display:flex;flex-wrap:wrap;gap:5px}
+.property-photo-tag-list:empty{display:none}
+.property-photo-tag-list button{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:16px;background:#e4eadc;color:var(--forest);overflow-wrap:anywhere;white-space:normal}
+.property-photo-tags select,.property-photo-tags input{width:100%;min-width:0;padding:7px 8px;font-size:12px}
+.property-photo-tag-input{display:flex;gap:6px}
+.property-photo-tag-input input{flex:1;width:0}
+.property-photo-tag-input button{flex-shrink:0;white-space:nowrap;padding:6px 10px;font-size:12px}
+.property-photo-table .property-photo-tags{padding:0}
+.event-image-generation{display:grid;gap:12px;margin:20px 0}
+.event-image-generation>button{justify-self:start}
+.event-image-prompt-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-weight:600}
+.event-image-prompt-heading button{display:inline-flex;align-items:center;gap:8px;font-size:13px}

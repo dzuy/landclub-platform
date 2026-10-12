@@ -15,7 +15,7 @@ export async function saveProfile(input:Profile):Promise<ProfileResult>{
   // are never derived from editable user metadata.
   const {error}=await client.auth.updateUser({data:profileMetadata(parsed.data)});
   if(error)return {error:'Your changes could not be saved. Please try again.'};
-  revalidatePath('/staff/profile');
+  revalidatePath('/dashboard/profile');
   return {saved:parsed.data};
  }catch{return {error:'Profile saving is unavailable. Your changes have not been saved.'};}
 }

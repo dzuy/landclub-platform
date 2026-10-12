@@ -16,6 +16,22 @@ const rows=[
 const actual=(value:string|number|boolean)=>({state:'Actual' as const,value});
 const unknown={state:'Not yet determined' as const,value:null};
 function available(){return readDraft({...seeds[0],offeringStatus:'Available',facts:{county:actual('Placer'),total_acres:actual(20),elevation:actual(0),topography:actual('mixed'),road_access:actual('gravel'),development_stage:actual('raw'),shares_available:actual(0),share_price:actual(0),gated:actual(false)},proximity:['airport','town'].map(kind=>({id:kind,kind,name:kind,minutes:actual(0),miles:unknown,notes:''}))});}
+test('photo tags persist through saving, cover changes, publishing and removal',async()=>{
+ const db=new PGlite(),repo=new PropertyRepository(embeddedDatabase(db));
+ try{
+  await repo.initialize();
+  const photo='/images/interior.jpg';
+  let record=await repo.create({...available(),photoTags:{[photo]:['Interior','Living room']}},'admin');
+  record=await repo.save(record.id,record.version,{...record.draft,hero:photo},'admin');
+  record=await repo.publish(record.id,record.version,'admin');
+  assert.deepEqual((await repo.get(record.id))?.draft.photoTags,{[photo]:['Interior','Living room']});
+  assert.deepEqual(record.published?.photoTags,record.draft.photoTags);
+  record=await repo.save(record.id,record.version,{...record.draft,photoTags:{}},'admin',true);
+  assert.deepEqual((await repo.get(record.id))?.published?.photoTags,{});
+  assert.equal(draftSchema.safeParse({...record.draft,photoTags:{[photo]:['']}}).success,false);
+  assert.equal(draftSchema.safeParse({...record.draft,photoTags:{[photo]:['x'.repeat(41)]}}).success,false);
+ }finally{await db.close();}
+});
 test('Incomplete listings can publish; zero and false survive',()=>{
  const p=available();
  const incomplete={...p,name:'',headline:'',summary:'',intro:'',region:'',imageAlt:'',hero:'',offeringStatus:null,category:'Unclassified',facts:{},proximity:[]};

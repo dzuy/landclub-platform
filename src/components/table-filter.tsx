@@ -1,6 +1,6 @@
 'use client';
 import {useEffect,useId,useRef,useState} from 'react';
-import styles from '@/app/staff/members/members.module.css';
+import styles from '@/app/dashboard/members/members.module.css';
 
 export function MultiFilter({label,options,selected,onChange}:{label:string;options:{id:string;name:string}[];selected:string[];onChange:(values:string[])=>void}){
  const container=useRef<HTMLDivElement>(null),trigger=useRef<HTMLButtonElement>(null);

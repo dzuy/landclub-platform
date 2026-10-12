@@ -11,7 +11,7 @@ export function hasPublicFact(fact?:{state:string;value:unknown}):boolean{
 }
 export function visiblePropertyFields(p:PropertyDraft):PropertyDraft{
  return {...p,
-  facts:Object.fromEntries(Object.entries(p.facts).filter(([,fact])=>hasPublicFact(fact))),
+  facts:Object.fromEntries(Object.entries(p.facts).filter(([key,fact])=>hasPublicFact(fact)&&!(key==='existing_structures'&&typeof fact?.value==='string'&&/^(?:none[.!]?|(?:none[.!]?\s+)?nothing (?:is )?built yet[.!]?|no (?:existing )?structures[.!]?)$/i.test(fact.value.trim())))),
   phases:p.phases.filter(v=>hasPublicValue(v.scope)||hasPublicFact(v.budget)||hasPublicFact(v.timeline)),
   sections:p.sections.map(s=>({...s,body:hasPublicValue(s.body)?s.body:'',facts:s.facts.filter(f=>hasPublicValue(f.value))})).filter(s=>s.body||s.facts.length),
  };

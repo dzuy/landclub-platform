@@ -1,6 +1,7 @@
 import {requireStaff,StaffAccessError} from '@/lib/staff';
 import {saveEventImage} from '@/lib/event-images';
 import {MAX_PHOTO_BYTES} from '@/lib/photo-policy';
+import {imageGenerationError} from '@/lib/image-generation-error';
 export const runtime='nodejs';
 export const maxDuration=180;
 export async function POST(request:Request){
@@ -17,7 +18,10 @@ export async function POST(request:Request){
    if(typeof prompt!=='string'||!prompt.trim()||prompt.length>2000)return Response.json({error:'Describe your image in 1–2,000 characters.'},{status:400});
    if(!process.env.OPENAI_API_KEY)return Response.json({error:'Image generation is not configured yet. You can upload a photo instead.'},{status:503});
    const response=await fetch('https://api.openai.com/v1/images/generations',{method:'POST',headers:{Authorization:`Bearer ${process.env.OPENAI_API_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.OPENAI_IMAGE_MODEL||'gpt-image-1',prompt:`Create an inviting editorial event cover photo. No text or logos. ${prompt}`,size:'1536x1024',quality:'medium',n:1}),signal:AbortSignal.timeout(150000)});
-   if(!response.ok)return Response.json({error:'Image generation failed. Please try again or upload a photo.'},{status:502});
+   if(!response.ok){
+    const failure:unknown=await response.json().catch(()=>null);
+    return Response.json({error:imageGenerationError(response.status,failure)},{status:502});
+   }
    const result=await response.json();if(!result.data?.[0]?.b64_json)throw new Error('Missing generated image');
    bytes=Buffer.from(result.data[0].b64_json,'base64');
   }else{

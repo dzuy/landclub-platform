@@ -79,7 +79,7 @@ Migrate actual database drafts and published snapshots independently, preserving
 - `src/lib/schema.ts`: current contract, enums, image restrictions and generic facts.
 - `migrations/001_property_content.sql`: JSONB snapshots and revisions; no proximity table.
 - `src/lib/repository.ts`: validation on create/save/publish; full-draft publication.
-- `src/app/staff/properties/actions.ts`: new-property placeholders and publication action.
+- `src/app/dashboard/properties/actions.ts`: new-property placeholders and publication action.
 - `src/components/property-editor.tsx`: Overview/Content/Photos/History editor.
 - `src/components/property-page.tsx`: generic public section renderer and global demo disclosure.
 - `src/components/collection-map.tsx`: slug-keyed hardcoded regional coordinates.

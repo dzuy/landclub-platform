@@ -1,8 +1,10 @@
 'use client';
 import {useRef,useState} from 'react';
 import {MAX_PHOTO_BYTES,PHOTO_MIME_TYPES} from '@/lib/photo-policy';
-export function EventImageEditor({url,alt,title,disabled=false,onChange,onBusy}:{url:string;alt:string;title:string;disabled?:boolean;onChange:(imageUrl:string,imageAlt:string)=>void;onBusy:(busy:boolean)=>void}){
+import {eventImagePrompt} from '@/lib/event-image-prompt';
+export function EventImageEditor({url,alt,title,description,location,start,timeZone,disabled=false,onChange,onBusy}:{url:string;alt:string;title:string;description:string;location:string;start:string;timeZone:string;disabled?:boolean;onChange:(imageUrl:string,imageAlt:string)=>void;onBusy:(busy:boolean)=>void}){
  const [busy,setBusy]=useState(false),[error,setError]=useState(''),[dragging,setDragging]=useState(false);
+ const [prompt,setPrompt]=useState(''),[generating,setGenerating]=useState(false);
  const input=useRef<HTMLInputElement>(null),uploading=useRef(false),dragDepth=useRef(0);
  async function upload(file:File){
   if(disabled||uploading.current)return;
@@ -14,6 +16,17 @@ export function EventImageEditor({url,alt,title,disabled=false,onChange,onBusy}:
    const result=await response.json();if(!response.ok)throw new Error(result.error||'Unable to upload image.');onChange(result.url,alt||title);
   }catch(e){setError(e instanceof Error?e.message:'Unable to upload image.');}finally{uploading.current=false;setBusy(false);onBusy(false);}
  }
+ async function generate(){
+  if(disabled||uploading.current||!prompt.trim())return;
+  uploading.current=true;setBusy(true);setGenerating(true);onBusy(true);setError('');
+  try{
+   const response=await fetch('/api/event-images',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:prompt.trim()})});
+   const result=await response.json();
+   if(!response.ok)throw new Error(result.error||'Unable to generate image.');
+   onChange(result.url,(title||prompt.trim()).slice(0,300));
+  }catch(e){setError(e instanceof Error?e.message:'Unable to generate image.');}
+  finally{uploading.current=false;setBusy(false);setGenerating(false);onBusy(false);}
+ }
  return <section className="event-image-editor" aria-label="Event photo"><h2>Event photo</h2>
  <div className={'event-photo-dropzone'+(dragging?' is-dragging':'')} onDragEnter={e=>{e.preventDefault();dragDepth.current++;if(!disabled&&!busy)setDragging(true);}} onDragOver={e=>{e.preventDefault();e.dataTransfer.dropEffect=disabled||busy?'none':'copy';}} onDragLeave={e=>{e.preventDefault();dragDepth.current--;if(dragDepth.current<=0)setDragging(false);}} onDrop={e=>{e.preventDefault();dragDepth.current=0;setDragging(false);if(disabled||busy)return;if(e.dataTransfer.files.length!==1){setError('Drop one photo at a time.');return;}void upload(e.dataTransfer.files[0]);}}>
  {url&&<img className="event-cover" src={url} alt={alt||title} draggable={false}/>}
@@ -21,8 +34,9 @@ export function EventImageEditor({url,alt,title,disabled=false,onChange,onBusy}:
  </div>
  <input ref={input} type="file" hidden aria-label="Choose event photo" accept="image/jpeg,image/png,image/webp,image/gif" disabled={disabled||busy} onChange={e=>{const file=e.target.files?.[0];if(file)void upload(file);e.target.value='';}}/>
  <p className="muted">JPG, PNG, WebP or GIF · Up to 20 MiB</p>
+ <div className="event-image-generation"><div className="event-image-prompt-heading"><span>Image generation</span><button type="button" className="secondary" disabled={disabled||busy||!(description.trim()||location.trim()||start)} title="Create a prompt from the event description, location, and start time" onClick={()=>{setPrompt(eventImagePrompt({title,description,location,start,timeZone}));setError('');}}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true"><path d="m9 3 2.5 6.5L18 12l-6.5 2.5L9 21l-2.5-6.5L0 12l6.5-2.5L9 3ZM19 2l1.2 3.8L24 7l-3.8 1.2L19 12l-1.2-3.8L14 7l3.8-1.2L19 2Z"/></svg>Draft prompt</button></div><label>Describe an image to generate<textarea rows={5} maxLength={2000} value={prompt} disabled={disabled||busy} placeholder="A relaxed outdoor gathering with coffee beside a woodland trail, warm morning light" onChange={e=>setPrompt(e.target.value)}/></label><button type="button" className="secondary" disabled={disabled||busy||!prompt.trim()} onClick={()=>void generate()}>{generating?'Generating…':url?'Generate replacement':'Generate image'}</button></div>
  {url&&<><div className="row-actions"><button type="button" className="secondary" disabled={disabled||busy} onClick={()=>{setError('');onChange('','');}}>Remove photo</button></div><label>Image description<input value={alt} maxLength={300} disabled={disabled||busy} onChange={e=>onChange(url,e.target.value)}/></label></>}
  <p className="muted">Save the event to apply photo changes.</p>
- {busy&&<p role="status">Uploading…</p>}{error&&<p role="alert" className="cms-error">{error}</p>}
+ {busy&&<p role="status">{generating?'Generating your image. This may take a couple of minutes…':'Uploading…'}</p>}{error&&<p role="alert" className="cms-error">{error}</p>}
  </section>;
 }

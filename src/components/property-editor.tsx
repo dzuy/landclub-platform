@@ -2,7 +2,7 @@
 import {useEffect,useRef,useState,useSyncExternalStore,useTransition} from 'react';
 import {useRouter} from 'next/navigation';
 import {type PropertyDraft,type PropertyRecord} from '@/lib/schema';
-import {saveProperty,publishProperty,unpublishProperty} from '@/app/staff/properties/actions';
+import {saveProperty,publishProperty,unpublishProperty} from '@/app/dashboard/properties/actions';
 import {PropertyPhotos} from './property-photos';
 import {PropertyFactsEditor} from './property-facts-editor';
 import {categories} from '@/lib/property-facts';

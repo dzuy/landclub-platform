@@ -14,12 +14,12 @@ export async function saveMemberInfo(userId:string,input:MemberInfo){
  try{
   await requireStaff();z.uuid().parse(userId);const parsed=memberInfoSchema.safeParse(input);if(!parsed.success)return {error:parsed.error.issues[0].message};
   const drafts=await preparedMemberStore();
-  if(await drafts.get(userId)){await drafts.saveInfo(userId,parsed.data);revalidatePath('/staff/members');return {message:'Member information saved.'};}
+  if(await drafts.get(userId)){await drafts.saveInfo(userId,parsed.data);revalidatePath('/dashboard/members');return {message:'Member information saved.'};}
   const user=await managedMember(userId);
   const metadata={...user.user_metadata,display_name:parsed.data.displayName,home_region:parsed.data.homeRegion,contact_phone:parsed.data.contactPhone};
   const {error:saveError}=process.env.SUPABASE_SECRET_KEY?await authAdminClient().auth.admin.updateUserById(userId,{user_metadata:metadata}):await (await authClient()).auth.updateUser({data:metadata});
   if(saveError)return {error:'Member information could not be saved.'};
-  revalidatePath('/staff/members');revalidatePath(`/staff/members/${userId}`);revalidatePath('/staff/profile');return {message:'Member information saved.'};
+  revalidatePath('/dashboard/members');revalidatePath(`/dashboard/members/${userId}`);revalidatePath('/dashboard/profile');return {message:'Member information saved.'};
  }catch{return {error:'Unable to save member information. Check your admin access and try again.'};}
 }
 const associationSchema=z.object({userId:z.uuid(),propertyId:z.uuid(),roles:propertyRolesSchema,version:z.number().int().positive().optional(),remove:z.boolean().optional()});
@@ -34,7 +34,7 @@ export async function saveMemberProperty(input:unknown){
   if(prepared)await drafts.edit(userId,tx=>change(new MemberPropertyRepository({...tx,transaction:work=>work(tx)})));
   else await change(repo);
 
-  revalidatePath(`/staff/members/${userId}`);revalidatePath('/staff/members');
+  revalidatePath(`/dashboard/members/${userId}`);revalidatePath('/dashboard/members');
   return {message:remove?'Property association removed.':'Property association saved.',associations:await repo.list(userId)};
  }catch(error){const message=error instanceof Error?error.message:'';return {error:message.startsWith('This association')||message.startsWith('This property is already')?message:'Unable to change the property association. Refresh and try again.'};}
 }

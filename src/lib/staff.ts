@@ -28,5 +28,5 @@ export async function staffIdentity(){const actor=await clubIdentity();return ac
 export async function requireStaff(){const actor=await staffIdentity();if(!actor)throw new StaffAccessError();return actor;}
 export async function requireMember(){const actor=await clubIdentity();if(!actor)throw new MemberAccessError();return actor;}
 
-export async function requireStaffPage(){const actor=await clubIdentity();if(!actor)redirect('/signin');if(!actor.admin)redirect('/staff');return {...actor,admin:true as const};}
+export async function requireStaffPage(){const actor=await clubIdentity();if(!actor)redirect('/signin');if(!actor.admin)redirect('/dashboard');return {...actor,admin:true as const};}
 export async function requireMemberPage(){const actor=await clubIdentity();if(!actor)redirect('/signin');return actor;}

@@ -19,7 +19,7 @@ export async function signIn(_previous:AuthState,form:FormData):Promise<AuthStat
   member=await clubUserAuthorized(data.user);
   (await cookies()).set('land-club-local-signed-out','1',{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',path:'/'});
  }catch{return {error:'Sign-in is unavailable. Please try again later.'};}
- redirect(member?'/staff':'/account');
+ redirect(member?'/dashboard':'/account');
 }
 export async function requestPasswordReset(_previous:AuthState,form:FormData):Promise<AuthState>{
  const input=recoveryRequest.safeParse({email:form.get('email')});

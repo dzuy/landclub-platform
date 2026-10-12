@@ -33,7 +33,6 @@ function EventDrawer({event,onClose,onSaved}:{event:ClubEvent|null;onClose:()=>v
    {error&&<p role="alert" className="cms-error">{error}</p>}
    <fieldset disabled={pending||imageBusy} className={styles.fields}>
     <label>Title<input required maxLength={150} value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></label>
-    <EventImageEditor disabled={pending} url={form.imageUrl} alt={form.imageAlt} title={form.title} onBusy={setImageBusy} onChange={(imageUrl,imageAlt)=>setForm(current=>({...current,imageUrl,imageAlt}))}/>
     <label>Description<textarea required maxLength={10000} rows={5} value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></label>
     <label>Start<input required type="datetime-local" value={form.start} onChange={e=>setForm({...form,start:e.target.value})}/></label>
     <label>End<input required type="datetime-local" value={form.end} onChange={e=>setForm({...form,end:e.target.value})}/></label>
@@ -41,6 +40,7 @@ function EventDrawer({event,onClose,onSaved}:{event:ClubEvent|null;onClose:()=>v
     <label>Location<input required maxLength={300} placeholder="Venue and address, or Online" value={form.location} onChange={e=>setForm({...form,location:e.target.value})}/></label>
     <label>Meeting or event link (optional)<input type="url" placeholder="https://" value={form.meetingUrl} onChange={e=>setForm({...form,meetingUrl:e.target.value})}/></label>
     <label>Status<select value={form.status} onChange={e=>setForm({...form,status:e.target.value as typeof form.status})}><option value="scheduled">Scheduled — visible to members</option><option value="cancelled">Cancelled — visible with cancellation notice</option><option value="archived">Archived — hidden from members</option></select></label>
+    <EventImageEditor disabled={pending} url={form.imageUrl} alt={form.imageAlt} title={form.title} description={form.description} location={form.location} start={form.start} timeZone={timeZone} onBusy={setImageBusy} onChange={(imageUrl,imageAlt)=>setForm(current=>({...current,imageUrl,imageAlt}))}/>
    </fieldset>
   </form></div>
  </dialog>;
@@ -52,7 +52,7 @@ export function EventManager({initial}:{initial:ClubEvent[]}){
  useEffect(()=>{setEvents(initial);},[initial]);
  const query=search.trim().toLowerCase();
  const visible=events.filter(event=>`${event.details.title} ${event.details.location} ${event.details.status}`.toLowerCase().includes(query)).sort((a,b)=>{const column=(sort.column==='edit'||sort.column==='image')?'title':sort.column;const order=column==='startsAt'?Date.parse(a.details.startsAt)-Date.parse(b.details.startsAt):a.details[column].localeCompare(b.details[column],undefined,{numeric:true,sensitivity:'base'});return (sort.direction==='asc'?1:-1)*(order||a.details.title.localeCompare(b.details.title));});
- return <><PageHeading title="Events"><div className="row-actions"><Link className="button secondary" href="/staff/events">View events</Link><button onClick={()=>setSelected(null)}>+ New Event</button></div></PageHeading>
+ return <><PageHeading title="Events"><div className="row-actions"><Link className="button secondary" href="/dashboard/events">View events</Link><button onClick={()=>setSelected(null)}>+ New Event</button></div></PageHeading>
   <div className={styles.tools}><input type="search" aria-label="Search events" placeholder="Search by title, location or status" value={search} onChange={e=>setSearch(e.target.value)}/><span className="muted" role="status">{query?`${visible.length} of ${events.length}`:events.length} events</span></div>
   {message&&<p role="status" className="cms-success">{message}</p>}
   <DataTable columns={columns} label="Events" sort={sort} onSort={column=>setSort({column,direction:sort.column===column&&sort.direction==='asc'?'desc':'asc'})}>

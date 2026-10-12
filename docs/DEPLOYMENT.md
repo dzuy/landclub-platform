@@ -77,9 +77,9 @@ Verify on the actual domain:
 
 - `/` displays the landscape home and published properties.
 - `/api/health` returns `{ "status": "ok", ... }`.
-- `/staff/properties` redirects an anonymous visitor to `/signin`.
+- `/dashboard/properties` redirects an anonymous visitor to `/signin`.
 - An approved staff account can sign in; an unapproved account cannot access the editor.
-- A staff user can invite an email from `/staff/members`, assign one or more roles, and review member identity, status, and activity in the directory. The recipient can create an account only through the invitation sent to that email. Invitations default to `Member`.
+- A staff user can invite an email from `/dashboard/members`, assign one or more roles, and review member identity, status, and activity in the directory. The recipient can create an account only through the invitation sent to that email. Invitations default to `Member`.
 - Save a draft, preview it, publish it, then verify the public page updates. Unpublish removes it from the collection and detail route.
 - Sign out and confirm staff access is gone.
 
@@ -102,6 +102,8 @@ Production tables live in the private `land_club` schema, outside Supabase's def
 Keep migrations backward-compatible: an application rollback does not reverse database changes. Back up the Supabase database before destructive changes, verify backup/restore procedures, and use forward repair migrations. Public files are bundled in the image; future uploads require persistent object storage, not the Railway container filesystem.
 
 ## Verification boundaries
+
+To backfill hosted property photo thumbnails, run `npm run photos:thumbnails` with the database and photo storage environment configured. This creates missing 160px and 640px WebP derivatives, reads them back to verify their format and dimensions, and reports any failures. It is safe to rerun and leaves originals intact. New uploads already create both sizes; photo grids, cards, tables, and media previews use these derivatives, while large hero images and expanded viewers use the display-quality originals.
 
 Local tests cover the repository, validation, access policy and production configuration rules. The optional GitHub Actions workflow adds a real PostgreSQL service, idempotent migration/seed checks, a Docker image build, packaged migration execution and an anonymous production HTTP smoke test. Docker and external PostgreSQL checks have not been executed locally because those services are unavailable here. A live Supabase login and actual Railway rollout still require the real project settings above; local tests do not claim to validate those external services.
 

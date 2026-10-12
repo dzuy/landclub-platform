@@ -31,7 +31,7 @@ export async function sendInvitation(_previous:InvitationState,form:FormData):Pr
   if(error||!data.user){await repository.markFailed(id,error?.message||'Provider did not create an invited user.');return {error:'The invitation could not be sent. The address may already have an account.'};}
   await repository.markPending(id,data.user.id);
  }catch(error){await repository.markFailed(id,error instanceof Error?error.message:'Invitation delivery failed.');return {error:'Invitation delivery is unavailable. Please try again later.'};}
- revalidatePath('/staff/members');
+ revalidatePath('/dashboard/members');
  return {error:'',message:`Invitation sent to ${email}.`};
 }
 
@@ -51,7 +51,7 @@ export async function resendInvitation(_previous:InvitationState,form:FormData):
    if(result.error||result.data.user?.id!==invitation.authUserId)throw new Error('Invitation delivery could not be confirmed. Please wait a minute before trying again.');
   });
  }catch(error){return {error:error instanceof Error&&['This invitation','Please wait','The invited','This person','Invitation delivery'].some(prefix=>error.message.startsWith(prefix))?error.message:'The invitation could not be resent. Please try again later.'};}
- revalidatePath('/staff/members','layout');
+ revalidatePath('/dashboard/members','layout');
  return {error:'',message:'Invitation resent. Ask them to use the newest invitation email.'};
 }
 
@@ -68,7 +68,7 @@ export async function updateMemberRoles(_previous:RoleUpdateState,form:FormData)
   else if(target.data.kind==='invitation')await repository.updatePendingRoles(target.data.id,roles);
   else await repository.replaceUserRoles(target.data.id,roles,actor.id);
  }catch{return {error:'Roles could not be updated. Refresh the page and try again.'};}
- revalidatePath('/staff/members','layout');
+ revalidatePath('/dashboard/members','layout');
  return {error:'',message:'Roles updated.'};
 }
 
@@ -99,7 +99,7 @@ export async function cancelInvitation(_previous:CancelInvitationState,form:Form
   }
   });
  }catch(error){return {error:error instanceof Error&&error.message.startsWith('This person has already')?error.message:'The invitation could not be cancelled. Refresh the page and try again.'};}
- revalidatePath('/staff/members','layout');
+ revalidatePath('/dashboard/members','layout');
  return {error:'',message:'Invitation cancelled. Any saved member setup is available as a draft, ready to invite again.'};
 }
 
@@ -115,7 +115,7 @@ export async function createPreparedMember(_previous:PreparedMemberState,form:Fo
   if(result==='unavailable')return {error:'This email already has an invitation or account. Open the existing member in the directory.'};
   const draft=await repository.getByEmail(input.data.email);
   if(!draft)throw new Error('Member draft unavailable.');
-  revalidatePath('/staff/members','layout');
+  revalidatePath('/dashboard/members','layout');
   return {error:'',message:result==='existing'?'Their saved member draft is ready.':'Member draft created.',member:{id:draft.id,name:draft.info.displayName}};
  }
  catch{return {error:'Unable to prepare this member. This email may already have a prepared account.'};}
@@ -138,7 +138,7 @@ export async function invitePreparedMember(_previous:InvitationState,form:FormDa
    let page=1;
    while(true){const {data,error}=await admin.auth.admin.listUsers({page,perPage:1000});if(error)throw error;
     const user=data.users.find(user=>user.email?.toLowerCase()===existing.email&&user.user_metadata?.land_club_invitation_id===existing.invitation_id);
-    if(user){await prepared.finishDelivery(existing.id,user.id,existing.invitation_id);revalidatePath('/staff/members');return {error:'',message:'Invitation confirmed. Their profile and property associations are ready.'};}
+    if(user){await prepared.finishDelivery(existing.id,user.id,existing.invitation_id);revalidatePath('/dashboard/members');return {error:'',message:'Invitation confirmed. Their profile and property associations are ready.'};}
     if(data.users.length<1000)break;page++;
    }
   }catch{return {error:'Unable to check delivery right now. Your setup is saved; try checking again later.'};}
@@ -154,7 +154,7 @@ export async function invitePreparedMember(_previous:InvitationState,form:FormDa
   if(error||!data.user){await invitations.markFailed(invitationId,'Invitation provider rejected delivery.');await prepared.deliveryFailed(member.id);return {error:'The invitation could not be sent. This email may already have an account. Your setup is saved.'};}
   await prepared.finishDelivery(member.id,data.user.id,invitationId);
  }catch{return {error:'Delivery could not be confirmed. The setup is preserved and sending is paused to prevent duplicate invitations. Use Check invitation status to confirm delivery without sending another email.'};}
- revalidatePath('/staff/members');return {error:'',message:`Invitation sent to ${member.email}. Their profile and property associations are ready.`};
+ revalidatePath('/dashboard/members');return {error:'',message:`Invitation sent to ${member.email}. Their profile and property associations are ready.`};
 }
 
 export async function deleteMember(_previous:{error:string;deleted?:boolean;self?:boolean},form:FormData):Promise<{error:string;deleted?:boolean;self?:boolean}>{
@@ -175,6 +175,6 @@ export async function deleteMember(_previous:{error:string;deleted?:boolean;self
    if(error&&error.status!==404)throw error;
   });
  }catch{return {error:'The account could not be deleted. Please try again.'};}
- revalidatePath('/staff','layout');
+ revalidatePath('/dashboard','layout');
  return {error:'',deleted:true,self:actor.id===id.data};
 }
