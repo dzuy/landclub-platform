@@ -85,3 +85,11 @@ test('ambiguous identity and same-name unlinked records abort without writes',as
  assert.equal((await repo.list())[0].version,1);
  }finally{await db.close();}
 });
+
+test('qualified live coordinate formats retain their source warning',()=>{
+ const row=mapPlatformPage(platformPage(norden,{coordinates:'40.01135, 18.05059 (approximate; the listing site may offset this)'}),[]);
+ assert.equal(row.platform.coordinates?.value?.latitude,40.01135);
+ assert.equal(row.platform.coordinates?.value?.precision,'approximate');
+ assert.match(row.platform.coordinates!.notes!,/may offset this/);
+ assert.throws(()=>mapPlatformPage(platformPage(norden,{coordinates:'1000, 0'}),[]));
+});

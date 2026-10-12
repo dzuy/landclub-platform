@@ -49,9 +49,9 @@ export function mapPlatformPage(input:unknown,proximity:PropertyDraft['proximity
  const type=z.enum(['mountain','farm','coastal','desert','heritage']).nullable().parse(v.property_type);
  let coordinates:PropertyDraft['coordinates']=null;
  if(present(v.coordinates)){
-  const match=String(v.coordinates).match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*(?:\(approximate\))?\s*$/i);
+  const match=String(v.coordinates).match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*(?:\(([^()]*)\))?\s*$/i);
   if(!match)throw new Error('Invalid Platform Properties coordinates.');
-  coordinates={state:'Actual',value:{latitude:Number(match[1]),longitude:Number(match[2]),precision:'approximate'},notes:sourceNote};
+  coordinates={state:'Actual',value:{latitude:Number(match[1]),longitude:Number(match[2]),precision:'approximate'},notes:match[3]?`${sourceNote} ${match[3]}`:sourceNote};
  }
  // Listing price is private source context, never share pricing or ownership terms.
  const listing=present(v.list_price)?{amount:z.number().nonnegative().parse(v.list_price),currency:z.enum(['USD','EUR']).parse(v.list_price_currency)}:undefined;
