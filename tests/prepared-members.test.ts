@@ -59,6 +59,8 @@ test('cancel, reuse and reinvite preserves setup and rebinds assignments to the 
   await drafts.beginDelivery(id,first);await invitations.begin(first,info.email,['member'],'admin');await drafts.finishDelivery(id,oldUser,first);
   assert.equal(await drafts.createOrReuseDraft(randomUUID(),info,['admin'],'admin'),'unavailable');
   await invitations.updatePendingRoles(first,['member','owner']);
+  await assert.rejects(drafts.cancelInvitation(first,'admin',async()=>{throw new Error('Provider unavailable');}),/Provider unavailable/);
+  assert.equal((await drafts.get(id))?.status,'invited');assert.equal((await invitations.activeById(first))?.status,'pending');
   assert.equal(await drafts.cancelInvitation(first,'admin'),true);
   await assert.rejects(drafts.cancelInvitation(first,'admin'));
   const restored=await drafts.get(id);assert.equal(restored?.status,'draft');assert.equal(restored?.auth_user_id,null);assert.equal(restored?.invitation_id,null);

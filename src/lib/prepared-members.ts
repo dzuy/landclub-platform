@@ -27,9 +27,11 @@ export class PreparedMemberRepository{
    return 'unavailable' as const;
   });
  }
- async cancelInvitation(invitationId:string,actor:string){return this.db.transaction(async tx=>{
+ async cancelInvitation(invitationId:string,actor:string,beforeCancel?:()=>Promise<void>){return this.db.transaction(async tx=>{
   const cancelled=(await tx.query<{id:string;auth_user_id:string|null;roles:ClubRole[]}>("UPDATE invitations SET status='failed',failure_reason=$2 WHERE id=$1 AND status='pending' RETURNING id,auth_user_id,roles",[invitationId,`Cancelled by ${actor}`.slice(0,500)])).rows[0];
   if(!cancelled)throw new Error('This invitation is no longer pending.');
+  // Keep cancellation serialized with resend and acceptance until provider revocation completes.
+  await beforeCancel?.();
   const member=(await tx.query<PreparedMember>("SELECT * FROM prepared_members WHERE invitation_id=$1 AND status='invited' FOR UPDATE",[invitationId])).rows[0];
   if(!member)return false;
   // Move saved property assignments back to the draft before clearing its link.

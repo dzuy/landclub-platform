@@ -3,11 +3,13 @@ import {readFile} from 'node:fs/promises';
 import type {Database,Queryable} from './database';
 import {checksum,MAX_PHOTO_BYTES,photoStorage,type PhotoObjectStorage} from './photo-object-storage';
 import {PHOTO_SIZE_LABEL} from './photo-policy';
+import {createThumbnail,optimizeGalleryPhoto,thumbnailKey} from './photo-image-processing';
+import {THUMBNAIL_WIDTHS} from './photo-thumbnail-url';
 export {MAX_PHOTO_BYTES} from './photo-object-storage';
 // Kept for callers upgrading the original local upload implementation.
 export const photoMigration=`CREATE TABLE IF NOT EXISTS property_photos (id uuid PRIMARY KEY,property_id uuid NOT NULL REFERENCES properties(id),mime text NOT NULL,content text NOT NULL,created_at timestamptz NOT NULL DEFAULT now());`;
 export async function initializePhotoStorage(db:Database){
- const sql=await readFile(new URL('../../migrations/011_property_photo_objects.sql',import.meta.url),'utf8');
+ const sql=(await Promise.all(['011_property_photo_objects.sql','014_optimized_property_photos.sql'].map(name=>readFile(new URL('../../migrations/'+name,import.meta.url),'utf8')))).join('\n');
  await db.transaction(async tx=>{
   await tx.query(photoMigration);
   for(const statement of sql.split(';').filter(part=>part.trim()))await tx.query(statement);
@@ -27,7 +29,7 @@ export function inspectPhoto(bytes:Uint8Array){
  if(!mime||bytes.length>MAX_PHOTO_BYTES)throw new Error(`Use a JPG, PNG, WebP or GIF up to ${PHOTO_SIZE_LABEL}.`);
  return {mime,checksum:checksum(bytes),size:bytes.length};
 }
-export type StoredPhoto={id:string;property_id:string;mime:string;content:string|null;storage_backend:string|null;storage_key:string|null;checksum:string|null;byte_size:number|null;staff_only:boolean};
+export type StoredPhoto={id:string;property_id:string;mime:string;content:string|null;storage_backend:string|null;storage_key:string|null;checksum:string|null;storage_checksum?:string|null;byte_size:number|null;staff_only:boolean};
 export type PhotoSource={system:string;id:string};
 export type SavePhotoOptions={storage?:PhotoObjectStorage;originalFilename?:string;source?:PhotoSource;staffOnly?:boolean};
 export const photoUrl=(id:string)=>'/api/property-photos/'+id;
@@ -48,10 +50,16 @@ export async function savePhoto(db:Database,propertyId:string,bytes:Uint8Array,o
   if(!(await tx.query('SELECT id FROM properties WHERE id=$1 FOR UPDATE',[propertyId])).rows.length)throw new Error('Property not found.');
   let photo=await findPhoto(tx,propertyId,info.checksum,staffOnly,options.source);
   if(!photo){
-   const storage=options.storage||photoStorage(),key=objectKey(propertyId,info.checksum,info.mime),id=randomUUID();
-   await storage.put(key,bytes,info.mime);
-   if(checksum(await storage.get(key))!==info.checksum)throw new Error('Photo write verification failed.');
-   photo=(await tx.query<StoredPhoto>('INSERT INTO property_photos(id,property_id,mime,content,storage_backend,storage_key,byte_size,checksum,original_filename,staff_only) VALUES($1,$2,$3,NULL,$4,$5,$6,$7,$8,$9) RETURNING *',[id,propertyId,info.mime,storage.backend,key,info.size,info.checksum,options.originalFilename?.slice(0,255)||null,staffOnly])).rows[0];
+   const gallery=await optimizeGalleryPhoto(bytes),storedHash=checksum(gallery);
+   const storage=options.storage||photoStorage(),key=objectKey(propertyId,storedHash,'image/webp'),id=randomUUID();
+   const variants=[{key,bytes:gallery},...await Promise.all(THUMBNAIL_WIDTHS.map(async width=>({key:thumbnailKey(key,width),bytes:await createThumbnail(gallery,width)})))];
+   // Commit the photo only when the large image and both thumbnails are stored
+   // and verified. Input bytes are never written to object storage.
+   for(const variant of variants){
+    await storage.put(variant.key,variant.bytes,'image/webp');
+    if(checksum(await storage.get(variant.key))!==checksum(variant.bytes))throw new Error('Photo write verification failed.');
+   }
+   photo=(await tx.query<StoredPhoto>('INSERT INTO property_photos(id,property_id,mime,content,storage_backend,storage_key,byte_size,checksum,original_filename,staff_only,storage_checksum) VALUES($1,$2,$3,NULL,$4,$5,$6,$7,$8,$9,$10) RETURNING *',[id,propertyId,'image/webp',storage.backend,key,gallery.length,info.checksum,options.originalFilename?.slice(0,255)||null,staffOnly,storedHash])).rows[0];
   }
   if(options.source)await tx.query('INSERT INTO property_photo_sources(property_id,source_system,source_id,photo_id) VALUES($1,$2,$3,$4) ON CONFLICT DO NOTHING',[propertyId,options.source.system,options.source.id,photo.id]);
   return {id:photo.id,url:photoUrl(photo.id)};
@@ -60,7 +68,7 @@ export async function savePhoto(db:Database,propertyId:string,bytes:Uint8Array,o
 export async function readPhoto(photo:StoredPhoto,storage?:PhotoObjectStorage){
  if(photo.storage_key&&photo.storage_backend){
   const bytes=await (storage||photoStorage(photo.storage_backend)).get(photo.storage_key);
-  const expected=photo.checksum||(photo.content?checksum(Buffer.from(photo.content,'base64')):null);
+  const expected=photo.storage_checksum||photo.checksum||(photo.content?checksum(Buffer.from(photo.content,'base64')):null);
   if(expected&&checksum(bytes)!==expected)throw new Error('Photo integrity check failed.');
   return bytes;
  }

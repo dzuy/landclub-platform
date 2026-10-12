@@ -1,4 +1,6 @@
 import test from 'node:test';
+import sharp from 'sharp';
+import {thumbnailKey} from '../src/lib/photo-image-processing';
 import assert from 'node:assert/strict';
 import {mkdtemp,rm,writeFile,readdir,mkdir} from 'node:fs/promises';
 import path from 'node:path';
@@ -16,7 +18,7 @@ import {assetUrl} from '../src/lib/property-facts';
 import type {SupabaseClient} from '@supabase/supabase-js';
 import seeds from '../src/lib/seed-properties.json';
 import {MAX_PHOTO_BYTES,PHOTO_MIME_TYPES,photoBucketIssues} from '../src/lib/photo-policy';
-const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64');
+const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAIAAAAUMWhjAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAL0lEQVRIiWMIrk2mKWIYtaB2NIiSR1NR8GhGSx4tKoJHS9Pa0QoneLTKrB3crQoAenyZLkqOFOEAAAAASUVORK5CYII=','base64');
 async function fixture(){
  const root=await mkdtemp(path.join(os.tmpdir(),'land-photos-')),pg=new PGlite(),db=embeddedDatabase(pg),repo=new PropertyRepository(db);
  await repo.initialize();await initializePhotoStorage(db);const p=await repo.create(seeds[0],'test');
@@ -29,8 +31,12 @@ test('photo bytes live outside DB; metadata, dedup, provenance and integrity are
  const again=await savePhoto(f.db,f.p.id,png,{storage:f.storage,source:{system:'drive',id:'drive-b'}});assert.equal(first.id,again.id);
  assert.equal(assetUrl.safeParse(first.url).success,true);
  const saved=(await f.db.query<StoredPhoto>('SELECT * FROM property_photos')).rows[0];
- assert.equal(saved.content,null);assert.equal(saved.checksum,checksum(png));assert.equal(Number(saved.byte_size),png.length);assert.equal(saved.storage_backend,'local');
- assert.deepEqual(Buffer.from(await readPhoto(saved,f.storage)),png);
+ assert.equal(saved.content,null);assert.equal(saved.checksum,checksum(png));assert.equal(saved.mime,'image/webp');assert.equal(saved.storage_backend,'local');
+ const gallery=await readPhoto(saved,f.storage);assert.equal(saved.storage_checksum,checksum(gallery));assert.equal(Number(saved.byte_size),gallery.length);
+ assert.equal((await sharp(gallery).metadata()).format,'webp');
+ const objects=await readdir(path.join(f.root,'objects',f.p.id));assert.equal(objects.length,3);
+ for(const width of [160,640] as const)assert.equal((await sharp(await f.storage.get(thumbnailKey(saved.storage_key!,width))).metadata()).format,'webp');
+ assert.equal(objects.includes(checksum(png)+'.png'),false);
  assert.equal((await f.db.query('SELECT * FROM property_photo_sources')).rows.length,2);
  await writeFile(path.join(f.root,'objects',saved.storage_key!),Buffer.from('corrupt'));
  await assert.rejects(readPhoto(saved,f.storage),/integrity/);
@@ -54,6 +60,19 @@ test('legacy migration is additive, verifies copies, preserves IDs/base64 and re
  assert.equal(migrated.id,id);assert.equal(migrated.content,png.toString('base64'));assert.deepEqual(Buffer.from(await readPhoto(migrated,f.storage)),png);
  assert.equal((await migrateLegacyPhotos(f.db,f.storage,true)).photos,0);
  assert.equal(mayReadPhoto(migrated,false,true),true);
+ }finally{await f.close();}
+});
+test('failed thumbnail storage does not create a photo record; retry completes all variants',async()=>{
+ const f=await fixture();try{
+  const storage:PhotoObjectStorage={...f.storage,put:async(key,bytes,mime)=>{if(key.includes('.thumb-'))throw new Error('Thumbnail unavailable');await f.storage.put(key,bytes,mime);}};
+  await assert.rejects(savePhoto(f.db,f.p.id,png,{storage}),/Thumbnail unavailable/);
+  assert.equal((await f.db.query('SELECT * FROM property_photos')).rows.length,0);
+  await savePhoto(f.db,f.p.id,png,{storage:f.storage});
+  assert.equal((await f.db.query('SELECT * FROM property_photos')).rows.length,1);
+  assert.equal((await readdir(path.join(f.root,'objects',f.p.id))).length,3);
+  const invalid=Buffer.concat([Buffer.from([255,216,255]),Buffer.alloc(30)]);
+  await assert.rejects(savePhoto(f.db,f.p.id,invalid,{storage:f.storage}));
+  assert.equal((await f.db.query('SELECT * FROM property_photos')).rows.length,1);
  }finally{await f.close();}
 });
 test('dry-run writes nothing; explicit mappings import privately into drafts and rerun without duplicates',async()=>{
@@ -106,7 +125,7 @@ test('interrupted imports resume committed items without duplicating draft media
  const f=await fixture();try{
  await writeFile(path.join(f.root,'one.png'),png);await writeFile(path.join(f.root,'two.png'),Buffer.concat([png,Buffer.from('second')]));
  const manifest={version:1,photos:['one.png','two.png'].map((file,i)=>({file,propertyId:f.p.id,source:{system:'drive',id:'source-'+i},alt:'Site image'}))};
- let writes=0;const interrupted:PhotoObjectStorage={...f.storage,put:async(...args)=>{if(++writes===2)throw new Error('Simulated interruption');await f.storage.put(...args);}};
+ let writes=0;const interrupted:PhotoObjectStorage={...f.storage,put:async(...args)=>{if(++writes===4)throw new Error('Simulated interruption');await f.storage.put(...args);}};
  await assert.rejects(importPropertyPhotos(f.db,manifest,f.root,interrupted,true),/interruption/);
  assert.equal((await f.db.query('SELECT * FROM property_photos')).rows.length,1);
  await importPropertyPhotos(f.db,manifest,f.root,f.storage,true);

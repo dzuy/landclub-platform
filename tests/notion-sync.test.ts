@@ -59,3 +59,40 @@ test('concurrent syncs do not duplicate; a validation failure rolls back the who
  const after=(await repo.list())[0];assert.equal(after.draft.name,before.draft.name);assert.equal(after.version,before.version);assert.equal((await repo.list()).length,1);
  }finally{await db.close();}
 });
+
+test('merged source IDs cannot recreate renamed properties through live sync or snapshot import',async()=>{
+ const db=new PGlite(),repo=new PropertyRepository(embeddedDatabase(db));await repo.initialize();
+ try{
+ await syncNotionRecords(repo,[row],ds,'test');let record=(await repo.list())[0];
+ const retired='bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb';
+ record=await repo.save(record.id,record.version,{...record.draft,hero:'/images/farm.jpg',source:{...record.draft.source,retiredPageIds:[retired]}},'merge');
+ await repo.publish(record.id,record.version,'test');
+ const before=(await repo.list())[0];
+ const renamed={...row,pageId:retired,name:'Completely different legacy name',acreage:'999 acres'};
+ for(const sourceRows of [[renamed,row],[row,renamed]]){
+  const result=await syncNotionRecords(repo,sourceRows,ds,'test');
+  assert.equal(result.created,0);assert.equal(result.skipped,1);
+  assert.deepEqual(await repo.list(),[before]);
+ }
+ const imported=await importPropertyRecords(repo,[renamed],'test');assert.equal(imported.created,0);assert.equal(imported.skipped,1);
+ assert.deepEqual(await repo.list(),[before]);
+ // Seeing only the retired source does not falsely mark the canonical source present.
+ await syncNotionRecords(repo,[renamed],ds,'test');record=(await repo.list())[0];
+ assert.equal(record.draft.source?.sync?.missing,true);assert.equal(record.draft.facts.total_acres?.value,12);
+ assert.deepEqual(record.published,before.published);
+ }finally{await db.close();}
+});
+
+test('ambiguous retired identities abort before any sync writes',async()=>{
+ const db=new PGlite(),repo=new PropertyRepository(embeddedDatabase(db));await repo.initialize();
+ try{
+ const other={...row,pageId:'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',name:'Other farm'};
+ await syncNotionRecords(repo,[row,other],ds,'test');
+ const first=(await repo.list()).find(p=>p.draft.source?.pageId===row.pageId)!;
+ await repo.save(first.id,first.version,{...first.draft,source:{...first.draft.source,retiredPageIds:[other.pageId]}},'test');
+ const before=await repo.list();
+ await assert.rejects(syncNotionRecords(repo,[{...row,name:'Changed'},other],ds,'test'),/Ambiguous Notion identity/);
+ await assert.rejects(importPropertyRecords(repo,[other],'test'),/Ambiguous Notion identity/);
+ assert.deepEqual(await repo.list(),before);
+ }finally{await db.close();}
+});

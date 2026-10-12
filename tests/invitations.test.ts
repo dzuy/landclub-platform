@@ -41,3 +41,31 @@ test('cancelling an active invitation releases the email for a replacement',asyn
  await assert.rejects(repository.cancel(firstId,'staff-1'));
  await db.close();
 });
+
+test('resending keeps identity and roles, refreshes sent time, and throttles repeats',async()=>{
+ const db=new PGlite(),repository=new InvitationRepository(embeddedDatabase(db));await repository.initialize();
+ const id='11111111-1111-4111-8111-111111111111',user='22222222-2222-4222-8222-222222222222';
+ try{
+  await repository.begin(id,'person@example.com',['owner'],'staff');await repository.markPending(id,user);
+  await db.query("UPDATE invitations SET sent_at=now()-interval '2 days' WHERE id=$1",[id]);
+  let delivered=0;
+  const result=await repository.resend(id,async invite=>{assert.equal(invite.authUserId,user);assert.deepEqual(invite.roles,['owner']);delivered++;});
+  assert.equal(result.id,id);assert.equal(result.status,'pending');assert.ok(Date.now()-Date.parse(result.sentAt!)<5000);
+  await assert.rejects(repository.resend(id,async()=>{delivered++;}),/wait one minute/);assert.equal(delivered,1);
+  await repository.accept(id,user);
+  await assert.rejects(repository.resend(id,async()=>{delivered++;}),/no longer pending/);assert.equal(delivered,1);
+ }finally{await db.close();}
+});
+
+test('failed resend preserves the pending invitation and its original sent time',async()=>{
+ const db=new PGlite(),repository=new InvitationRepository(embeddedDatabase(db));await repository.initialize();
+ const id='11111111-1111-4111-8111-111111111111';
+ try{
+  await repository.begin(id,'person@example.com',['member'],'staff');await repository.markPending(id,'22222222-2222-4222-8222-222222222222');
+  await db.query("UPDATE invitations SET sent_at=now()-interval '2 days' WHERE id=$1",[id]);
+  const before=await repository.activeById(id);
+  await assert.rejects(repository.resend(id,async()=>{throw new Error('Provider unavailable');}),/Provider unavailable/);
+  assert.deepEqual(await repository.activeById(id),before);
+  await repository.cancel(id,'staff');await assert.rejects(repository.resend(id,async()=>assert.fail('Must not send')),/no longer pending/);
+ }finally{await db.close();}
+});

@@ -43,7 +43,7 @@ test('migration uses relation identity, preserves curated fields and publication
  let record=await repo.create(legacy,'test');await repo.publish(record.id,record.version,'test');
  const incoming=mapPlatformPage(platformPage(norden,{planned_structures:'First cabin planned'}),[]);
  const first=await syncNotionRecords(repo,[incoming],PLATFORM_SOURCE,'test');assert.equal(first.created,0);assert.equal(first.updated,1);
- record=(await repo.list())[0];assert.equal(record.draft.slug,legacy.slug);assert.equal(record.draft.source?.pageId,norden);
+ record=(await repo.list())[0];assert.equal(record.draft.slug,legacy.slug);assert.equal(record.draft.source?.pageId,norden);assert.deepEqual(record.draft.source?.retiredPageIds,[old]);
  assert.equal(record.draft.intro,'Curated story');assert.equal(record.draft.hero,'/images/cabin.jpg');assert.equal(record.draft.facts.power?.value,'Solar');
  assert.equal(record.draft.facts.total_acres?.value,20);assert.ok(record.draft.source?.sync?.conflicts.some(v=>v.field==='facts.total_acres'));
  assert.equal(record.draft.facts.elevation?.value,6840);assert.equal(record.draft.facts.year_round_access?.value,false);

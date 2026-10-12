@@ -3,7 +3,16 @@ import { draftSchema,publicationSchema,readDraft,type PropertyDraft,type Propert
 import { type Database,type Queryable,migration } from './database';
 export class ConflictError extends Error{constructor(){super('This property changed in another window. Reload the latest version before saving.');}}
 function normalize(p:PropertyRecord):PropertyRecord{return {...p,draft:readDraft(p.draft),published:p.published?readDraft(p.published):null};}
-function publicDraft(input:unknown){const {source,...p}=readDraft(input);return p;}
+export function publicDraft(input:unknown){
+ const {source,...p}=readDraft(input);
+ // Editorial notes belong in staff responses, never in the public client payload.
+ function withoutNotes<T extends {notes?:string}>(value:T){const {notes,...rest}=value;return rest;}
+ p.facts=Object.fromEntries(Object.entries(p.facts).map(([key,fact])=>[key,withoutNotes(fact!)]));
+ p.coordinates=p.coordinates?withoutNotes(p.coordinates):null;
+ p.proximity=p.proximity.map(place=>({...place,notes:'',minutes:withoutNotes(place.minutes),miles:withoutNotes(place.miles)}));
+ p.phases=p.phases.map(phase=>({...phase,budget:withoutNotes(phase.budget),timeline:withoutNotes(phase.timeline)}));
+ return p;
+}
 export class PropertyRepository{
  constructor(private db:Database){}
  async locked<T>(work:(repo:PropertyRepository)=>Promise<T>):Promise<T>{return this.db.transaction(async tx=>{

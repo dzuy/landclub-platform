@@ -5,6 +5,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 FROM dependencies AS build
+ARG NEXT_PUBLIC_MAPBOX_TOKEN
+ENV NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN
 COPY . .
 RUN npm test && npm run build
 

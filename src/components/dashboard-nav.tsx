@@ -4,7 +4,7 @@ import {usePathname} from 'next/navigation';
 import {useEffect, useState} from 'react';
 
 type IconName='home'|'properties'|'bookings'|'documents'|'events'|'profile'|'members'|'content';
-const links:[string,string,IconName][]=[['Home','/staff','home'],['My Properties','/staff/my-properties','properties'],['Bookings','/staff/bookings','bookings'],['Documents','/staff/documents','documents'],['Events','/staff/events','events'],['Profile & Settings','/staff/profile','profile']];
+const links:[string,string,IconName][]=[['Home','/staff','home'],['My Properties','/staff/my-properties','properties'],['Bookings','/staff/bookings','bookings'],['Documents','/staff/documents','documents'],['Events','/staff/events','events']];
 
 function NavIcon({name}:{name:IconName}){
  const shapes={
@@ -35,7 +35,6 @@ export function DashboardNav({showAdminTools,properties}:{showAdminTools:boolean
   <button className="dashboard-menu-toggle" type="button" aria-label={open?'Close dashboard navigation':'Open dashboard navigation'} aria-expanded={open} aria-controls="dashboard-navigation" onClick={()=>setOpen(value=>!value)}><span/><span/><span/></button>
   <button className="dashboard-menu-backdrop" type="button" aria-label="Close dashboard navigation" tabIndex={open?0:-1} onClick={()=>setOpen(false)}/>
   <div className="dashboard-sidebar-panel" id="dashboard-navigation">
-   <div className="eyebrow">YOUR LAND CLUB</div>
    <nav aria-label="Your Land Club">{links.map(([label,href,icon])=><div className={href==='/staff/my-properties'?'dashboard-nav-group':undefined} key={href}><Link href={href} aria-current={(href==='/staff/my-properties'?path.startsWith(href):path===href)?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name={icon}/><span>{label}</span></Link>{href==='/staff/my-properties'&&properties.length>0&&<div className="dashboard-property-subnav">{properties.map(property=><Link key={property.id} href={`/staff/my-properties/${property.id}`} aria-current={path===`/staff/my-properties/${property.id}`?'page':undefined} onClick={()=>setOpen(false)}><span>{property.name}</span></Link>)}</div>}</div>)}{showAdminTools&&<><div className="dashboard-nav-divider"/><div className="eyebrow">ADMIN TOOLS</div><Link href="/staff/members" aria-current={path.startsWith('/staff/members')?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="members"/><span>Members</span></Link><Link href="/staff/properties" aria-current={path.startsWith('/staff/properties')?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="content"/><span>Properties</span></Link><Link href="/staff/manage-documents" aria-current={path==='/staff/manage-documents'?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="documents"/><span>Documents</span></Link><Link href="/staff/manage-events" aria-current={path==='/staff/manage-events'?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="events"/><span>Events</span></Link></>}</nav>
   </div>
  </aside>

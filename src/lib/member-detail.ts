@@ -9,12 +9,12 @@ import {store} from './store';
 import {memberPropertyStore} from './member-property-store';
 export async function loadMemberDetail(id:string){
  const repo=new InvitationRepository(database());await repo.initialize();const invitations=await repo.list();
- if(id.startsWith('invitation:')){const invitation=invitations.find(i=>`invitation:${i.id}`===id);if(!invitation)throw new Error('Member not found.');return {kind:'invitation' as const,id:invitation.id,email:invitation.email,roles:invitation.roles,joinedAt:invitation.createdAt};}
+ if(id.startsWith('invitation:')){const invitation=invitations.find(i=>`invitation:${i.id}`===id);if(!invitation)throw new Error('Member not found.');return {kind:'invitation' as const,id:invitation.id,email:invitation.email,roles:invitation.roles,joinedAt:invitation.createdAt,invitation:invitation.status==='pending'?invitation:null};}
  z.uuid().parse(id);const prepared=await (await preparedMemberStore()).get(id);
  if(prepared&&prepared.status!=='invited')return {kind:'prepared' as const,prepared,properties:(await (await store()).list()).map(p=>({id:p.id,name:p.draft.name})),associations:await (await memberPropertyStore()).list(id)};
  const user=await managedMember(id);
  const member=buildMemberDirectory([user],invitations,await repo.roleAssignments(),process.env.STAFF_USER_IDS).find(m=>m.id===id)!;
  const metadata=user.user_metadata||{};
- return {kind:'member' as const,member,info:{displayName:member.name||'',homeRegion:typeof metadata.home_region==='string'?metadata.home_region:'',contactPhone:typeof metadata.contact_phone==='string'?metadata.contact_phone:''},properties:(await (await store()).list()).map(p=>({id:p.id,name:p.draft.name})),associations:await (await memberPropertyStore()).list(id)};
+ return {kind:'member' as const,member,invitation:invitations.find(i=>i.authUserId===id&&i.status==='pending')||null,info:{displayName:member.name||'',homeRegion:typeof metadata.home_region==='string'?metadata.home_region:'',contactPhone:typeof metadata.contact_phone==='string'?metadata.contact_phone:''},properties:(await (await store()).list()).map(p=>({id:p.id,name:p.draft.name})),associations:await (await memberPropertyStore()).list(id)};
 }
 export type MemberDetail=Awaited<ReturnType<typeof loadMemberDetail>>;

@@ -25,7 +25,7 @@ export const factsSchema=z.object(shape).strict().transform(v=>v as PropertyFact
 export type PropertyFact={value:string|number|boolean|string[]|null;state:typeof fieldStates[number];notes?:string};
 export type PropertyFacts=Partial<Record<FactKey,PropertyFact>>;
 export const coordinatesSchema=stated(z.object({latitude:z.number().min(-90).max(90),longitude:z.number().min(-180).max(180),precision:z.enum(['approximate','parcel'])}));
-export const proximitySchema=z.object({id:z.string().min(1).max(100),name:z.string().trim().min(1).max(200),kind:z.enum(['airport','town','metro','anchor']),minutes:stated(amount),miles:stated(amount),notes:description.default('')});
+export const proximitySchema=z.object({coordinates:z.object({latitude:z.number().min(-90).max(90),longitude:z.number().min(-180).max(180)}).nullable().optional(),id:z.string().min(1).max(100),name:z.string().trim().min(1).max(200),kind:z.enum(['airport','town','metro','anchor']),minutes:stated(amount),miles:stated(amount),notes:description.default('')});
 export const phaseSchema=z.object({id:z.string().min(1).max(100),name:z.string().trim().min(1).max(200),scope:description,budget:stated(amount),timeline:stated(description.min(1))});
 export const assetUrl=z.string().refine(v=>/^\/api\/property-photos\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(v)||/^\/images\/[a-zA-Z0-9._-]+$/.test(v)||(/^https:\/\//.test(v)&&!/[\s'"<>\\]/.test(v)), 'Use a local library path or HTTPS media URL.');
 export const mediaSchema=z.object({id:z.string().min(1).max(100),role:z.enum(['render','site_plan','parcel_map','aerial','video_tour','gallery']),url:assetUrl,kind:z.enum(['image','video','document']),alt:z.string().trim().min(1).max(300),caption:description,state:z.enum(fieldStates)});

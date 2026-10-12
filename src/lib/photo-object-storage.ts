@@ -11,7 +11,7 @@ export interface PhotoObjectStorage {
 }
 export function checksum(bytes:Uint8Array){return createHash('sha256').update(bytes).digest('hex');}
 export function validateObjectKey(key:string){
- if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{64}\.(jpg|png|gif|webp)$/.test(key))throw new Error('Invalid photo object key.');
+ if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{64}(\.(jpg|png|gif|webp)|\.thumb-(160|640)-v1\.webp)$/.test(key))throw new Error('Invalid photo object key.');
  return key;
 }
 export function localPhotoStorage(root=process.env.PHOTO_STORAGE_DIR||path.join(process.cwd(),'.data','property-photos')):PhotoObjectStorage {

@@ -25,6 +25,7 @@ async function schemaReady(db:Queryable){
 export async function importPropertyPhotos(db:Database,input:unknown,sourceRoot:string,storage:PhotoObjectStorage,apply=false){
  const manifest=photoImportManifest.parse(input),repo=new PropertyRepository(db),ready=await schemaReady(db);
  if(apply&&!ready)throw new Error('Apply photo migrations before importing.');
+ if(apply&&!(await db.query<{ready:boolean}>("SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='property_photos' AND column_name='storage_checksum') AS ready")).rows[0].ready)throw new Error('Apply photo migrations before importing.');
  const prepared: {item:PhotoImportManifest['photos'][number];hash:string;existing?:StoredPhoto}[]=[];
  const sourceHashes=new Map<string,string>();
  // Validate the entire plan before any writes. Do not infer destination properties from names.

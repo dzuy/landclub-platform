@@ -3,6 +3,8 @@ import {z} from 'zod';
 import type {Database} from './database';
 
 export const eventSchema=z.object({
+ imageUrl:z.string().regex(/^$|^\/api\/event-images\/[0-9a-f-]{36}\/[0-9a-f]{64}\.webp$/).optional(),
+ imageAlt:z.string().trim().max(300).optional(),
  title:z.string().trim().min(1,'Add an event title.').max(150),
  description:z.string().trim().min(1,'Add an event description.').max(10000),
  startsAt:z.iso.datetime(),endsAt:z.iso.datetime(),

@@ -1,10 +1,12 @@
+import {notionIdentityOwners} from './notion-identities';
+import {normalizeId} from './notion-platform';
 import {mapNotionProperty,mergeNotionDraft} from './notion-property-import';
 import {readDraft} from './schema';
 import type {PropertyRepository} from './repository';
 import seeds from './seed-properties.json';
 export async function importPropertyRecords(repo:PropertyRepository,rows:unknown[],actor:string,apply=true){
- const records=await repo.list();let created=0,updated=0,skipped=0;const conflicts:string[]=[];
- for(const row of rows){const incoming=mapNotionProperty(row);if(records.some(p=>p.draft.source?.pageId===incoming.source?.pageId)){skipped++;continue;}
+ const records=await repo.list();const identities=notionIdentityOwners(records);let created=0,updated=0,skipped=0;const conflicts:string[]=[];
+ for(const row of rows){const incoming=mapNotionProperty(row);if(identities.has(normalizeId(incoming.source!.pageId))||records.some(p=>p.draft.source?.pageId===incoming.source?.pageId)){skipped++;continue;}
  const existing=records.find(p=>p.draft.slug===incoming.slug);
  if(existing){
   if(existing.draft.source){conflicts.push(incoming.name);continue;}

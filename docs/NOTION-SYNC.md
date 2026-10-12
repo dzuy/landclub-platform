@@ -21,6 +21,8 @@ The app's connection is separate from the Notion connector in this chat. Without
 ## What sync does
 
 - Matches existing records by normalized Notion page ID, so renaming a property does not duplicate it or change its app URL.
+- Keeps merged-away Notion page IDs in `source.retiredPageIds` on the surviving draft. Live sync and the legacy snapshot importer skip those IDs, even if the old page is renamed. Retired pages cannot overwrite the canonical source. Platform identity migrations also retain the previous page ID. Conflicting identity ownership aborts sync before writes.
+- When merging records, retain every prior canonical/retired source ID on the survivor. The five October 12 merges have been backfilled from their preserved revision histories. This metadata is private and does not change publication.
 - Creates private drafts for new source records, with source-derived unique addresses. Does not merge unrelated properties by display name.
 - Compares app values and incoming Notion values against the previous imported values. Source-only changes update the draft; app-only edits are retained. Divergent edits in both systems become persistent conflicts.
 - Shows conflicts under **Facts → Notion sync review**, including both values. **Keep app value** and **Use Notion value** resolve the conflict locally; **Save draft** persists the decision. Neither option changes Notion.

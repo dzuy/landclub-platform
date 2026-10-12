@@ -1,9 +1,15 @@
 'use client';
 
 import {useEffect, useRef} from 'react';
+import Link from 'next/link';
+import {usePathname} from 'next/navigation';
+import {usePropertyTheme} from './use-property-theme';
 import {signOut} from '@/app/signin/actions';
 
-export function AccountMenu({email, role}: {email: string; role: string}) {
+export function AccountMenu({authenticated=true,photoUrl}: {photoUrl?:string|null;authenticated?:boolean}) {
+  const pathname=usePathname();
+  const showTheme=pathname.startsWith('/properties/')||pathname.startsWith('/staff/my-properties/');
+  const {dark,toggleTheme}=usePropertyTheme();
   const menuRef = useRef<HTMLDetailsElement>(null);
 
   useEffect(() => {
@@ -33,15 +39,15 @@ export function AccountMenu({email, role}: {email: string; role: string}) {
   return (
     <details ref={menuRef} className="account-menu">
       <summary aria-label="Open profile menu">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <span className="account-avatar">{photoUrl?<img src={photoUrl} alt=""/>:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <circle cx="12" cy="8" r="4" />
           <path d="M4.5 21c.6-5.2 3.1-7.8 7.5-7.8s6.9 2.6 7.5 7.8" />
-        </svg>
+        </svg>}</span>
       </summary>
       <div className="account-menu-panel">
-        <div><span className="account-menu-label">Signed in as</span><strong>{email}</strong></div>
-        <div><span className="account-menu-label">Role</span><span>{role}</span></div>
-        <form action={signOut}><button className="account-menu-signout">Sign out</button></form>
+        {authenticated&&<Link href="/staff/profile" aria-current={pathname==='/staff/profile'?'page':undefined} onClick={()=>{if(menuRef.current)menuRef.current.open=false;}}>Profile &amp; Settings</Link>}
+        {showTheme&&<button type="button" className="account-menu-theme" onClick={toggleTheme} aria-pressed={dark}>Dark mode <span aria-hidden="true">{dark?'On':'Off'}</span></button>}
+        {authenticated?<form action={signOut}><button className="account-menu-signout">Sign out</button></form>:<a href="/signin">Sign in</a>}
       </div>
     </details>
   );

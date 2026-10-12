@@ -27,6 +27,14 @@ export class InvitationRepository{
   const result=await this.db.query<InvitationRow>('INSERT INTO invitations(id,email,roles,status,invited_by) VALUES($1,$2,$3,\'sending\',$4) RETURNING *',[id,email.toLowerCase(),roles,invitedBy]);return invitation(result.rows[0]);
  }
  async markPending(id:string,authUserId:string){await this.db.query('UPDATE invitations SET status=\'pending\',auth_user_id=$2,sent_at=now(),failure_reason=NULL WHERE id=$1',[id,authUserId]);}
+ async resend(id:string,deliver:(invitation:Invitation)=>Promise<void>){return this.db.transaction(async tx=>{
+  const row=(await tx.query<InvitationRow>("SELECT * FROM invitations WHERE id=$1 AND status='pending' FOR UPDATE",[id])).rows[0];
+  if(!row||!row.auth_user_id)throw new Error('This invitation is no longer pending. Refresh the member directory.');
+  if(row.sent_at&&Date.now()-new Date(row.sent_at).getTime()<60_000)throw new Error('Please wait one minute before resending this invitation.');
+  await deliver(invitation(row));
+  const updated=(await tx.query<InvitationRow>("UPDATE invitations SET sent_at=now(),failure_reason=NULL WHERE id=$1 RETURNING *",[id])).rows[0];
+  return invitation(updated);
+ });}
  async markFailed(id:string,reason:string){await this.db.query('UPDATE invitations SET status=\'failed\',failure_reason=$2 WHERE id=$1',[id,reason.slice(0,500)]);}
  async activeById(id:string){const result=await this.db.query<InvitationRow>('SELECT * FROM invitations WHERE id=$1 AND status IN (\'sending\',\'pending\') LIMIT 1',[id]);return result.rows[0]?invitation(result.rows[0]):null;}
  async cancel(id:string,actor:string){const result=await this.db.query<InvitationRow>('UPDATE invitations SET status=\'failed\',failure_reason=$2 WHERE id=$1 AND status IN (\'sending\',\'pending\') RETURNING *',[id,`Cancelled by ${actor}`.slice(0,500)]);if(!result.rows[0])throw new Error('Invitation is no longer pending.');return invitation(result.rows[0]);}

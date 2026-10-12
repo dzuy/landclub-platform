@@ -8,7 +8,7 @@ export async function store(){
  const repo=new PropertyRepository(database());
  if(!globalStore.landClubSchemaV2Ready)globalStore.landClubSchemaV2Ready=(async()=>{
   if(!process.env.DATABASE_URL&&process.env.NODE_ENV==='development')await repo.initialize();
-  if(process.env.NODE_ENV==='development'&&(await repo.list()).length===0){for(const seed of seeds)await repo.create(seed,'demo-seed');}
+  if(!process.env.DATABASE_URL&&process.env.NODE_ENV==='development'&&(await repo.list()).length===0){for(const seed of seeds)await repo.create(seed,'demo-seed');}
  })().catch(error=>{globalStore.landClubSchemaV2Ready=undefined;throw error;});
  await globalStore.landClubSchemaV2Ready;
  return repo;

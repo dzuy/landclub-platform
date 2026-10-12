@@ -54,3 +54,15 @@ test('import preserves edits, public snapshots and revisions; rerun is idempoten
  const next=await repo.get(p.id);await repo.save(p.id,next!.version,{...next!.draft,proximity:[{id:'town',name:'Sample town',kind:'town',minutes:actual(15),miles:unknown,notes:''}]},'test');assert.equal((await repo.publicBySlug(p.draft.slug))?.proximity.length,0);
  }finally{await db.close();}
 });
+
+test('public property responses omit editorial notes while staff records retain them',async()=>{
+ const db=new PGlite(),repo=new PropertyRepository(embeddedDatabase(db));await repo.initialize();
+ try{
+ const note='Review before publication: internal editorial note';
+ const property=readDraft({...available(),facts:{existing_structures:{...actual('House'),notes:note}},coordinates:{state:'Actual',value:{latitude:39,longitude:-120,precision:'approximate'},notes:note},proximity:[{id:'town',kind:'town',name:'Nearby town',minutes:{...actual(15),notes:note},miles:{...unknown,notes:note},notes:note}],phases:[{id:'phase',name:'First phase',scope:'Planning',budget:{...unknown,notes:note},timeline:{state:'Planned',value:'2027',notes:note}}]});
+ const created=await repo.create(property,'test');await repo.publish(created.id,created.version,'test');
+ for(const result of [await repo.publicBySlug(property.slug),await repo.publicList()])assert.ok(!JSON.stringify(result).includes(note));
+ const staff=await repo.get(created.id);assert.deepEqual(staff?.draft,property);assert.deepEqual(staff?.published,property);
+ assert.equal((await repo.publicBySlug(property.slug))?.phases[0].timeline.state,'Planned');
+ }finally{await db.close();}
+});

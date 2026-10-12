@@ -13,26 +13,29 @@
     "deploy:check": "node scripts/check-environment.mjs",
     "test:postgres": "node --import tsx --test tests/postgres.test.ts",
     "photos:import": "node --import tsx scripts/import-property-photos.ts",
-    "photos:bucket": "node --import tsx scripts/setup-photo-bucket.ts"
+    "photos:bucket": "node --import tsx scripts/setup-photo-bucket.ts",
+    "photos:optimize": "node --import tsx scripts/optimize-property-photos.ts"
   },
   "dependencies": {
-    "next": "^16.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "@electric-sql/pglite": "^0.3.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.0.0",
-    "@electric-sql/pglite": "^0.3.0",
+    "mapbox-gl": "^3.32.0",
+    "next": "^16.0.0",
     "pg": "^8.16.0",
-    "zod": "^4.0.0",
-    "server-only": "^0.0.1"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "server-only": "^0.0.1",
+    "sharp": "^0.35.4",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.9.0",
     "@types/node": "^22.0.0",
+    "@types/pg": "^8.15.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@types/pg": "^8.15.0",
-    "tsx": "^4.0.0"
+    "tsx": "^4.0.0",
+    "typescript": "^5.9.0"
   },
   "engines": {
     "node": ">=22 <23"

@@ -1,3 +1,5 @@
+import {PropertyPage} from '../src/components/property-page';
+import {visiblePropertyFields} from '../src/lib/public-property-fields';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createElement} from 'react';
@@ -20,14 +22,29 @@ test('gallery supports aerial-only records and preserves captions and planned st
  assert.equal(JSON.stringify(property),original);
 });
 
-test('infrastructure keeps unknown, planned and false values visible',()=>{
+test('infrastructure hides unknown fields and keeps planned and false values visible',()=>{
  const property=readDraft({...seeds[0],facts:{road_access:{value:'gravel',state:'Planned',notes:'Awaiting approval.'},winter_access_notes:{value:null,state:'Not yet determined'},gated:{value:false,state:'Actual'}}});
  const html=renderToStaticMarkup(createElement(PropertyInfrastructure,{property}));
  assert.match(html,/gravel \(planned\)/);
- assert.match(html,/Awaiting approval\./);
- assert.match(html,/Not yet determined/);
+ assert.doesNotMatch(html,/Awaiting approval\./);
+ assert.doesNotMatch(html,/Not yet determined|TBD|Winter access notes/);
  assert.match(html,/>No</);
  assert.doesNotMatch(html,/>Utilities<|>Buildings &amp; Timeline</);
- const empty=renderToStaticMarkup(createElement(PropertyInfrastructure,{property:readDraft({...seeds[0],facts:{}})}));
+ const empty=renderToStaticMarkup(createElement(PropertyInfrastructure,{property:readDraft({...seeds[0],facts:{power:{state:'Not yet determined',value:null}}})}));
  assert.equal(empty,'');
+});
+
+
+test('public field projection hides empty sections without mutating staff content',()=>{
+ const property=readDraft({...seeds[0],facts:{total_acres:{state:'Not yet determined',value:10},share_price:{state:'Actual',value:0},gated:{state:'Actual',value:false},existing_structures:{state:'Actual',value:'TBD'}},phases:[{id:'empty',name:'Empty phase',scope:'TBD',budget:{state:'Not yet determined',value:null},timeline:{state:'Not yet determined',value:null}}],sections:[{id:'empty',title:'Empty story',eyebrow:'',body:'',facts:[{label:'Size',value:'Not yet determined'}]}]});
+ const original=structuredClone(property),visible=visiblePropertyFields(property);
+ assert.deepEqual(Object.keys(visible.facts).sort(),['gated','share_price']);
+ assert.equal(visible.phases.length,0);assert.equal(visible.sections.length,0);
+ assert.deepEqual(property,original);
+});
+
+test('property page omits empty sections and their navigation links',()=>{
+ const property=readDraft({...seeds[0],region:'',gallery:[],media:[],sections:[],phases:[{id:'empty',name:'Empty',scope:'',budget:{state:'Not yet determined',value:null},timeline:{state:'Not yet determined',value:null}}],facts:{existing_structures:{state:'Not yet determined',value:null},power:{state:'Not yet determined',value:null},total_acres:{state:'Not yet determined',value:null}},proximity:[]});
+ const html=renderToStaticMarkup(createElement(PropertyPage,{property}));
+ assert.doesNotMatch(html,/Not yet determined|TBD|href="#(?:structures|infrastructure|next|area|gallery)"|Area Details/);
 });

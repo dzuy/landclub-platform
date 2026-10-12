@@ -34,6 +34,26 @@ export async function sendInvitation(_previous:InvitationState,form:FormData):Pr
  return {error:'',message:`Invitation sent to ${email}.`};
 }
 
+export async function resendInvitation(_previous:InvitationState,form:FormData):Promise<InvitationState>{
+ await requireStaff();
+ const id=z.uuid().safeParse(form.get('invitationId'));
+ if(!id.success)return {error:'This invitation could not be identified.'};
+ try{
+  const admin=authAdminClient();
+  const redirectTo=new URL('/auth/confirm',canonicalSiteUrl((await headers()).get('origin'),process.env.LAND_CLUB_SITE_URL,process.env.NODE_ENV)).toString();
+  await new InvitationRepository(database()).resend(id.data,async invitation=>{
+   const {data,error}=await admin.auth.admin.getUserById(invitation.authUserId!);
+   if(error||!data.user)throw new Error('The invited account could not be found. Refresh the directory.');
+   if(data.user.email_confirmed_at||data.user.last_sign_in_at)throw new Error('This person has already verified their account. They should sign in or use Forgot password.');
+   if(data.user.email?.toLowerCase()!==invitation.email)throw new Error('The invited email no longer matches this account.');
+   const result=await admin.auth.admin.inviteUserByEmail(invitation.email,{redirectTo});
+   if(result.error||result.data.user?.id!==invitation.authUserId)throw new Error('Invitation delivery could not be confirmed. Please wait a minute before trying again.');
+  });
+ }catch(error){return {error:error instanceof Error&&['This invitation','Please wait','The invited','This person','Invitation delivery'].some(prefix=>error.message.startsWith(prefix))?error.message:'The invitation could not be resent. Please try again later.'};}
+ revalidatePath('/staff/members','layout');
+ return {error:'',message:'Invitation resent. Ask them to use the newest invitation email.'};
+}
+
 export async function updateMemberRoles(_previous:RoleUpdateState,form:FormData):Promise<RoleUpdateState>{
  const actor=await requireStaff();
  const target=roleTargetSchema.safeParse({kind:form.get('targetKind'),id:form.get('targetId')});
@@ -64,19 +84,20 @@ export async function cancelInvitation(_previous:CancelInvitationState,form:Form
   const {preparedMemberStore}=await import('@/lib/prepared-member-store');
   const {memberPropertyStore}=await import('@/lib/member-property-store');
   const prepared=await preparedMemberStore();await memberPropertyStore();
+  await prepared.cancelInvitation(id.data,actor.id,async()=>{
   if(invitation.authUserId){
    const admin=authAdminClient();
    const {data,error}=await admin.auth.admin.getUserById(invitation.authUserId);
    if(error&&error.status!==404)throw error;
    const invitedUser=data.user;
-   if(invitedUser?.last_sign_in_at||invitedUser?.email_confirmed_at)return {error:'This person has already created their account. Refresh the page to see their current status.'};
+   if(invitedUser?.last_sign_in_at||invitedUser?.email_confirmed_at)throw new Error('This person has already created their account. Refresh the page to see their current status.');
    if(invitedUser){
     const {error:deleteError}=await admin.auth.admin.deleteUser(invitation.authUserId);
     if(deleteError&&deleteError.status!==404)throw deleteError;
    }
   }
-  await prepared.cancelInvitation(id.data,actor.id);
- }catch{return {error:'The invitation could not be cancelled. Refresh the page and try again.'};}
+  });
+ }catch(error){return {error:error instanceof Error&&error.message.startsWith('This person has already')?error.message:'The invitation could not be cancelled. Refresh the page and try again.'};}
  revalidatePath('/staff/members','layout');
  return {error:'',message:'Invitation cancelled. Any saved member setup is available as a draft, ready to invite again.'};
 }

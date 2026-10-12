@@ -1,3 +1,4 @@
+import {notionIdentityOwners} from './notion-identities';
 import {PLATFORM_SOURCE,INTERNAL_SOURCE,normalizeId} from './notion-platform';
 import {readDraft,type PropertyDraft} from './schema';
 import {mapNotionProperty} from './notion-property-import';
@@ -38,9 +39,13 @@ export async function syncNotionRecords(repo:PropertyRepository,rows:LiveNotionR
  // Serialize imports and concurrent app writes; failures roll back the entire run.
  return repo.locked(async locked=>{
   const records=await locked.list(),matched=new Set<string>(),seen=new Set(rows.map(r=>r.pageId));
+  const identityOwners=notionIdentityOwners(records);
   if(seen.size!==rows.length)throw new Error('Duplicate Notion source rows.');
-  let created=0,updated=0,unchanged=0,missing=0;const conflicts:string[]=[];const now=new Date().toISOString();
+  let created=0,updated=0,unchanged=0,missing=0,skipped=0;const conflicts:string[]=[];const now=new Date().toISOString();
   for(const row of rows){
+   // Retired source pages must never recreate a merged property or overwrite its canonical source.
+   const owner=identityOwners.get(normalizeId(row.pageId));
+   if(owner&&normalizeId(owner.draft.source!.pageId)!==normalizeId(row.pageId)){skipped++;continue;}
    const incoming='platform' in row?readDraft(row.platform):mapNotionProperty(row,now);
    const candidates=records.filter(p=>p.draft.source&&(normalizeId(p.draft.source.pageId)===row.pageId||('platform' in row&&row.legacyPageIds.includes(normalizeId(p.draft.source.pageId)))));
    if(candidates.length>1)throw new Error('Ambiguous Notion identity mapping; no records changed.');
@@ -53,7 +58,7 @@ export async function syncNotionRecords(repo:PropertyRepository,rows:LiveNotionR
     const migration='platform' in row&&dataSourceId===PLATFORM_SOURCE&&row.legacyPageIds.includes(normalizeId(old.pageId))&&(!old.sync||normalizeId(old.sync.dataSourceId)===INTERNAL_SOURCE);
     if(old.sync&&normalizeId(old.sync.dataSourceId)!==dataSourceId&&!migration)throw new Error('Property is already linked to another Notion data source.');
     // The relation is used only as an identity bridge. Never fetch internal property values.
-    const local=migration?readDraft({...existing.draft,source:{...incoming.source,importedAt:old.importedAt,reviewNotes:[...old.reviewNotes,...incoming.source!.reviewNotes],sync:undefined}}):existing.draft;
+    const local=migration?readDraft({...existing.draft,source:{...incoming.source,retiredPageIds:[...new Set([...(old.retiredPageIds??[]),normalizeId(old.pageId)])],importedAt:old.importedAt,reviewNotes:[...old.reviewNotes,...incoming.source!.reviewNotes],sync:undefined}}):existing.draft;
     const draft=mergeLiveProperty(local,incoming,dataSourceId,row.lastEditedAt,now);
     if(draft.source!.sync!.conflicts.length)conflicts.push(draft.name);
     const comparable=(p:PropertyDraft)=>({...p,source:p.source?{...p.source,sync:p.source.sync?{...p.source.sync,checkedAt:''}:undefined}:undefined});
@@ -73,6 +78,6 @@ export async function syncNotionRecords(repo:PropertyRepository,rows:LiveNotionR
    missing++;if(source.sync?.missing)continue;
    await locked.save(p.id,p.version,{...p.draft,source:{...source,sync:{dataSourceId,baseline:source.sync?.baseline??{},conflicts:source.sync?.conflicts??[],missing:true,lastEditedAt:source.sync?.lastEditedAt??'',checkedAt:now,contentReview:true}}},actor);
   }
-  return {created,updated,unchanged,missing,conflicts,published:0};
+  return {created,updated,unchanged,missing,skipped,conflicts,published:0};
  });
 }
