@@ -235,7 +235,7 @@ button.property-danger{background:#a33428;border-color:#a33428;color:#fff}
 
 .property-editor-fields .property-facts-editor{gap:12px}
 .property-facts-editor>h2{margin:8px 0 12px}
-.property-facts-editor>.cms-content-section{margin:0;background:transparent}
+.property-facts-editor>.cms-content-section{min-width:0;margin:0;background:transparent}
 .property-facts-editor>.cms-content-section>summary{padding:14px 16px;font-size:16px}
 .property-facts-editor>.cms-content-section[open]>summary{border-bottom:1px solid var(--line)}
 .property-editor-fields .property-facts-editor .cms-form-grid{gap:16px}
@@ -276,3 +276,8 @@ button.property-photo-more{width:30px;height:30px;padding:0;background:var(--cre
 .admin-page-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:24px}
 .dashboard-main .admin-page-heading h1{font-size:32px;line-height:1.15;letter-spacing:-.8px;margin:0}
 .admin-page-heading .row-actions,.admin-page-heading .property-library-actions{margin:0;flex-wrap:wrap}
+
+/* Compact property detail lists use the existing right-hand drawer. */
+.property-detail-list{padding:0 16px 16px;min-width:0}.property-detail-row{display:flex;align-items:center;gap:16px;width:100%;text-align:left;padding:16px 0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;color:var(--ink);font-size:14px;min-height:72px}.property-detail-row:hover{background:#e9e7dc}.property-detail-row:focus-visible{outline:2px solid var(--ink);outline-offset:3px}.property-detail-row-copy{display:flex;flex:1;min-width:0;flex-direction:column;gap:5px}.property-detail-row-copy strong{font-weight:500;font-size:16px;overflow-wrap:anywhere}.property-detail-row-summary{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);line-height:1.5}.property-detail-row-meta{font-size:12px;color:var(--muted);flex-shrink:0}.property-detail-add{margin-top:16px;padding:8px 12px;font-size:13px}.cms-content-section summary .property-detail-count{margin-left:8px;margin-right:0}.property-entry-drawer{width:min(560px,100vw)}.property-entry-drawer .member-drawer-heading h2{margin:4px 0;font-size:28px;overflow-wrap:anywhere}.property-entry-drawer .member-drawer-body{padding-top:16px;padding-bottom:24px}.property-entry-drawer .form{max-width:none}.property-entry-drawer .property-fact-fields{border-top:1px solid var(--line);padding-top:18px;gap:12px}.property-entry-drawer input,.property-entry-drawer select,.property-entry-drawer textarea{width:100%;min-width:0;box-sizing:border-box;background:#fffdf7;font-size:16px}.property-entry-drawer textarea{min-height:96px;resize:vertical}.property-entry-footer{position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 32px;background:var(--cream);border-top:1px solid var(--line)}.property-entry-footer>.row-actions{margin-left:auto}.property-entry-confirm{width:100%}.property-entry-confirm p{margin:0 0 12px}.property-entry-drawer::backdrop{background:#17211366}@media(max-width:650px){.property-detail-row{gap:10px;flex-wrap:wrap}.property-detail-row-copy{flex-basis:calc(100% - 32px)}.property-detail-row-meta{order:3;flex-basis:100%}.property-entry-footer{padding:16px 20px;flex-wrap:wrap}.property-entry-footer button{padding:10px 14px}}
+
+.property-entry-remove{background:transparent;color:#a33428;border-color:transparent}

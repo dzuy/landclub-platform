@@ -1,0 +1,10 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createElement} from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {NearbyPlacesList,ThingsToDoList} from '../src/components/property-detail-lists';
+import {readDraft} from '../src/lib/schema';
+const draft=()=>readDraft({name:'Fixture',slug:'fixture',region:'Test',category:'Mountains',status:'Draft',headline:'',summary:'',intro:'',hero:'',imageAlt:'',isDemo:true,gallery:[],sections:[],facts:{recreation:{value:'Hiking',state:'Planned',notes:'Qualification'}},proximity:[{id:'first',name:'Zero-time place',kind:'town',minutes:{value:0,state:'Actual'},miles:{value:0,state:'Actual'},notes:'Preserved notes'},{id:'second',name:'Unknown place',kind:'anchor',minutes:{value:null,state:'Not yet determined'},miles:{value:null,state:'Not yet determined'},notes:''}]});
+test('nearby rows preserve order, distinguish zero from unknown, and keep forms out of the list',()=>{const d=draft(),before=structuredClone(d);const html=renderToStaticMarkup(createElement(NearbyPlacesList,{draft:d,onChange:()=>assert.fail('render must not mutate')}));assert.ok(html.indexOf('Edit Zero-time place')<html.indexOf('Edit Unknown place'));assert.match(html,/0 min · 0 miles/);assert.match(html,/Time unknown · Distance unknown/);assert.doesNotMatch(html,/<input|<textarea|<dialog/);assert.deepEqual(d,before);});
+test('Things To Do uses named field rows without splitting or dropping qualifications',()=>{const d=draft(),before=structuredClone(d);const html=renderToStaticMarkup(createElement(ThingsToDoList,{draft:d,onChange:()=>assert.fail()}));assert.match(html,/Edit Recreation/);assert.match(html,/Hiking/);assert.match(html,/Planned/);assert.match(html,/Add things to do/);assert.doesNotMatch(html,/<input|<textarea/);assert.deepEqual(d,before);});
+test('empty lists offer useful add actions',()=>{const d=draft();d.proximity=[];d.facts={};assert.match(renderToStaticMarkup(createElement(NearbyPlacesList,{draft:d,onChange:()=>{}})),/No nearby places yet/);assert.match(renderToStaticMarkup(createElement(ThingsToDoList,{draft:d,onChange:()=>{}})),/No things to do yet/);});
