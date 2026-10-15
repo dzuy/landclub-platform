@@ -164,6 +164,8 @@ export async function invitePreparedMember(_previous:InvitationState,form:FormDa
 
 export async function deleteMember(_previous:{error:string;deleted?:boolean;self?:boolean},form:FormData):Promise<{error:string;deleted?:boolean;self?:boolean}>{
  const actor=await requireStaff();
+ const kind=z.enum(['user','prepared','invitation']).safeParse(form.get('targetKind')??'user');
+ if(!kind.success)return {error:'This member could not be identified.'};
  const id=z.uuid().safeParse(form.get('userId'));
  if(!id.success)return {error:'This member could not be identified.'};
  if(form.get('confirmation')!=='DELETE')return {error:'Type DELETE to confirm.'};
@@ -174,12 +176,14 @@ export async function deleteMember(_previous:{error:string;deleted?:boolean;self
   const {memberDocumentStore}=await import('@/lib/member-document-store');
   await new InvitationRepository(database()).initialize();
   await preparedMemberStore();await memberPropertyStore();await memberDocumentStore();
-  const {deleteMemberAccount}=await import('@/lib/delete-member');
-  await deleteMemberAccount(database(),actor,id.data,'DELETE',async()=>{
-   const {error}=await admin.auth.admin.deleteUser(id.data);
+  const {deleteMemberAccount,deleteUnacceptedMember}=await import('@/lib/delete-member');
+  const removeAuth=async(userId:string)=>{
+   const {error}=await admin.auth.admin.deleteUser(userId);
    if(error&&error.status!==404)throw error;
-  });
- }catch{return {error:'The account could not be deleted. Please try again.'};}
+  };
+  if(kind.data==='user')await deleteMemberAccount(database(),actor,id.data,'DELETE',()=>removeAuth(id.data));
+  else await deleteUnacceptedMember(database(),actor,kind.data,id.data,'DELETE',removeAuth);
+ }catch(error){return {error:error instanceof Error&&error.message.startsWith('Check invitation status')?error.message:'The account could not be deleted. Please try again.'};}
  revalidatePath('/dashboard','layout');
- return {error:'',deleted:true,self:actor.id===id.data};
+ return {error:'',deleted:true,self:kind.data==='user'&&actor.id===id.data};
 }

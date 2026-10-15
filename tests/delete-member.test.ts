@@ -40,3 +40,30 @@ test('deletion rolls back on auth failure, removes only target data, and permits
   await deleteMemberAccount(db,{admin:true},user,'DELETE',async()=>{});
  }finally{await pg.close();}
 });
+
+test('drafts and pending invitations can be deleted before acceptance',async()=>{
+ const {deleteUnacceptedMember}=await import('../src/lib/delete-member');
+ const pg=new PGlite();
+ try{
+  for(const file of ['001_property_content.sql','003_invitations_and_roles.sql','008_prepared_members.sql','006_member_properties.sql','012_member_documents.sql'])await pg.exec(await readFile(new URL('../migrations/'+file,import.meta.url),'utf8'));
+  const db=embeddedDatabase(pg),draft=randomUUID(),invite=randomUUID(),user=randomUUID();
+  await db.query("INSERT INTO prepared_members(id,email,info,roles,status,created_by) VALUES($1,'draft@example.com','{}',ARRAY['member'],'draft','admin')",[draft]);
+  await db.query("INSERT INTO member_documents(id,member_id,filename,byte_size,content,uploaded_by) VALUES($1,$2,'test.txt',1,'x','admin')",[randomUUID(),draft]);
+  const unexpected=async()=>{throw new Error('Unexpected auth call');};
+  await assert.rejects(deleteUnacceptedMember(db,{admin:false},'prepared',draft,'DELETE',unexpected),/Admin/);
+  await assert.rejects(deleteUnacceptedMember(db,{admin:true},'prepared',draft,'no',unexpected),/confirm/);
+  await db.query("UPDATE prepared_members SET status='sending' WHERE id=$1",[draft]);
+  await assert.rejects(deleteUnacceptedMember(db,{admin:true},'prepared',draft,'DELETE',unexpected),/Check invitation status/);
+  await db.query("UPDATE prepared_members SET status='draft' WHERE id=$1",[draft]);
+  await deleteUnacceptedMember(db,{admin:true},'prepared',draft,'DELETE',unexpected);
+  assert.equal((await db.query('SELECT * FROM member_documents')).rows.length,0);
+  assert.equal((await db.query('SELECT * FROM prepared_members')).rows.length,0);
+  await db.query("INSERT INTO invitations(id,email,roles,status,auth_user_id,invited_by) VALUES($1,'pending@example.com',ARRAY['member'],'pending',$2,'admin')",[invite,user]);
+  await assert.rejects(deleteUnacceptedMember(db,{admin:true},'invitation',invite,'DELETE',async()=>{throw new Error('Provider failed');}),/Provider/);
+  assert.equal((await db.query('SELECT * FROM invitations')).rows.length,1);
+  let removed='';
+  await deleteUnacceptedMember(db,{admin:true},'invitation',invite,'DELETE',async id=>{removed=id;});
+  assert.equal(removed,user);
+  assert.equal((await db.query('SELECT * FROM invitations')).rows.length,0);
+ }finally{await pg.close();}
+});
