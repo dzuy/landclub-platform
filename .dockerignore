@@ -11,3 +11,5 @@ npm-debug.log*
 land-club-prototype/
 .slide-build/
 output/
+
+.scanner

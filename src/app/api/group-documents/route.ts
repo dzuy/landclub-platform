@@ -1,3 +1,4 @@
+import {documentServiceReady} from '@/lib/scanner-readiness';
 import {hasSameOrigin} from '@/lib/request-origin';
 import {groupDocumentStore} from '@/lib/group-document-store';
 import {MAX_DOCUMENT_BYTES,validateDocument} from '@/lib/member-documents';
@@ -8,6 +9,7 @@ export async function GET(){const actor=await documentActor();if(!actor?.admin)r
 export async function POST(request:Request){
  const actor=await documentActor();if(!actor?.admin)return documentJson({error:'Admin access required.'},403);
  if(!hasSameOrigin(request))return documentJson({error:'Invalid upload origin.'},403);
+ if(!await documentServiceReady())return documentJson({error:'Document security scanning is temporarily unavailable. Please try again later.'},503);
  try{
   let bytes:Buffer;try{bytes=await limitedBody(request,MAX_DOCUMENT_BYTES+65536);}catch{return documentJson({error:'Choose a file up to 20 MB.'},413);}
   const form=await new Response(new Uint8Array(bytes),{headers:{'Content-Type':request.headers.get('content-type')||''}}).formData();

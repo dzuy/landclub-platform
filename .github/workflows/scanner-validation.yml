@@ -1,0 +1,21 @@
+name: Isolated scanner validation
+on:
+  push:
+    branches: [validation/scanner-20261015]
+permissions:
+  contents: read
+jobs:
+  scanner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build candidate and run embedded tests
+        run: timeout 22m docker build --progress=plain -t landclub-scanner-validation .
+      - name: Measure real clean and EICAR probes without network or database
+        run: >-
+          timeout 3m docker run --rm --network none --memory 6g --cpus 2
+          --read-only --tmpfs /tmp:rw,noexec,nosuid,size=128m
+          --entrypoint node landclub-scanner-validation scripts/measure-scanner-probe.mjs

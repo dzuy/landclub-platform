@@ -1,3 +1,4 @@
+import {documentServiceReady} from '@/lib/scanner-readiness';
 import {z} from 'zod';
 import {hasSameOrigin} from '@/lib/request-origin';
 import {groupDocumentStore} from '@/lib/group-document-store';
@@ -7,6 +8,7 @@ export const dynamic='force-dynamic';
 export async function GET(_request:Request,{params}:{params:Promise<{id:string}>}){
  const actor=await documentActor();if(!actor)return documentJson({error:'Please sign in.'},401);
  const {id}=await params;if(!z.uuid().safeParse(id).success)return documentJson({error:'Not found.'},404);
+ if(!await documentServiceReady())return documentJson({error:'Document security scanning is temporarily unavailable. Please try again later.'},503);
  try{const doc=await (await groupDocumentStore()).download(id,actor);if(!doc)return documentJson({error:'Not found.'},404);
   return new Response(Buffer.from(doc.content,'base64'),{headers:{...privateHeaders,'Content-Type':'application/octet-stream','Content-Disposition':`attachment; filename="document"; filename*=UTF-8''${encodeURIComponent(doc.filename).replace(/['()*]/g,c=>'%'+c.charCodeAt(0).toString(16))}`,'Content-Security-Policy':"sandbox; default-src 'none'"}});
  }catch{return documentJson({error:'Unable to download this document.'},500);}
