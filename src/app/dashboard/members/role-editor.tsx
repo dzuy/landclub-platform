@@ -1,12 +1,14 @@
 'use client';
 import {useEffect,useRef,useState,useTransition} from 'react';
-import {readRoles,roleLabels,roleValues,type ClubRole} from '@/lib/roles';
+import {readRoles,roleLabels,assignableRoleValues,type ClubRole} from '@/lib/roles';
+import {useDetailSaveStatus} from '@/components/detail-save-status';
 import {updateMemberRoles} from './actions';
 import styles from './members.module.css';
 
 export function RoleEditor({roles,target,locked,detail=false}:{detail?:boolean;roles:ClubRole[];target:{kind:'user'|'invitation'|'prepared';id:string};locked:boolean}){
  const [selected,setSelected]=useState(roles),[state,setState]=useState({error:'',message:''});
  const [pending,startTransition]=useTransition(),saving=useRef(false);
+ useDetailSaveStatus(state.error?'error':pending?'saving':state.message?'saved':'');
  useEffect(()=>{if(!saving.current)setSelected(roles);},[roles]);
  function change(role:ClubRole,checked:boolean){
   if(locked||saving.current)return;
@@ -19,9 +21,9 @@ export function RoleEditor({roles,target,locked,detail=false}:{detail?:boolean;r
    finally{saving.current=false;}
   });
  }
- if(locked&&!detail)return <div><div className={styles.roles}>{roles.map(role=><span className="badge gray" key={role}>{roleLabels[role]}</span>)}</div>{target.kind==='prepared'&&<span className={styles.lockedRole}>Invitation in progress</span>}</div>;
+ if(locked&&!detail)return <div><div className={styles.roles}>{roles.filter(role=>role!=='member').map(role=><span className="badge gray" key={role}>{roleLabels[role]}</span>)}</div>{target.kind==='prepared'&&<span className={styles.lockedRole}>Invitation in progress</span>}</div>;
  return <div className={`${styles.roleEditor} ${detail?styles.detailRoleEditor:''}`}>
-  <fieldset disabled={pending||locked}><legend className={styles.srOnly}>Club roles</legend>{roleValues.map(role=><label key={role}><input type="checkbox" name="roles" value={role} checked={selected.includes(role)} onChange={event=>change(role,event.target.checked)}/><span>{roleLabels[role]}</span></label>)}</fieldset>
+  {detail&&<p className="muted">Everyone is a member by default.</p>}<fieldset disabled={pending||locked}><legend className={styles.srOnly}>Club roles</legend>{assignableRoleValues.map(role=><label key={role}><input type="checkbox" name="roles" value={role} checked={selected.includes(role)} onChange={event=>change(role,event.target.checked)}/><span>{roleLabels[role]}</span></label>)}</fieldset>
   {locked?<p className={styles.lockedRole}>This account’s roles are managed in deployment settings.</p>:<>{state.error&&<span className={styles.roleError} role="alert">{state.error}</span>}<span className={styles.roleSuccess} role="status" aria-live="polite">{pending?'Saving…':state.message?'Saved':''}</span></>}
  </div>;
 }

@@ -3,8 +3,7 @@ import {useState} from 'react';
 import {MultiFilter} from '@/components/table-filter';
 import {MemberDrawerLink} from './member-drawer';
 import {memberDirectoryView,memberStatusLabels,type DirectoryMember,type MemberColumn} from '@/lib/member-directory-view';
-import {roleLabels,roleValues} from '@/lib/roles';
-import {RoleEditor} from './role-editor';
+import {roleLabels,assignableRoleValues} from '@/lib/roles';
 import {DataTable,type TableColumn} from '@/components/data-table';
 import styles from './members.module.css';
 
@@ -22,7 +21,7 @@ export function MemberTable({members,properties}:{members:DirectoryMember[];prop
   <div className={styles.directoryTools}>
    <label className={styles.search}><span className={styles.srOnly}>Search members</span><input type="search" placeholder="Search by name or email" value={search} onChange={event=>setSearch(event.target.value)}/></label>
    <MultiFilter label="Properties" options={[...properties].sort((a,b)=>a.name.localeCompare(b.name))} selected={selectedProperties} onChange={setProperties}/>
-   <MultiFilter label="Roles" options={roleValues.map(role=>({id:role,name:roleLabels[role]}))} selected={selectedRoles} onChange={setRoles}/>
+   <MultiFilter label="Roles" options={assignableRoleValues.map(role=>({id:role,name:roleLabels[role]}))} selected={selectedRoles} onChange={setRoles}/>
    <MultiFilter label="Status" options={Object.entries(memberStatusLabels).map(([id,name])=>({id,name}))} selected={selectedStatuses} onChange={setStatuses}/>
    {filtered&&<button type="button" className={`secondary ${styles.clearFilters}`} onClick={clear}>Clear all</button>}
   </div>
@@ -32,7 +31,7 @@ export function MemberTable({members,properties}:{members:DirectoryMember[];prop
     if(event.target instanceof Element&&event.target.closest('a,button,input,select,textarea,label,form,dialog'))return;
     if(window.getSelection()?.toString())return;
     event.currentTarget.querySelector<HTMLButtonElement>('[data-member-drawer-trigger]')?.click();
-   }}><td><MemberDrawerLink id={member.id} name={member.name||member.email}/></td><td>{member.email}</td><td><RoleEditor key={member.roles.join(',')} roles={member.roles} target={member.roleTarget} locked={member.rolesLocked}/></td><td><span className={`badge ${member.status==='active'?'':'sand'}`}>{memberStatusLabels[member.status]}</span></td></tr>)}{!visible.length&&<tr><td colSpan={columns.length} className={styles.emptyDirectory}>{members.length?'No members match your search and filters.':'No members or invitations yet.'}{filtered&&<button type="button" className="secondary" onClick={clear}>Clear search and filters</button>}</td></tr>}
+   }}><td><MemberDrawerLink id={member.id} name={member.name||member.email}/></td><td>{member.email}</td><td><button type="button" className={styles.roleChips} aria-label={`Edit roles for ${member.name||member.email}`} onClick={event=>event.currentTarget.closest('tr')?.querySelector<HTMLButtonElement>('[data-member-drawer-trigger]')?.click()}>{member.roles.filter(role=>role!=='member').length?member.roles.filter(role=>role!=='member').map(role=><span key={role} className={styles.roleChip}>{roleLabels[role]}</span>):<span className={styles.roleChip}>Member</span>}</button></td><td><span className={`badge ${member.status==='active'?'':'sand'}`}>{memberStatusLabels[member.status]}</span></td></tr>)}{!visible.length&&<tr><td colSpan={columns.length} className={styles.emptyDirectory}>{members.length?'No members match your search and filters.':'No members or invitations yet.'}{filtered&&<button type="button" className="secondary" onClick={clear}>Clear search and filters</button>}</td></tr>}
   </DataTable>
  </section>;
 }

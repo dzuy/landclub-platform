@@ -30,3 +30,13 @@ export async function getPropertyDetail(id:string){
   return {ok:true as const,record:JSON.parse(JSON.stringify(record)) as typeof record,history:JSON.parse(JSON.stringify(await repo.history(id))) as Awaited<ReturnType<typeof repo.history>>};
  }catch(e){return {ok:false as const,error:message(e)};}
 }
+
+export async function deleteProperty(id:string,version:number,confirmation:string){
+ try{
+  await requireStaff();reference.parse({id,version});
+  if(confirmation!=='DELETE')return {ok:false as const,error:'Confirm property deletion first.'};
+  await (await store()).delete(id,version);
+  revalidatePath('/properties','layout');revalidatePath('/dashboard','layout');revalidatePath('/');
+  return {ok:true as const};
+ }catch(e){return {ok:false as const,error:message(e)};}
+}

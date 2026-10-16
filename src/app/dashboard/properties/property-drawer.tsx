@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useRef,useState} from 'react';
+import {DetailSaveStatus,DetailSaveStatusProvider} from '@/components/detail-save-status';
 import {useRouter} from 'next/navigation';
 import {PropertyEditor} from '@/components/property-editor';
 import {getPropertyDetail} from './actions';
@@ -23,7 +24,7 @@ export function PropertyDrawer({id,title,onClose}:{id:string;title:string;onClos
  }
  function isOutside(event:React.PointerEvent<HTMLDialogElement>|React.MouseEvent<HTMLDialogElement>){const r=event.currentTarget.getBoundingClientRect();return event.target===event.currentTarget&&(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom);}
  return <dialog ref={dialog} className={`member-drawer property-editor-drawer${closing?' is-closing':''}`} aria-labelledby="property-drawer-title" onCancel={event=>{event.preventDefault();close();}} onPointerDown={event=>{outside.current=isOutside(event);}} onPointerCancel={()=>{outside.current=false;}} onClick={event=>{if(outside.current&&isOutside(event))close();outside.current=false;}}>
-  <header className="member-drawer-heading"><h1 id="property-drawer-title">{title}</h1><button type="button" className="secondary" aria-label={waitingForSave?"Saving before closing":"Close property details"} disabled={waitingForSave||closing} autoFocus onClick={close}>×</button></header>
+  <DetailSaveStatusProvider><header className="member-drawer-heading"><h1 id="property-drawer-title">{title}</h1><div className="detail-heading-actions"><DetailSaveStatus/><button type="button" className="secondary" aria-label={waitingForSave?"Saving before closing":"Close property details"} disabled={waitingForSave||closing} autoFocus onClick={close}>×</button></div></header>
   <div className="member-drawer-body">{!result?<p role="status">Loading property…</p>:!result.ok?<p role="alert">{result.error}</p>:<PropertyEditor initial={result.record} history={result.history} drawer onSaveBeforeClose={save=>{saveBeforeClose.current=save;}} onBusyChange={value=>{busy.current=value;}}/>}</div>
- </dialog>;
+ </DetailSaveStatusProvider></dialog>;
 }

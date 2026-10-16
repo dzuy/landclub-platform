@@ -35,5 +35,16 @@ export class PropertyRepository{
   await this.audit(tx,p,'saved',actor);return normalize(p);
  });}
  async publish(id:string,version:number,actor:string){return this.db.transaction(async tx=>{const row=(await tx.query<PropertyRecord>('SELECT * FROM properties WHERE id=$1 AND version=$2 FOR UPDATE',[id,version])).rows[0];if(!row)throw new ConflictError();publicationSchema.parse(readDraft(row.draft));const p=(await tx.query<PropertyRecord>('UPDATE properties SET published=draft,published_at=now(),updated_at=now(),version=version+1 WHERE id=$1 RETURNING *',[id])).rows[0];await this.audit(tx,p,'published',actor);return normalize(p);});}
+ async delete(id:string,version:number){return this.db.transaction(async tx=>{
+  const row=(await tx.query<{id:string}>('SELECT id FROM properties WHERE id=$1 AND version=$2 FOR UPDATE',[id,version])).rows[0];
+  if(!row)throw new ConflictError();
+  // Optional tables may not exist yet in a fresh embedded development database.
+  for(const table of ['property_photo_sources','property_photos','member_properties','property_revisions']){
+   const exists=(await tx.query<{name:string|null}>('SELECT to_regclass($1)::text AS name',[table])).rows[0]?.name;
+   if(exists)await tx.query(`DELETE FROM ${table} WHERE property_id=$1`,[id]);
+  }
+  // Keep shared document audience IDs: removing the last restriction would widen access.
+  await tx.query('DELETE FROM properties WHERE id=$1',[id]);
+ });}
  async unpublish(id:string,version:number,actor:string){return this.db.transaction(async tx=>{const p=(await tx.query<PropertyRecord>('UPDATE properties SET published=NULL,published_at=NULL,version=version+1,updated_at=now() WHERE id=$1 AND version=$2 RETURNING *',[id,version])).rows[0];if(!p)throw new ConflictError();await this.audit(tx,p,'unpublished',actor);return normalize(p);});}
 }

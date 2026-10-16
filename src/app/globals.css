@@ -330,3 +330,7 @@ body:has(.property-dark) .account-menu summary{color:#faf8f4;border-color:#faf8f
 .event-image-generation>button{justify-self:start}
 .event-image-prompt-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;font-weight:600}
 .event-image-prompt-heading button{display:inline-flex;align-items:center;gap:8px;font-size:13px}
+
+.detail-heading-actions{display:flex;align-items:center;gap:14px;flex-shrink:0}.detail-save-status{font-size:12px;font-weight:400;line-height:1.4;color:var(--muted);max-width:110px;text-align:right}
+
+.trash-button{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:9px;border:1px solid #b88980;border-radius:3px;background:transparent;color:#9b3f31;flex-shrink:0}.trash-button:hover{background:#f2e4df}.trash-button:focus-visible{outline:2px solid #9b3f31;outline-offset:3px}

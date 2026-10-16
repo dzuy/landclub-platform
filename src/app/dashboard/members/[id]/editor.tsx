@@ -1,5 +1,6 @@
 'use client';
 import {useEffect,useState,useSyncExternalStore,useTransition} from 'react';
+import {useDetailSaveStatus} from '@/components/detail-save-status';
 import {MemberInfoAutosave} from '@/lib/member-info-autosave';
 import {propertyRoleValues,propertyRoleLabels,type PropertyRole,type MemberProperty,type MemberInfo} from '@/lib/member-properties';
 import {saveMemberInfo,saveMemberProperty} from './actions';
@@ -8,8 +9,9 @@ import styles from '../members.module.css';
 import tableStyles from '@/components/data-table.module.css';
 export function MemberInfoEditor({userId,email,initial,onSaveBeforeClose,onUnsavedChange}:{userId:string;email:string;initial:MemberInfo;onSaveBeforeClose?:(save:(()=>Promise<boolean>)|null)=>void;onUnsavedChange?:(unsaved:boolean)=>void}){
  const [autosave]=useState(()=>new MemberInfoAutosave(initial,info=>saveMemberInfo(userId,info)));
- const {info,pending,error}=useSyncExternalStore(autosave.subscribe,autosave.getSnapshot,autosave.getSnapshot);
+ const {info,saved,pending,error}=useSyncExternalStore(autosave.subscribe,autosave.getSnapshot,autosave.getSnapshot);
  const dirty=autosave.dirty;
+ useDetailSaveStatus(error?'error':pending?'saving':dirty?'unsaved':saved!==initial?'saved':'');
  useEffect(()=>{onSaveBeforeClose?.(()=>autosave.flush());return()=>onSaveBeforeClose?.(null);},[autosave,onSaveBeforeClose]);
  useEffect(()=>{onUnsavedChange?.(dirty||pending);},[dirty,pending,onUnsavedChange]);
  useEffect(()=>{
@@ -21,6 +23,7 @@ export function MemberInfoEditor({userId,email,initial,onSaveBeforeClose,onUnsav
 }
 export function MemberProperties({userId,initial,properties}:{userId:string;initial:MemberProperty[];properties:{id:string;name:string}[]}){
  const [rows,setRows]=useState(initial);const [propertyId,setPropertyId]=useState('');const [roles,setRoles]=useState<PropertyRole[]>(['prospect']);const [error,setError]=useState('');const [pending,start]=useTransition();
+ useDetailSaveStatus(error?'error':pending?'saving':rows!==initial?'saved':'');
  const sortedRows=[...rows].sort((a,b)=>a.name.localeCompare(b.name,undefined,{sensitivity:'base'}));
  const available=properties.filter(p=>!rows.some(row=>row.property_id===p.id));
  function save(propertyId:string,roles:PropertyRole[],version?:number,remove=false){setError('');start(async()=>{try{const result=await saveMemberProperty({userId,propertyId,roles,version,remove});if(result.error)setError(result.error);else if(result.associations){setRows(result.associations);if(!version)setPropertyId('');}}catch{setError('Unable to save. Please try again.');}});}
