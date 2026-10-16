@@ -5,9 +5,9 @@ import {embeddedDatabase} from '../src/lib/database';
 import {InvitationRepository} from '../src/lib/invitations';
 import {readRoles} from '../src/lib/roles';
 
-test('roles are multi-select and default to member',()=>{
+test('membership is automatic alongside optional additional roles',()=>{
  assert.deepEqual(readRoles([]),['member']);
- assert.deepEqual(readRoles(['owner','investor','owner','not-a-role']),['owner','investor']);
+ assert.deepEqual(readRoles(['owner','investor','owner','not-a-role']),['member','owner','investor']);
 });
 
 test('invitations bind roles to the invited auth user',async()=>{

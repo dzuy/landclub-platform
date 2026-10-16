@@ -10,12 +10,12 @@ CREATE TABLE IF NOT EXISTS invitations (
  id uuid PRIMARY KEY,email text NOT NULL CHECK (email = lower(email)),roles text[] NOT NULL DEFAULT ARRAY['member']::text[],
  status text NOT NULL CHECK (status IN ('sending','pending','accepted','failed')),auth_user_id uuid UNIQUE,invited_by text NOT NULL,
  failure_reason text,created_at timestamptz NOT NULL DEFAULT now(),sent_at timestamptz,accepted_at timestamptz,
- CHECK (cardinality(roles) > 0),CHECK (roles <@ ARRAY['member','prospect','investor','owner','admin']::text[])
+ CHECK (cardinality(roles) > 0),CHECK (roles <@ ARRAY['member','prospect','investor','owner','team','lender','admin']::text[])
 );
 CREATE UNIQUE INDEX IF NOT EXISTS invitations_active_email ON invitations ((lower(email))) WHERE status IN ('sending','pending');
 CREATE INDEX IF NOT EXISTS invitations_created_at ON invitations (created_at DESC);
 CREATE TABLE IF NOT EXISTS user_roles (
- user_id uuid NOT NULL,role text NOT NULL CHECK (role IN ('member','prospect','investor','owner','admin')),
+ user_id uuid NOT NULL,role text NOT NULL CHECK (role IN ('member','prospect','investor','owner','team','lender','admin')),
  invitation_id uuid REFERENCES invitations(id),granted_by text NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY (user_id,role)
 );`;
 function invitation(row:InvitationRow):Invitation{return {id:row.id,email:row.email,roles:row.roles,status:row.status,authUserId:row.auth_user_id,invitedBy:row.invited_by,failureReason:row.failure_reason,createdAt:new Date(row.created_at).toISOString(),sentAt:row.sent_at?new Date(row.sent_at).toISOString():null,acceptedAt:row.accepted_at?new Date(row.accepted_at).toISOString():null};}

@@ -6,14 +6,14 @@ import {currentUser} from './auth/identity';
 import {isStaffUser,authConfigured} from './auth/policy';
 import {database} from './database';
 import {InvitationRepository} from './invitations';
-import type {ClubRole} from './roles';
+import {readRoles,type ClubRole} from './roles';
 export class StaffAccessError extends Error{constructor(){super('Please sign in with an authorized staff account.');}}
 export class MemberAccessError extends Error{constructor(){super('Please sign in with an invited Land Club account.');}}
 type AuthUser={id:string;email?:string|null;email_confirmed_at?:string|null;is_anonymous?:boolean};
 export async function clubUserRoles(user:AuthUser|null):Promise<ClubRole[]>{
  if(!user||user.is_anonymous||!user.email_confirmed_at)return [];
  if(isStaffUser(user,process.env.STAFF_USER_IDS))return ['member','admin'];
- try{return await new InvitationRepository(database()).rolesForUser(user.id);}catch{return [];}
+ try{const roles=await new InvitationRepository(database()).rolesForUser(user.id);return roles.length?readRoles(roles):[];}catch{return [];}
 }
 export async function clubUserAuthorized(user:AuthUser|null){return (await clubUserRoles(user)).length>0;}
 export async function staffUserAuthorized(user:AuthUser|null){return (await clubUserRoles(user)).includes('admin');}

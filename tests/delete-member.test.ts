@@ -1,3 +1,4 @@
+import {securitySchema} from './document-security-fixtures';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -17,12 +18,14 @@ test('account deletion requires admin and confirmation before any side effects',
 test('deletion rolls back on auth failure, removes only target data, and permits retry',async()=>{
  const pg=new PGlite();
  try{
-  for(const file of ['001_property_content.sql','003_invitations_and_roles.sql','008_prepared_members.sql','006_member_properties.sql','012_member_documents.sql'])await pg.exec(await readFile(new URL('../migrations/'+file,import.meta.url),'utf8'));
+  for(const file of ['001_property_content.sql','003_invitations_and_roles.sql','008_prepared_members.sql','006_member_properties.sql','012_member_documents.sql','016_member_investments.sql'])await pg.exec(await readFile(new URL('../migrations/'+file,import.meta.url),'utf8'));
+  await securitySchema(pg);
   const db=embeddedDatabase(pg),user=randomUUID(),other=randomUUID(),draft=randomUUID(),invite=randomUUID(),property=randomUUID();
   await db.query('INSERT INTO properties(id,draft) VALUES($1,$2)',[property,JSON.stringify({slug:'test'})]);
   await db.query("INSERT INTO invitations(id,email,roles,status,auth_user_id,invited_by) VALUES($1,'member@example.com',ARRAY['admin'],'accepted',$2,'admin')",[invite,user]);
   await db.query("INSERT INTO prepared_members(id,email,info,roles,status,created_by,auth_user_id,invitation_id) VALUES($1,'member@example.com','{}',ARRAY['admin'],'invited','admin',$2,$3)",[draft,user,invite]);
   for(const id of [user,other]){
+   await db.query("INSERT INTO member_investments(user_id,entities,updated_by) VALUES($1,'[]','admin')",[id]);
    await db.query("INSERT INTO user_roles(user_id,role,granted_by) VALUES($1,'admin','admin')",[id]);
    await db.query("INSERT INTO member_properties(user_id,property_id,role,updated_by) VALUES($1,$2,'owner','admin')",[id,property]);
   }
@@ -33,6 +36,7 @@ test('deletion rolls back on auth failure, removes only target data, and permits
   let calls=0;
   await deleteMemberAccount(db,{admin:true},user,'DELETE',async()=>{calls++;});
   assert.equal(calls,1);
+  assert.deepEqual((await db.query<{user_id:string}>('SELECT user_id FROM member_investments')).rows.map(r=>r.user_id),[other]);
   for(const table of ['user_roles','member_properties'])assert.deepEqual((await db.query<{user_id:string}>(`SELECT user_id FROM ${table}`)).rows.map(r=>r.user_id),[other]);
   assert.deepEqual((await db.query<{member_id:string}>('SELECT member_id FROM member_documents')).rows.map(r=>r.member_id),[other]);
   for(const table of ['invitations','prepared_members'])assert.equal((await db.query(`SELECT * FROM ${table}`)).rows.length,0);
@@ -45,7 +49,8 @@ test('drafts and pending invitations can be deleted before acceptance',async()=>
  const {deleteUnacceptedMember}=await import('../src/lib/delete-member');
  const pg=new PGlite();
  try{
-  for(const file of ['001_property_content.sql','003_invitations_and_roles.sql','008_prepared_members.sql','006_member_properties.sql','012_member_documents.sql'])await pg.exec(await readFile(new URL('../migrations/'+file,import.meta.url),'utf8'));
+  for(const file of ['001_property_content.sql','003_invitations_and_roles.sql','008_prepared_members.sql','006_member_properties.sql','012_member_documents.sql','016_member_investments.sql'])await pg.exec(await readFile(new URL('../migrations/'+file,import.meta.url),'utf8'));
+  await securitySchema(pg);
   const db=embeddedDatabase(pg),draft=randomUUID(),invite=randomUUID(),user=randomUUID();
   await db.query("INSERT INTO prepared_members(id,email,info,roles,status,created_by) VALUES($1,'draft@example.com','{}',ARRAY['member'],'draft','admin')",[draft]);
   await db.query("INSERT INTO member_documents(id,member_id,filename,byte_size,content,uploaded_by) VALUES($1,$2,'test.txt',1,'x','admin')",[randomUUID(),draft]);
