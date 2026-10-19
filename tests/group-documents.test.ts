@@ -1,3 +1,4 @@
+import {securitySchema} from './document-security-fixtures';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -15,7 +16,7 @@ test('group documents enforce property and role audiences on both listing and do
  try{
   const properties=new PropertyRepository(adapter);await properties.initialize();const farm=await properties.create(seeds[0],admin.id),coast=await properties.create({...seeds[0],slug:'test-coast'},admin.id);
   const members=new MemberPropertyRepository(adapter);await members.initialize();await members.save(prospect.id,farm.id,['prospect'],admin);await members.save(owner.id,farm.id,['owner'],admin);await members.save(outside.id,coast.id,['prospect'],admin);
-  await db.exec(await readFile(new URL('../migrations/013_group_documents.sql',import.meta.url),'utf8'));
+  await securitySchema(db);
   const repo=new GroupDocumentRepository(adapter),bytes=Buffer.from('Synthetic group document, no personal information.');
   const farmDoc=await repo.upload('farm.txt',bytes,['Role: Prospect'],{everyone:false,propertyIds:[farm.id],roles:[]},admin);
   const prospectDoc=await repo.upload('prospects.txt',bytes,[],{everyone:false,propertyIds:[],roles:['prospect']},admin);

@@ -1,7 +1,7 @@
 'use client';
 
 import {photoThumbnailUrl} from '@/lib/photo-thumbnail-url';
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {PropertyDrawer} from './property-drawer';
 import {DataTable,type TableColumn} from '@/components/data-table';
 import styles from './property-table.module.css';
@@ -10,6 +10,7 @@ import {MultiFilter} from '@/components/table-filter';
 
 export type PropertyRow={id:string;title:string;location:string;thumbnail:string;imageAlt:string;status:string};
 type Column='thumbnail'|'title'|'location'|'status'|'edit';
+const sortStorageKey='land-club:admin-properties:sort';
 const columns:TableColumn<Column>[]=[
  {key:'thumbnail',label:'Image',width:80,min:80,sortLabel:'Sort by image availability'},
  {key:'title',label:'Title',width:210,min:140},
@@ -28,13 +29,27 @@ export function PropertyTable({rows}:{rows:PropertyRow[]}){
  function clear(){setSearch('');setLocations([]);setStatuses([]);}
  const query=search.trim().toLocaleLowerCase();
  const [sort,setSort]=useState<{column:Exclude<Column,'edit'>;ascending:boolean}>({column:'title',ascending:true});
+ useEffect(()=>{
+  try{
+   const saved:unknown=JSON.parse(localStorage.getItem(sortStorageKey)||'null');
+   if(!saved||typeof saved!=='object'||Array.isArray(saved))return;
+   const {column,ascending}=saved as Record<string,unknown>;
+   if((column==='title'||column==='location'||column==='status'||column==='thumbnail')&&typeof ascending==='boolean')setSort({column,ascending});
+  }catch{/* Keep alphabetical order if the saved preference is unavailable or invalid. */}
+ },[]);
+ function changeSort(column:Column){
+  if(column==='edit')return;
+  const next={column,ascending:sort.column===column?!sort.ascending:true};
+  setSort(next);
+  try{localStorage.setItem(sortStorageKey,JSON.stringify(next));}catch{/* Sorting still works without local storage. */}
+ }
  const [failedImages,setFailedImages]=useState<Set<string>>(()=>new Set());
  function value(row:PropertyRow,column:Exclude<Column,'edit'>){return column==='thumbnail'?(row.thumbnail?'1':'0'):row[column];}
  const sorted=rows.filter(row=>(!query||row.title.toLocaleLowerCase().includes(query)||row.location.toLocaleLowerCase().includes(query))&&(!locations.length||locations.includes(row.location))&&(!statuses.length||statuses.includes(row.status))).sort((a,b)=>{
   const order=value(a,sort.column).localeCompare(value(b,sort.column),undefined,{numeric:true,sensitivity:'base'})||a.title.localeCompare(b.title);
   return sort.ascending?order:-order;
  });
- return <><div className={filterStyles.directoryTools}><label className={filterStyles.search}><span className={filterStyles.srOnly}>Search properties</span><input type="search" placeholder="Search by title or location" value={search} onChange={event=>setSearch(event.target.value)}/></label><MultiFilter label="Location" options={locationOptions} selected={locations} onChange={setLocations}/><MultiFilter label="Status" options={statusOptions} selected={statuses} onChange={setStatuses}/>{filtered&&<button type="button" className={`secondary ${filterStyles.clearFilters}`} onClick={clear}>Clear all</button>}</div><DataTable columns={columns} label="Properties" sort={{column:sort.column,direction:sort.ascending?'asc':'desc'}} onSort={column=>{if(column!=='edit')setSort({column,ascending:sort.column===column?!sort.ascending:true});}}>
+ return <><div className={filterStyles.directoryTools}><label className={filterStyles.search}><span className={filterStyles.srOnly}>Search properties</span><input type="search" placeholder="Search by title or location" value={search} onChange={event=>setSearch(event.target.value)}/></label><MultiFilter label="Location" options={locationOptions} selected={locations} onChange={setLocations}/><MultiFilter label="Status" options={statusOptions} selected={statuses} onChange={setStatuses}/>{filtered&&<button type="button" className={`secondary ${filterStyles.clearFilters}`} onClick={clear}>Clear all</button>}</div><DataTable columns={columns} label="Properties" sort={{column:sort.column,direction:sort.ascending?'asc':'desc'}} onSort={changeSort}>
   {sorted.map(row=><tr key={row.id} className={styles.clickableRow} onClick={event=>{
     if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
     if(event.target instanceof Element&&event.target.closest('a,button,input,select,textarea'))return;

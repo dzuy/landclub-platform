@@ -18,7 +18,7 @@ export function memberDirectoryView(members:DirectoryMember[],filters:DirectoryF
  const value=(member:DirectoryMember)=>{
   switch(sort.column){
    case 'name':return member.name||member.email;
-   case 'roles':return member.roles.map(role=>roleLabels[role]).sort().join(', ');
+   case 'roles':return member.roles.filter(role=>role!=='member').map(role=>roleLabels[role]).sort().join(', ');
    case 'status':return memberStatusLabels[member.status];
    case 'actions':return memberAction(member);
    case 'email':return member.email;

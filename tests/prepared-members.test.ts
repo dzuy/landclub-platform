@@ -1,3 +1,4 @@
+import {MemberInvestmentRepository} from '../src/lib/member-investments';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -13,13 +14,14 @@ test('prepared members retain their profile and associations through invitation 
  const db=embeddedDatabase(pg);const drafts=new PreparedMemberRepository(db);const invitations=new InvitationRepository(db);const properties=new MemberPropertyRepository(db);
  await pg.exec('CREATE TABLE properties(id uuid PRIMARY KEY,draft jsonb NOT NULL)');
  await pg.exec(await readFile(new URL('../migrations/008_prepared_members.sql',import.meta.url),'utf8'));
- await invitations.initialize();await properties.initialize();
+ await drafts.initialize();await invitations.initialize();await properties.initialize();
  const id=randomUUID(),user=randomUUID(),property=randomUUID(),invitation=randomUUID();
  await db.query('INSERT INTO properties VALUES($1,$2)',[property,JSON.stringify({name:'Prepared property',region:'California'})]);
  const info={displayName:'Alex Member',homeRegion:'Oregon',contactPhone:'555-0100'};
  await drafts.create(id,{email:'ALEX@example.com',...info},['member','investor'],'admin');
  await assert.rejects(drafts.create(randomUUID(),{email:'alex@example.com',...info},['member'],'admin'));
  await properties.save(id,property,['owner','investor'],{id:'admin',admin:true});
+ const investments=new MemberInvestmentRepository(db);await investments.save(id,[{kind:'company',id:'land-club-llc'}],0,{id:'admin',admin:true});
  await drafts.saveInfo(id,{...info,homeRegion:'California'});await drafts.saveRoles(id,['member','owner','investor']);
  const claimed=await drafts.beginDelivery(id);assert.equal(claimed.info.homeRegion,'California');
  await assert.rejects(drafts.beginDelivery(id));await assert.rejects(drafts.saveInfo(id,info));await assert.rejects(drafts.saveRoles(id,['admin']));
@@ -28,6 +30,7 @@ test('prepared members retain their profile and associations through invitation 
  await assert.rejects(drafts.finishDelivery(id,user,randomUUID()));
  assert.equal((await properties.list(id)).length,1);assert.equal((await properties.list(user)).length,0);
  await drafts.finishDelivery(id,user,invitation);
+ assert.equal((await investments.get(user)).entities.length,1);assert.equal((await investments.get(id)).entities.length,0);
  assert.equal((await drafts.list()).length,0);assert.equal((await properties.list(id)).length,0);
  assert.deepEqual((await properties.list(user))[0].roles,['owner','investor']);
  assert.equal(await invitations.pendingForUser(user,'wrong@example.com'),null);
@@ -42,7 +45,7 @@ test('rejected delivery preserves editable setup and permits a single retry',asy
  const pg=new PGlite();try{const drafts=new PreparedMemberRepository(embeddedDatabase(pg));await drafts.initialize();const id=randomUUID();
  await drafts.create(id,{email:'retry@example.com',displayName:'Retry',homeRegion:'',contactPhone:''},['member'],'admin');
  await drafts.beginDelivery(id);await drafts.deliveryFailed(id);assert.equal((await drafts.get(id))?.status,'draft');
- await drafts.saveRoles(id,['owner']);assert.deepEqual((await drafts.beginDelivery(id)).roles,['owner']);await assert.rejects(drafts.beginDelivery(id));
+ await drafts.saveRoles(id,['owner']);assert.deepEqual((await drafts.beginDelivery(id)).roles,['member','owner']);await assert.rejects(drafts.beginDelivery(id));
  }finally{await pg.close();}
 });
 
@@ -56,12 +59,14 @@ test('cancel, reuse and reinvite preserves setup and rebinds assignments to the 
   await drafts.create(id,info,['member'],'admin');
   await db.query('INSERT INTO properties VALUES($1,$2)',[property,JSON.stringify({name:'Test',region:'California'})]);
   await properties.save(id,property,['owner','investor'],{id:'admin',admin:true});
+ const investments=new MemberInvestmentRepository(db);await investments.save(id,[{kind:'company',id:'land-club-llc'}],0,{id:'admin',admin:true});
   await drafts.beginDelivery(id,first);await invitations.begin(first,info.email,['member'],'admin');await drafts.finishDelivery(id,oldUser,first);
   assert.equal(await drafts.createOrReuseDraft(randomUUID(),info,['admin'],'admin'),'unavailable');
   await invitations.updatePendingRoles(first,['member','owner']);
   await assert.rejects(drafts.cancelInvitation(first,'admin',async()=>{throw new Error('Provider unavailable');}),/Provider unavailable/);
   assert.equal((await drafts.get(id))?.status,'invited');assert.equal((await invitations.activeById(first))?.status,'pending');
   assert.equal(await drafts.cancelInvitation(first,'admin'),true);
+  assert.equal((await investments.get(id)).entities.length,1);assert.equal((await investments.get(oldUser)).entities.length,0);
   await assert.rejects(drafts.cancelInvitation(first,'admin'));
   const restored=await drafts.get(id);assert.equal(restored?.status,'draft');assert.equal(restored?.auth_user_id,null);assert.equal(restored?.invitation_id,null);
   assert.deepEqual(restored?.roles,['member','owner']);assert.equal((await properties.list(oldUser)).length,0);

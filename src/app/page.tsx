@@ -1,4 +1,9 @@
-import {store} from '@/lib/store';
-import {DiscoveryHome} from '@/components/discovery-home';
-export const dynamic='force-dynamic';
-export default async function Home(){return <DiscoveryHome properties={await (await store()).publicList()}/>;}
+import {headers} from 'next/headers';
+import {redirect} from 'next/navigation';
+import {clubIdentity} from '@/lib/staff';
+import {PublicHome} from '@/components/website/pages';
+export default async function Home(){
+ const host=(await headers()).get('host')?.split(':')[0];
+ if(host==='app.land.club' && await clubIdentity())redirect('/dashboard');
+ return <PublicHome/>;
+}

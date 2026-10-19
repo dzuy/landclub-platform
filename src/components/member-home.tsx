@@ -1,26 +1,45 @@
-import {photoThumbnailUrl} from '@/lib/photo-thumbnail-url';
-import {PageHeading} from '@/components/page-heading';
 import Link from 'next/link';
+import {photoThumbnailUrl} from '@/lib/photo-thumbnail-url';
 import type {MemberPropertyDetail} from '@/lib/member-property-access';
-import {propertyRoleLabels} from '@/lib/member-properties';
 import type {ClubEvent} from '@/lib/events';
-import styles from './member-home.module.css';
 import {homePropertyPhoto} from '@/lib/member-home';
+import styles from './member-home.module.css';
 
 export function MemberHome({name,properties,events}:{name:string;properties:MemberPropertyDetail[];events:ClubEvent[]}){
  const firstName=name&&!name.includes('@')?name.trim().split(/\s+/)[0]:'';
- return <div className={styles.home}>
-  <PageHeading title={firstName?`Welcome back, ${firstName}`:'Welcome back'}/>
-  <div className={styles.layout}><section aria-label="Your properties">
-   {properties.length?<div className={styles.properties}>{properties.map(({id,roles,property:p})=>{const photo=homePropertyPhoto(p);return <Link href={`/dashboard/my-properties/${id}`} className={styles.property} key={id}>
-    <div className={styles.image}>{photo?<img src={photoThumbnailUrl(photo.src)} loading="lazy" decoding="async" alt={photo.alt}/>:<div className={styles.noImage}><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1" aria-hidden="true"><path d="m4 35 14-22 10 15 7-10 9 17M4 40h40"/><circle cx="33" cy="9" r="3"/></svg><span>{p.region||'Location to be confirmed'}</span></div>}</div>
-    <div className={styles.propertyBody}><p className={styles.location}>{p.region||'Location to be confirmed'}</p><h3>{p.name||'Untitled property'}</h3><div className={styles.roles}>{roles.map(role=><span key={role}>{propertyRoleLabels[role]}</span>)}</div></div>
-   </Link>;})}</div>:<div className={styles.empty}><h3>Your connection starts here.</h3><p>Properties linked to your membership will appear here.</p><Link href="/">Explore properties <span aria-hidden="true">↗</span></Link></div>}
-   <section className={styles.stays} aria-labelledby="home-stays"><div className={styles.stayIcon} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M8 15h3"/></svg></div><div><h3 id="home-stays">Make time for your places.</h3><p>Online booking isn’t available yet. Explore your property details while we get stays ready.</p></div><Link href="/dashboard/my-properties">My properties <span aria-hidden="true">→</span></Link></section>
+ return <div className={styles.home} data-dashboard-home>
+  <h1>{firstName?`Welcome back, ${firstName}`:'Welcome back'}</h1>
+  <div className={styles.overview}>
+   <section className={styles.card} aria-labelledby="home-properties">
+    <h2 id="home-properties">Your properties</h2>
+    {properties.length?properties.slice(0,1).map(({id,property:p})=>{const photo=homePropertyPhoto(p);return <Link href={`/dashboard/my-properties/${id}`} className={styles.property} key={id}>
+     {photo?<img className={styles.propertyImage} src={photoThumbnailUrl(photo.src)} decoding="async" alt={photo.alt}/>:<div className={styles.noImage}>Property photography coming soon</div>}
+     <h3>{p.name||'Untitled property'}</h3><p>{p.region||'Location to be confirmed'}</p><span className={styles.textLink}>View property →</span>
+    </Link>;}):<div className={styles.empty}><p>Properties linked to your membership will appear here.</p><Link className={styles.textLink} href="/properties">Explore properties →</Link></div>}
+    {properties.length>1&&<Link className={styles.allProperties} href="/dashboard/my-properties">View all {properties.length} properties →</Link>}
+   </section>
+   <section className={styles.card} aria-labelledby="home-portfolio">
+    <h2 id="home-portfolio">Your portfolio</h2>
+    <p className={styles.balance} aria-label="Balance not yet available">—</p>
+    <p className={styles.caption}>Your investment summary</p>
+    <dl className={styles.balances}>{['Original investment','Principal returned','Remaining principal','Preferred return accrued to date'].map(label=><div key={label}><dt>{label}</dt><dd aria-label="Not yet available">—</dd></div>)}</dl>
+    <p className={styles.pending}>Portfolio details are coming soon.</p>
+    <Link className={styles.button} href="/dashboard/portfolio">See more</Link>
+   </section>
+  </div>
+  <section className={styles.card} aria-labelledby="home-following">
+   <h2 id="home-following">Properties You’re Following</h2>
+   <div className={styles.followingEmpty}><p>Property following is coming soon. Explore the places taking shape at Land Club.</p><Link className={styles.textLink} href="/properties">Browse properties →</Link></div>
   </section>
-  <aside className={styles.side}><section aria-labelledby="home-events"><div className={styles.sectionHeading}><div><h2 id="home-events">Upcoming events</h2></div></div>
-   {events.length?<div className={styles.events}>{events.map(({id,details:d})=>{const date=new Date(d.startsAt);const format=(options:Intl.DateTimeFormatOptions)=>new Intl.DateTimeFormat('en-US',{...options,timeZone:d.timeZone}).format(date);return <Link className={styles.event} href={`/dashboard/events#event-${id}`} key={id}>{d.imageUrl&&<img className={styles.eventImage} src={d.imageUrl} alt={d.imageAlt||d.title}/>}<div className={styles.date}><span>{format({month:'short'})}</span><strong>{format({day:'numeric'})}</strong></div><div><h3>{d.title}</h3><p><time dateTime={d.startsAt}>{format({weekday:'short',hour:'numeric',minute:'2-digit',timeZoneName:'short'})}</time></p><p>{d.location}</p><span className={styles.eventLink}>View event <span aria-hidden="true">↗</span></span></div></Link>;})}</div>:<div className={styles.eventEmpty}><h3>A little room on the calendar.</h3><p>No upcoming events right now. New club gatherings will appear here.</p></div>}
-   <Link className={styles.allEvents} href="/dashboard/events">All club events <span aria-hidden="true">→</span></Link>
-  </section></aside></div>
+  <section aria-labelledby="home-membership" className={styles.membership}>
+   <h2 id="home-membership">Your Membership</h2>
+   <div className={styles.overview}>
+    <section className={styles.card} aria-labelledby="home-events"><h3 id="home-events">Your events</h3>
+     {events.length?events.map(({id,details:d})=>{const date=new Date(d.startsAt);const format=(options:Intl.DateTimeFormatOptions)=>new Intl.DateTimeFormat('en-US',{...options,timeZone:d.timeZone}).format(date);return <Link className={styles.event} href={`/dashboard/events#event-${id}`} key={id}><time className={styles.date} dateTime={d.startsAt}><span>{format({month:'short'})}</span><strong>{format({day:'numeric'})}</strong></time><div><h4>{d.title}</h4><p>{d.location}</p></div><span className={styles.chip}>View event</span></Link>;}):<p className={styles.membershipEmpty}>No upcoming club events right now.</p>}
+     <Link className={styles.textLink} href="/dashboard/events">All club events →</Link>
+    </section>
+    <section className={styles.card} aria-labelledby="home-bookings"><h3 id="home-bookings">Your bookings</h3><p className={styles.membershipEmpty}>Online booking isn’t available yet. Your upcoming stays will appear here.</p><Link className={styles.textLink} href="/dashboard/bookings">View bookings →</Link></section>
+   </div>
+  </section>
  </div>;
 }

@@ -1,5 +1,6 @@
 'use client';
 import {useActionState,useEffect,useState} from 'react';
+import {TrashIcon} from '@/components/trash-icon';
 import {deleteMember} from './actions';
 import styles from './members.module.css';
 
@@ -8,7 +9,7 @@ export function DeleteMemberControl({id,email,kind='user',disabled=false}:{id:st
  const [state,action,pending]=useActionState(deleteMember,{error:''});
  useEffect(()=>{if(state.deleted)window.location.assign(state.self?'/signin':'/dashboard/members');},[state.deleted,state.self]);
  return <section className={styles.memberInvite} aria-label="Delete user">
- {!confirming?<button type="button" className={styles.dangerButton} disabled={disabled} onClick={()=>setConfirming(true)}>Delete user</button>:
+ {!confirming?<button type="button" className="trash-button" aria-label="Delete user" title="Delete user" disabled={disabled} onClick={()=>setConfirming(true)}><TrashIcon/></button>:
  <form action={action} className={styles.cancelInvite}>
  <h2>Delete {email}?</h2>
  <p>This permanently deletes their member setup, invitation, sign-in account (if created), roles, property connections, and member documents. Properties and shared documents will remain. This cannot be undone.</p>

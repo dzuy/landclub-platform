@@ -50,6 +50,7 @@ Image selection uses the supplied library; uploads and private file storage rema
 
 ## Product documentation
 
+- [Investor platform build plan — Ian, Scott, real data, and admin View as](docs/INVESTOR-PLATFORM-BUILD-PLAN.md)
 - [Product requirements](docs/PRD.md)
 - [Technology decisions](docs/TECH-STACK.md)
 - [Implementation and planning backlog](docs/BACKLOG.md)

@@ -4,6 +4,8 @@ Last updated: 2026-09-23
 
 ## Current implementation backlog
 
+**October 19, 2026 investor-platform planning:** [Investor platform build plan](INVESTOR-PLATFORM-BUILD-PLAN.md) records the Ian/Scott journeys, real-data import, admin “View as,” access controls, reporting, calculations, delivery phases, and acceptance criteria. Its checklist tracks this new increment; the historical statuses below have not been refreshed by that planning work.
+
 These are the next requested product tasks, in the order listed. Statuses are recorded per item; recording an item does not start implementation. The technical planning backlog below is retained as background and has not been re-audited against the current build.
 
 ### APP-001 — Match the property page schema to Notion

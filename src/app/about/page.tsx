@@ -1,7 +1,4 @@
 import type {Metadata} from 'next';
-
+import {About} from '@/components/website/pages';
 export const metadata:Metadata={title:'About | Land Club'};
-
-export default function AboutPage(){
- return <main className="section"><p className="eyebrow">About</p><h1>Coming Soon</h1></main>;
-}
+export default About;
