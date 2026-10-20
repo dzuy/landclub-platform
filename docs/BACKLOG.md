@@ -1,6 +1,6 @@
 # Land Club Platform — Backlog
 
-Last updated: 2026-09-23
+Last updated: 2026-10-19
 
 ## Current implementation backlog
 
@@ -51,6 +51,50 @@ Remove invented properties, buyer details, sample member identities, ownership, 
 - [ ] Replace samples with verified content or useful empty states, and remove preview-only actions and obsolete demo labels.
 - [ ] Disable production demo seeding so later deployments cannot restore removed samples; retain isolated test fixtures where needed.
 - [ ] Back up and review affected records before removing demo database content; preserve real content and verify public and authenticated pages after cleanup.
+
+---
+
+## Deferred product work
+
+The following items were added on October 19, 2026 at the user's request. They are **not a current priority**; recording them does not start implementation or change the ordering of the current implementation backlog.
+
+### APP-004 — Self-service financial spreadsheet imports
+
+**Status:** Deferred — not a current priority
+
+Let admins upload new spreadsheets from Nathan, select the property and reporting period, map and validate the data, review changed balances/payments and discrepancies, then approve and publish. Store the original sources privately and the normalized investment data in the hosted database. Publishing should update Portfolio, company financial reports, and investor-specific documents together.
+
+**Acceptance criteria**
+
+- [ ] Upload and validate new source workbooks rather than only reprocessing the existing October 16 dataset.
+- [ ] Preview changes and flag missing information, conflicting values, and duplicate imports before committing them.
+- [ ] Keep source files admin-only and maintain source versions and an audit trail.
+- [ ] Publish approved data consistently across investor views and generated documents, preserving investor-specific access boundaries.
+
+### APP-005 — Company update editor
+
+**Status:** Deferred — not a current priority
+
+Provide an admin editor for written company/property progress updates with attachments, draft review, and explicit publishing to the relevant investor audience. Today, admins can share an update PDF through Documents; a file upload does not change investment balances.
+
+**Acceptance criteria**
+
+- [ ] Compose and save draft updates with attachments and a selected property/audience.
+- [ ] Preview and publish updates for authorized investors only.
+- [ ] Show published updates in the investor dashboard with publication dates and retained history.
+
+### APP-006 — Align automatic investor documents with approval and publishing
+
+**Status:** Deferred — not a current priority
+
+Automatic private spreadsheets currently refresh from imported draft report data when listed or downloaded. Make investor-facing generation follow the same approval/release gate as financial reports, alongside APP-004.
+
+**Acceptance criteria**
+
+- [ ] Unpublished imports do not replace the investor's last approved document.
+- [ ] Publishing an approved report makes the corresponding private workbook available using the same release data.
+- [ ] Preserve prior versions and enforce ownership/access checks on every download.
+- [ ] Define withdrawal behavior so withdrawn data cannot remain downloadable as a current approved document.
 
 ---
 

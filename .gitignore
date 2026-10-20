@@ -12,3 +12,6 @@ output/
 
 # Reviewed source exports can contain private prospective-property records.
 data/notion-properties-*.json
+
+# Private investor deliverables
+outputs/investor-private-20261019/

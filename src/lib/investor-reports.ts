@@ -1,3 +1,4 @@
+import {nordenCompanyReport} from './investor-company-report';
 import {z} from 'zod';
 import type {Database} from './database';
 
@@ -21,21 +22,23 @@ function identity(actor:ReportActor):[boolean,string|null]|null{
  return z.uuid().safeParse(actor.id).success?[false,actor.id]:null;
 }
 export class InvestorReportRepository{
- constructor(private db:Database){}
+ constructor(private db:Database,private scope:{person:boolean;draft:boolean;subjectId?:string}={person:false,draft:false}){}
+ private identity(actor:ReportActor){return this.scope.subjectId?identity(actor?{id:this.scope.subjectId,admin:false}:null):identity(actor);}
+ private get predicate(){return this.scope.person?allowed.replace('person.auth_user_id=$2::uuid','person.id=$2::uuid').replace('r.released_at IS NOT NULL',this.scope.draft?'TRUE':'r.released_at IS NOT NULL'):allowed;}
  async isReady(){
   const result=await this.db.query<{ready:boolean}>(`SELECT bool_and(to_regclass(name) IS NOT NULL) AS ready FROM unnest($1::text[]) AS names(name)`,[['investor_reports','investment_positions','investment_holders','investor_access','report_people','investor_report_lines','investor_report_schedules','investor_report_findings','investor_report_documents']]);
   return result.rows[0]?.ready===true;
  }
  async list(actor:ReportActor):Promise<ReportSummary[]>{
-  const params=identity(actor);if(!params)return [];
-  return (await this.db.query<ReportSummary>(`SELECT ${fields} ${joins} WHERE ${allowed} ORDER BY r.as_of DESC NULLS LAST,r.id`,params)).rows;
+  const params=this.identity(actor);if(!params)return [];
+  return (await this.db.query<ReportSummary>(`SELECT ${fields} ${joins} WHERE ${this.predicate} ORDER BY r.as_of DESC NULLS LAST,r.id`,params)).rows;
  }
  async get(id:string,actor:ReportActor):Promise<InvestorReport|null>{
-  const who=identity(actor);if(!who||!z.uuid().safeParse(id).success)return null;
+  const who=this.identity(actor);if(!who||!z.uuid().safeParse(id).success)return null;
   const params=[...who,id];
-  const report=(await this.db.query<InvestorReport>(`SELECT ${fields},r.narrative,r.source_reference ${joins} WHERE ${allowed} AND r.id=$3::uuid`,params)).rows[0];
+  const report=(await this.db.query<InvestorReport>(`SELECT ${fields},r.narrative,r.source_reference ${joins} WHERE ${this.predicate} AND r.id=$3::uuid`,params)).rows[0];
   if(!report)return null;
-  const child=`${joins} WHERE ${allowed} AND r.id=$3::uuid`;
+  const child=`${joins} WHERE ${this.predicate} AND r.id=$3::uuid`;
   const lines=(await this.db.query<ReportLine>(`SELECT l.id,l.section,l.label,l.amount::text,l.basis,l.source_reference,l.effective_date::text FROM investor_report_lines l WHERE l.report_id IN (SELECT r.id ${child}) ORDER BY l.ordinal,l.id`,params)).rows;
   const schedules=(await this.db.query<ReportSchedule>(`SELECT s.id,s.label,s.scheduled_date::text,s.confirmation,s.source_reference,s.note FROM investor_report_schedules s WHERE s.report_id IN (SELECT r.id ${child}) ORDER BY s.source_reference,s.scheduled_date,s.id`,params)).rows;
   const documents=(await this.db.query<{id:string;filename:string}>(`SELECT d.id,d.filename FROM investor_report_documents d WHERE d.report_id IN (SELECT r.id ${child}) ORDER BY d.filename,d.id`,params)).rows;
@@ -44,9 +47,18 @@ export class InvestorReportRepository{
   if(!(await this.db.query(`SELECT r.id ${child}`,params)).rows.length)return null;
   return {...report,lines,schedules,documents,findings};
  }
+ async company(id:string,actor:ReportActor){
+  const who=this.identity(actor);if(!who||!z.uuid().safeParse(id).success)return null;
+  const result=await this.db.query<{payload:unknown}>(`SELECT snapshot.payload ${joins} JOIN investment_entities entity ON entity.id=p.entity_id JOIN investor_source_snapshots snapshot ON snapshot.id=r.snapshot_id WHERE ${this.predicate} AND r.id=$3::uuid AND entity.source_id='ENT-NC'`,[...who,id]);
+  if(!result.rows[0])return null;
+  const company=nordenCompanyReport(result.rows[0].payload);
+  // Re-check access after reading and mapping the immutable source snapshot.
+  if(!await this.get(id,actor))return null;
+  return company;
+ }
  async download(id:string,actor:ReportActor){
-  const who=identity(actor);if(!who||!z.uuid().safeParse(id).success)return null;
-  return (await this.db.query<{filename:string;content:Uint8Array}>(`SELECT d.filename,d.content FROM investor_report_documents d WHERE d.id=$3::uuid AND d.report_id IN (SELECT r.id ${joins} WHERE ${allowed})`,[...who,id])).rows[0]??null;
+  const who=this.identity(actor);if(!who||!z.uuid().safeParse(id).success)return null;
+  return (await this.db.query<{filename:string;content:Uint8Array}>(`SELECT d.filename,d.content FROM investor_report_documents d WHERE d.id=$3::uuid AND d.report_id IN (SELECT r.id ${joins} WHERE ${this.predicate})`,[...who,id])).rows[0]??null;
  }
 }
 // Preserve decimal precision; null must never be formatted as zero.

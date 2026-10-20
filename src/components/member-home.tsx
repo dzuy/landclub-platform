@@ -1,11 +1,12 @@
 import Link from 'next/link';
+import type {ReportSummary} from '@/lib/investor-reports';
 import {photoThumbnailUrl} from '@/lib/photo-thumbnail-url';
 import type {MemberPropertyDetail} from '@/lib/member-property-access';
 import type {ClubEvent} from '@/lib/events';
 import {homePropertyPhoto} from '@/lib/member-home';
 import styles from './member-home.module.css';
 
-export function MemberHome({name,properties,events}:{name:string;properties:MemberPropertyDetail[];events:ClubEvent[]}){
+export function MemberHome({name,properties,events,reports=[]}:{name:string;properties:MemberPropertyDetail[];events:ClubEvent[];reports?:ReportSummary[]}){
  const firstName=name&&!name.includes('@')?name.trim().split(/\s+/)[0]:'';
  return <div className={styles.home} data-dashboard-home>
   <h1>{firstName?`Welcome back, ${firstName}`:'Welcome back'}</h1>
@@ -20,10 +21,7 @@ export function MemberHome({name,properties,events}:{name:string;properties:Memb
    </section>
    <section className={styles.card} aria-labelledby="home-portfolio">
     <h2 id="home-portfolio">Your portfolio</h2>
-    <p className={styles.balance} aria-label="Balance not yet available">—</p>
-    <p className={styles.caption}>Your investment summary</p>
-    <dl className={styles.balances}>{['Original investment','Principal returned','Remaining principal','Preferred return accrued to date'].map(label=><div key={label}><dt>{label}</dt><dd aria-label="Not yet available">—</dd></div>)}</dl>
-    <p className={styles.pending}>Portfolio details are coming soon.</p>
+    {reports.length?<><p className={styles.caption}>{reports.length} investment{reports.length===1?'':'s'}</p><dl className={styles.balances}>{reports.map(report=><div key={report.id}><dt><Link href={`/dashboard/portfolio#position-${report.id}`}>{report.project_name}</Link><small> · {report.kind}</small></dt><dd>{report.released_at?'Report available':'Draft report'}</dd></div>)}</dl><p className={styles.pending}>View your portfolio for balances, activity and company reports.</p></>:<p className={styles.pending}>Your investment information will appear here when it is ready to share.</p>}
     <Link className={styles.button} href="/dashboard/portfolio">See more</Link>
    </section>
   </div>

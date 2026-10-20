@@ -1,0 +1,50 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import {readFile} from 'node:fs/promises';
+import {PGlite} from '@electric-sql/pglite';
+import ExcelJS from 'exceljs';
+import {embeddedDatabase} from '../src/lib/database';
+import {MemberDocumentRepository} from '../src/lib/member-documents';
+import {securitySchema} from './document-security-fixtures';
+
+test('private workbooks refresh in place, preserve history, choose latest reports, and enforce current access',async()=>{
+ const pg=new PGlite();try{
+ await pg.exec('CREATE TABLE properties(id uuid PRIMARY KEY,draft jsonb); CREATE TABLE prepared_members(id uuid PRIMARY KEY,auth_user_id uuid,status text)');
+ await securitySchema(pg);
+ for(const name of ['018_investor_reporting.sql','019_investor_operations.sql','021_dashboard_preview.sql','023_automatic_investor_documents.sql'])await pg.exec(await readFile(new URL(`../migrations/${name}`,import.meta.url),'utf8'));
+ const db=embeddedDatabase(pg),repo=new MemberDocumentRepository(db);
+ const member=randomUUID(),person=randomUUID(),holder=randomUUID(),position=randomUUID(),report=randomUUID(),document=randomUUID(),line=randomUUID();
+ await pg.query("INSERT INTO prepared_members VALUES($1,NULL,'draft')",[member]);
+ await pg.query("INSERT INTO report_people(id,display_name,prepared_member_id) VALUES($1,'Example Investor',$2)",[person,member]);
+ await pg.query("INSERT INTO investment_holders(id,name) VALUES($1,'Private holder')",[holder]);
+ await pg.query("INSERT INTO investor_access(person_id,holder_id,granted_by) VALUES($1,$2,'test')",[person,holder]);
+ await pg.query("INSERT INTO investment_positions(id,holder_id,project_name,name,kind) VALUES($1,$2,'Test property','Equity','equity')",[position,holder]);
+ await pg.query("INSERT INTO investor_reports(id,position_id,title,as_of,source_reference,created_at) VALUES($1,$2,'Original','2026-10-16','source','2026-10-16')",[report,position]);
+ await pg.query("INSERT INTO investor_report_lines(id,report_id,section,label,amount,basis,source_reference,ordinal) VALUES($1,$2,'position','capital outstanding',100,'reported','source row 1',1)",[line,report]);
+ await pg.query("INSERT INTO member_documents(id,member_id,filename,byte_size,content,tags,uploaded_by) VALUES($1,$2,'original.xlsx',8,$3,ARRAY[]::text[],'test')",[document,member,Buffer.from('original').toString('base64')]);
+ await pg.query('INSERT INTO automatic_investor_documents(document_id,person_id) VALUES($1,$2)',[document,person]);
+ const actor={id:member,admin:false},other={id:randomUUID(),admin:false};
+ assert.equal(await repo.download(document,other),null);
+ assert.equal((await pg.query<{version:number}>('SELECT version FROM member_documents WHERE id=$1',[document])).rows[0].version,1,'Denied requests must not trigger generation');
+ let list=await repo.list(member,actor);assert.equal(list.length,1);assert.equal(list[0].id,document);assert.equal(list[0].version,2);
+ const first=(await repo.download(document,actor))!;assert.equal(first.version,2);
+ const wb=new ExcelJS.Workbook();await wb.xlsx.load(Buffer.from(first.content,'base64') as never);assert.equal(wb.worksheets.length,1);assert.equal(wb.worksheets[0].getCell('B7').value,100);
+ assert.equal((await repo.list(member,actor))[0].version,2,'Unchanged source must reuse current version');
+ await pg.query('UPDATE investor_report_lines SET amount=125 WHERE id=$1',[line]);
+ const updated=(await repo.download(document,actor))!;assert.equal(updated.version,3);
+ await wb.xlsx.load(Buffer.from(updated.content,'base64') as never);assert.equal(wb.worksheets[0].getCell('B7').value,125);
+ const next=randomUUID();await pg.query("INSERT INTO investor_reports(id,position_id,title,as_of,source_reference,created_at) VALUES($1,$2,'New import','2026-10-20','new source','2026-10-20')",[next,position]);
+ await pg.query("INSERT INTO investor_report_lines(id,report_id,section,label,amount,basis,source_reference,ordinal) VALUES($1,$2,'position','capital outstanding',200,'reported','new row',1)",[randomUUID(),next]);
+ const latest=(await repo.download(document,actor))!;await wb.xlsx.load(Buffer.from(latest.content,'base64') as never);
+ assert.equal(wb.worksheets.length,1,'Older report versions must not duplicate investment tabs');assert.equal(wb.worksheets[0].getCell('B7').value,200);assert.match(String(wb.worksheets[0].getCell('A3').value),/2026-10-20/);
+ assert.equal((await pg.query('SELECT * FROM investor_document_versions')).rows.length,3);
+ await assert.rejects(()=>pg.query('DELETE FROM investor_document_versions'),/immutable/);
+ await pg.query('UPDATE investor_access SET revoked_at=now()');assert.deepEqual(await repo.list(member,actor),[]);assert.equal(await repo.download(document,actor),null);
+ await pg.query('UPDATE investor_access SET revoked_at=NULL');assert.ok(await repo.download(document,actor));
+ await pg.query('UPDATE report_people SET disabled_at=now()');assert.equal(await repo.download(document,actor),null);
+ await pg.query('UPDATE report_people SET disabled_at=NULL');
+ const linked=randomUUID();await pg.query("UPDATE prepared_members SET auth_user_id=$1,status='invited'",[linked]);assert.ok(await repo.download(document,{id:linked,admin:false}));
+ assert.equal(await repo.download(document,other),null);
+ }finally{await pg.close();}
+});

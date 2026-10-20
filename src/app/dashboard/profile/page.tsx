@@ -13,6 +13,7 @@ import {ProfileForm} from './form';
 
 export default async function ProfilePage(){
  const actor=await requireMemberPage();
+ if(actor.preview)return <><PageHeading title="Profile & Settings"/><section className="panel"><h2>{actor.name}</h2><dl className="profile-role"><dt>Role</dt><dd>{actor.roles.map(role=>roleLabels[role]).join(', ')}</dd><dt>Home region</dt><dd>{actor.profile?.homeRegion||'Not supplied'}</dd><dt>Phone</dt><dd>{actor.profile?.contactPhone||'Not supplied'}</dd></dl><p className="muted">You’re viewing this profile in read-only mode.</p></section></>;
  const user=await currentUser();
  const investments=user?await (await memberInvestmentStore()).get(user.id):null;
  const properties=investments?(await (await store()).list()).map(p=>({id:p.id,name:p.draft.name})):[];

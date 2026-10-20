@@ -3,9 +3,15 @@
 import {useEffect, useRef} from 'react';
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
+import {switchDashboardPreview} from '@/app/dashboard/preview-actions';
+import {useFormStatus} from 'react-dom';
 import {signOut} from '@/app/signin/actions';
 
-export function AccountMenu({authenticated=true,photoUrl}: {photoUrl?:string|null;authenticated?:boolean}) {
+function PreviewSelect({people,selected}:{people:{id:string;name:string}[];selected?:string}){
+ const {pending}=useFormStatus();
+ return <label className="account-preview-label">View as<select aria-label="View as" name="person" value={selected||''} disabled={pending} onChange={event=>event.currentTarget.form?.requestSubmit()}><option value="">My admin account</option>{people.map(person=><option key={person.id} value={person.id}>{person.name}</option>)}</select>{pending&&<small>Switching…</small>}</label>;
+}
+export function AccountMenu({authenticated=true,photoUrl,previewPeople,previewPersonId}: {photoUrl?:string|null;authenticated?:boolean;previewPeople?:{id:string;name:string}[];previewPersonId?:string}) {
   const pathname=usePathname();
   const menuRef = useRef<HTMLDetailsElement>(null);
 
@@ -43,6 +49,7 @@ export function AccountMenu({authenticated=true,photoUrl}: {photoUrl?:string|nul
       </summary>
       <div className="account-menu-panel">
         {authenticated&&<Link href="/dashboard/profile" aria-current={pathname==='/dashboard/profile'?'page':undefined} onClick={()=>{if(menuRef.current)menuRef.current.open=false;}}>Profile &amp; Settings</Link>}
+        {previewPeople&&<form action={switchDashboardPreview}><PreviewSelect people={previewPeople} selected={previewPersonId}/><input type="hidden" name="mode" value="draft"/></form>}
         {authenticated?<form action={signOut}><button className="account-menu-signout">Sign out</button></form>:<a href="/signin">Sign in</a>}
       </div>
     </details>

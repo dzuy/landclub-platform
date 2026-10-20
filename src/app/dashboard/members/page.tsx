@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import {PageHeading} from '@/components/page-heading';
 import {requireStaffPage} from '@/lib/staff';
 import {authAdminClient} from '@/lib/auth/admin';
@@ -25,5 +26,5 @@ export default async function MembersPage(){
  for(const draft of drafts)members.unshift({id:draft.id,name:draft.info.displayName,email:draft.email,roles:draft.roles,status:draft.status==='sending'?'sending':'draft',joinedAt:draft.created_at,lastActiveAt:null,roleTarget:{kind:'prepared',id:draft.id},rolesLocked:draft.status==='sending'});
  const [properties,associations]=await Promise.all([(await store()).list(),(await memberPropertyStore()).directoryAssociations()]);
  const directoryMembers=members.map(member=>({...member,propertyIds:associations.filter(association=>association.user_id===member.id).map(association=>association.property_id)}));
- return <><PageHeading title="Members"><NewMemberModal/></PageHeading><MemberTable members={directoryMembers} properties={properties.map(property=>({id:property.id,name:property.draft.name}))}/></>;
+ return <><PageHeading title="Members"><NewMemberModal/></PageHeading><MemberTable members={directoryMembers} properties={properties.map(property=>({id:property.id,name:property.draft.name}))}/><details style={{marginTop:32}}><summary>Advanced investment tools</summary><p><Link href="/dashboard/investor-data">Source files and imports →</Link></p></details></>;
 }

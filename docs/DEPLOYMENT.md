@@ -108,3 +108,24 @@ To backfill hosted property photo thumbnails, run `npm run photos:thumbnails` wi
 Local tests cover the repository, validation, access policy and production configuration rules. The optional GitHub Actions workflow adds a real PostgreSQL service, idempotent migration/seed checks, a Docker image build, packaged migration execution and an anonymous production HTTP smoke test. Docker and external PostgreSQL checks have not been executed locally because those services are unavailable here. A live Supabase login and actual Railway rollout still require the real project settings above; local tests do not claim to validate those external services.
 
 References: [Railway GitHub autodeploys](https://docs.railway.com/deployments/github-autodeploys), [monorepo settings](https://docs.railway.com/deployments/monorepo), [pre-deploy commands](https://docs.railway.com/deployments/pre-deploy-command), [Supabase server-side authentication](https://supabase.com/docs/guides/auth/server-side/creating-a-client).
+
+## Investor storage (October 19, 2026)
+
+Investor records now use the configured hosted Supabase `land_club` schema in development and production whenever `DATABASE_URL` is set. Migrations 019 and 020 are applied, and the local investor data plus four private original workbooks have been transferred and verified. Do not seed/import them again during deployment. Existing previews expire; all imported reports remain drafts, and prepared people have no linked login accounts.
+
+Source evidence and calculations read hosted snapshots. Original workbook downloads are admin-only; investor-facing documents retain separate report access checks. The fallback `.data/investor-platform` database is now only for development without a database URL. A future code deployment should include migrations 019/020 unchanged so their stored checksums match.
+
+Dashboard-wide preview requires migration `021_dashboard_preview.sql`. The reviewed
+Ian/Scott prepared-member links can be validated with
+`node --env-file=.env.local scripts/link-preview-members.mjs` and saved with `--apply`.
+The script refuses conflicting IDs; it does not create accounts or grant property
+access. Preview sessions remain bound to their originating admin and expire after
+30 minutes; the cookie is HttpOnly, SameSite=Lax and Secure in production.
+
+Automatic private investor XLSX files require migration `023_automatic_investor_documents.sql`
+and the installed `exceljs` production dependency. Enroll the existing user-approved
+Ian/Scott documents with `node --env-file=.env.local scripts/enable-automatic-investor-documents.mjs --apply`.
+The same command without `--apply` is a dry run. Refresh occurs on Documents listing or
+private download, so no scheduler or local authoring runtime is required. Prior versions
+are retained in private `investor_document_versions`. Do not expose these tables through
+a public API or change document ownership to implement sharing.

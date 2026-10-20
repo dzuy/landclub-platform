@@ -1,4 +1,6 @@
 import 'server-only';
+import {database} from './database';
+import {investedPropertyIds,mergePropertyRoles} from './invested-properties';
 import {cache} from 'react';
 import {z} from 'zod';
 import {memberPropertyStore} from './member-property-store';
@@ -19,13 +21,14 @@ export function memberPropertyThumbnail(property:PropertyDraft){
 
 export const memberPropertyDetails=cache(async(userId:string):Promise<MemberPropertyDetail[]>=>{
  if(!z.uuid().safeParse(userId).success)return [];
- const associations=await (await memberPropertyStore()).list(userId);
+ const [manual,invested]=await Promise.all([(await memberPropertyStore()).list(userId),investedPropertyIds(database(),userId)]);
+ const associations=mergePropertyRoles(manual,invested);
  const propertyStore=await store();
  const details=await Promise.all(associations.map(async association=>{
   const record=await propertyStore.get(association.property_id);
   return record?{id:association.property_id,roles:association.roles,property:record.published??record.draft}:null;
  }));
- return details.filter((detail):detail is MemberPropertyDetail=>detail!==null);
+ return details.filter((detail):detail is MemberPropertyDetail=>detail!==null).sort((a,b)=>a.property.name.localeCompare(b.property.name));
 });
 
 export async function memberPropertyDetail(userId:string,propertyId:string){

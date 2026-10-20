@@ -1,10 +1,12 @@
 'use server';
+import {hasDashboardPreview} from '@/lib/dashboard-preview';
 import {revalidatePath} from 'next/cache';
 import {authClient} from '@/lib/auth/client';
 import {clubUserAuthorized} from '@/lib/staff';
 import {profileSchema,profileMetadata,type Profile} from '@/lib/profile';
 export type ProfileResult={error?:string;saved?:Profile};
 export async function saveProfile(input:Profile):Promise<ProfileResult>{
+ if(await hasDashboardPreview())return {error:'Exit View as before editing your profile.'};
  const parsed=profileSchema.safeParse(input);
  if(!parsed.success)return {error:parsed.error.issues[0]?.message||'Check your profile details.'};
  try{

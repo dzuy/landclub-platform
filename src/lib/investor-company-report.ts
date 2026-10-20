@@ -1,0 +1,22 @@
+import {sourceWorkbooksSchema,sourceMoney} from './investor-source-review';
+import {cents,decimal} from './investor-calculations';
+export type CompanyReport={source:string;asOf:string;comparisonDate:string;cash:string;previousCash:string;cashChange:string;assets:{label:string;amount:string}[];liabilities:{label:string;amount:string}[];totalAssets:string;totalLiabilities:string;equity:string;totalLiabilitiesAndEquity:string;spending:{label:string;amount:string;share:string}[];totalSpending:string;notes:string[]};
+/** Project-level aggregates only. Never return raw workbook rows or other holders' records. */
+export function nordenCompanyReport(input:unknown):CompanyReport|null{
+ const books=sourceWorkbooksSchema.parse(input),book=books.find(b=>b.filename==='Land_Club_Norden_Cross_Balance_Sheet_10-16-2026_Draft_v2.xlsx');if(!book)return null;
+ const sheet=book.tabs.find(t=>t.name==='Balance Sheet'),spend=book.tabs.find(t=>t.name==='Spending 4-1 to 10-16');if(!sheet||!spend)throw new Error('Company report source is incomplete.');
+ const balance=(label:string,col='Unnamed: 3')=>{const rows=sheet.rows.filter(r=>[r['Land Club Norden Cross LLC'],r['Unnamed: 1'],r['Unnamed: 2']].includes(label));if(rows.length!==1)throw new Error(`Ambiguous or missing company line: ${label}`);const amount=sourceMoney(rows[0][col]);if(amount===null)throw new Error(`Missing company amount: ${label}`);return amount;};
+ const key='Land Club Norden Cross LLC — Spending Summary, April 1 – October 16, 2026 (cash paid)';
+ const spending=(label:string)=>{const rows=spend.rows.filter(r=>r[key]===label);if(rows.length!==1)throw new Error(`Ambiguous or missing spending category: ${label}`);const amount=sourceMoney(rows[0]['Unnamed: 1']);if(amount===null)throw new Error('Missing spending amount.');return amount;};
+ const totalSpending=spending('Total spending');
+ const groups:[string,string[]][]=[['Land carry (loan interest, property taxes)',['Loan interest','Property taxes']],['Design and permitting',['Architecture & design','Engineering & construction consulting','Project management']],['Legal, accounting and admin',['Legal, accounting & admin','Travel & meals','Other – $800 to Norden Cross LLC 4/14 (to confirm)']],['Manager fees (Land Club LLC)',['Manager fees (Land Club LLC acquisition & development)']],['Marketing, brand and web',['Marketing, brand & web']]];
+ const grouped=groups.map(([label,names])=>{const amount=names.reduce((sum,n)=>sum+cents(spending(n)),0n),den=cents(totalSpending);return {label,amount:decimal(amount),share:den>0n?(Number((amount*1000n+den/2n)/den)/10).toFixed(1):'0.0'};});
+ if(grouped.reduce((sum,v)=>sum+cents(v.amount),0n)!==cents(totalSpending))throw new Error('Spending categories do not reconcile.');
+ return {source:book.filename,asOf:'October 16, 2026',comparisonDate:'April 13, 2026',cash:balance('Cash - Wells Fargo (x6398)'),previousCash:balance('Cash - Wells Fargo (x6398)','Unnamed: 4'),cashChange:balance('Cash - Wells Fargo (x6398)','Unnamed: 5'),assets:[{label:'Cash',amount:balance('Cash - Wells Fargo (x6398)')},{label:'Land, Norden (including acquisition costs)',amount:balance('Total Fixed Assets')},{label:'Prepaid loan interest',amount:balance('Prepaid Interest - First DOT Notes')}],liabilities:[{label:'First mortgage loans (May 2026 refinance)',amount:balance('Total First DOT Notes Payable')},{label:'Accounts payable (estimated)',amount:balance('Total Accounts Payable')},{label:'Other current liabilities',amount:balance('Total Other Current Liabilities')}],totalAssets:balance('TOTAL ASSETS'),totalLiabilities:balance('Total Liabilities'),equity:balance('Total Equity'),totalLiabilitiesAndEquity:balance('TOTAL LIABILITIES & EQUITY'),spending:grouped,totalSpending,notes:[
+ 'Cash is the workbook’s computed closing balance; confirmation against the bank statement is still pending.',
+ 'The balance sheet uses accrual accounting. Spending shows cash paid April 1–October 16, including payments of previously accrued payables and $22,021 interest paid at the refinance.',
+ 'Legal, accounting and admin includes travel and meals, plus an $800 payment whose purpose remains unconfirmed.',
+ 'Year-to-date net income (loss) is a balancing figure in the draft. Accrued 2026–27 property taxes and unbilled architect or consultant fees are not included.',
+ 'Spending categories are grouped to match this report layout; shares are calculated from the source total and rounded to one decimal place.'
+ ]};
+}

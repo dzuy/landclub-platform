@@ -1,3 +1,4 @@
+import {refreshInvestorDocument} from './automatic-investor-documents';
 import {auditActor,auditDocument} from './document-security';
 import {validateDocumentContent} from './document-content';
 import {randomUUID} from 'node:crypto';
@@ -33,11 +34,21 @@ export function validateDocument(name:string,bytes:Uint8Array){
 }
 export class MemberDocumentRepository{
  constructor(private db:Database){}
- async list(memberId:string,actor:DocumentActor){if(!actor.admin&&actor.id!==memberId)throw new Error('Access denied.');z.uuid().parse(memberId);return (await this.db.query<MemberDocument>(`SELECT ${fields} FROM member_documents d WHERE ${owned} ORDER BY d.created_at DESC,d.id`,[memberId])).rows;}
+ async list(memberId:string,actor:DocumentActor){
+  if(!actor.admin&&actor.id!==memberId)throw new Error('Access denied.');z.uuid().parse(memberId);
+  const before=(await this.db.query<{id:string}>(`SELECT d.id FROM member_documents d WHERE ${owned}`,[memberId])).rows;
+  const allowed:string[]=[];
+  for(const doc of before)if(await refreshInvestorDocument(this.db,doc.id)!=='unavailable')allowed.push(doc.id);
+  return (await this.db.query<MemberDocument>(`SELECT ${fields} FROM member_documents d WHERE ${owned} AND d.id=ANY($2::uuid[]) ORDER BY d.created_at DESC,d.id`,[memberId,allowed])).rows;
+ }
  async download(id:string,actor:DocumentActor){
   z.uuid().parse(id);
   if(!actor.admin&&!z.uuid().safeParse(actor.id).success)return null;
   const predicate=actor.admin?'d.id=$1::uuid':`${owned} AND d.id=$2::uuid`;
+  const authorized=(await this.db.query<{id:string}>(`SELECT d.id FROM member_documents d WHERE ${predicate}`,actor.admin?[id]:[actor.id,id])).rows.length>0;
+  if(!authorized||await refreshInvestorDocument(this.db,id)==='unavailable'){
+   await auditDocument(this.db,actor.id,'member_documents',id,'download_denied');return null;
+  }
   const doc=(await this.db.query<MemberDocument & {content:string}>(`SELECT ${fields},d.content FROM member_documents d WHERE ${predicate}`,actor.admin?[id]:[actor.id,id])).rows[0]??null;
   const allowed=!!doc;
   await auditDocument(this.db,actor.id,'member_documents',id,allowed?'download_authorized':'download_denied');

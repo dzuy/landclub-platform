@@ -1,4 +1,5 @@
 'use server';
+import {PREVIEW_COOKIE} from '@/lib/dashboard-preview';
 import {redirect} from 'next/navigation';
 import {cookies,headers} from 'next/headers';
 import {z} from 'zod';
@@ -33,6 +34,7 @@ export async function requestPasswordReset(_previous:AuthState,form:FormData):Pr
  return {error:'',message:'If an account exists for that email, we sent a password reset link. Check your inbox and spam folder.'};
 }
 export async function signOut(){
+ (await cookies()).delete(PREVIEW_COOKIE);
  if(authConfigured()){const {error}=await (await authClient()).auth.signOut({scope:'local'});if(error)throw new Error('Sign-out failed. Please try again.');}
  (await cookies()).set('land-club-local-signed-out','1',{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',path:'/'});
  redirect('/signin');

@@ -1,6 +1,11 @@
 # Investor platform — build plan
 
+> Current storage (October 19, 2026): investor records and original source spreadsheets have been transferred to the configured hosted Supabase database. The app uses hosted storage whenever DATABASE_URL is set. Earlier local-only notes below describe the initial implementation and are superseded by section 16.
+
+
 Updated: October 19, 2026
+
+Current admin navigation: investor management is consolidated into **Members → member profile → Investments**, in both the drawer and full profile. Explicit investor/member identity links scope the displayed reports, holder access, draft review, publishing, attachments, and statement editions. The existing company/property investment checkboxes remain above the reports; View as is available in the admin Profile menu, not in member profiles. Shared source imports and audit history are under **Members → Advanced investment tools → Source files and imports** (`/dashboard/investor-data`). The old `/dashboard/investors` page redirects to Members and is no longer a navigation item. Existing financial data and publication rules are unchanged; the deferred new-spreadsheet upload workflow is not part of this consolidation.
 
 Status: Planning baseline. This document records the requested direction and proposed implementation; it does not claim implementation, deployment, source verification, or investor release.
 
@@ -253,17 +258,197 @@ Dependencies: phase 1 can use isolated test records before phase 2. Phase 2 need
 
 ## 14. Implementation checklist
 
-- [ ] Audit current schema/environment and map source fields.
-- [ ] Reconcile mock/source wording and retain unresolved decisions.
-- [ ] Build prepared-person identity and holder mapping.
-- [ ] Build secure, audited read-only View as.
-- [ ] Implement versioned import dry run and commit.
-- [ ] Import Ian/Scott source records into the selected review environment.
-- [ ] Replace mock portfolios with authorized dated records.
-- [ ] Verify isolation, revocation, releases, and preview exit end to end.
+Checked items refer to the local implementation and validation described in section 15, not hosted rollout. Revocation/release tests use isolated synthetic records; actual source findings remain pending.
+
+- [x] Audit current schema/environment and map source fields.
+- [x] Reconcile mock/source wording and retain unresolved decisions.
+- [x] Build prepared-person identity and holder mapping.
+- [x] Build secure, audited read-only View as.
+- [x] Implement versioned import dry run and commit.
+- [x] Import Ian/Scott source records into the selected review environment.
+- [x] Replace mock portfolios with authorized dated records.
+- [x] Verify isolation, revocation, releases, and preview exit end to end.
 - [ ] Build staff maintenance, review, and release workflow.
 - [ ] Attach actual documents with correct audiences and auditing.
 - [ ] Verify invited-person login parity with preview.
 - [ ] Confirm calculation conventions and implement tested engines.
 - [ ] Build immutable statement issuance and approved exports.
 - [ ] Validate staging/production rollout and release an approved investor subset.
+
+## 15. Local implementation — October 19, 2026
+
+The first working slice across the five requested steps is implemented. This is a local review environment, not a production release.
+
+| Step | Implemented | Remaining |
+| --- | --- | --- |
+| 1. View as | Prepared Ian/Scott people, explicit holder links, administrator-bound hashed preview sessions, 30-minute expiry, persistent banner, exit, audited access. Investor mode obeys release rules; separate admin draft review includes unreleased reports. | Full-site impersonation is deliberately out of scope: the investor area is scoped while surrounding navigation and other tabs retain the administrator identity. |
+| 2. Real records | Four private workbooks imported into isolated local PostgreSQL-compatible storage: 2 people, 2 holders, 3 entities, 4 positions, source snapshots, dated events, terms, loans, schedules, findings. Digest-based dry run/import is idempotent. Changed sources produce new draft report versions. | Canonical entities/events are inserted once, not overwritten by subsequent imports. Field-level reconciliation and approval of changed canonical terms/events need a dedicated maintenance workflow. |
+| 3. Real portfolios | Authorized dated portfolios, activity, schedules, review notes, private documents and CSV/JSON exports. Mock portfolio routes redirect to real portfolio. | Company financial views, authored quarterly updates and further visual refinement. No single combined total is inferred across different positions/dates. |
+| 4. Admin operations | Evidence resolutions, review/release/withdraw, holder revoke/restore, verified existing-account linking, private document upload, download auditing, audit history. | Actual verified login emails/invitations and signed files; richer event/term/schedule correction tools and production release authority. |
+| 5. Calculations/statements | Exact-cent Actual/365 calculations, capital-change segments, prepaid/unpaid interest, fixed-denominator allocation helper, source-based scenario screen, immutable issued JSON statement editions. | Confirmed financial conventions, full Sutter reconstruction and waterfall rules, live published calculation results, approved PDF statement layout. No disputed assumptions were confirmed. |
+
+### Try it locally
+
+1. Run `npm run dev` and sign in with the existing administrator account.
+2. Open `/dashboard/investors` (Investors in Admin tools).
+3. The current four-workbook source version has already been imported locally. “Import / check” is safe to repeat and reports no new import for the same digest.
+4. Choose **Review unreleased drafts** for Ian or Scott to see the actual imported portfolios. **View as** shows precisely the released investor subset, currently empty because actual source findings remain unresolved.
+5. Exit returns to the workspace. Review calculations using the dedicated link; changing its date does not update investor balances.
+6. Resolve actual findings only with supporting evidence, then review and release. Documents attach only to unreleased reports; attachments reset review to draft. Issuing a data statement requires a reviewed released report and creates a frozen edition.
+
+### Environment and rollout
+
+`src/lib/investor-platform-db.ts` uses `.data/investor-platform` in development, even when a hosted `DATABASE_URL` exists. Other existing application features keep their existing storage. Neither this private database nor `.data/investor-review` is tracked or included in production file tracing. Do not run multiple dev processes against the same local data directory.
+
+Outside development, the investor repository uses the configured application database. Apply migrations 018 then 019 through the normal migration workflow after staging validation and backup. Production does not automatically migrate or read/import local workbooks. A controlled durable import path and release process remain rollout work. No hosted investor data or auth accounts were changed by this local build.
+
+Tests use synthetic isolated SQL fixtures to exercise import/versioning, cross-holder denial, expired/exited sessions, account mapping parity, revocation, release withdrawal, immutable statements and audit protection. Actual local workbook validation is optional when the private fixture is present. Financial check figures exercise Ian preferred return, Reserve accrual, Scott prepaid interest and fixed-denominator allocation. These checks establish implementation behavior, not approval of underlying source terms.
+
+Validation result: full suite 128 passed / 1 optional test skipped; final focused investor suite 5 passed; TypeScript and production build passed. Browser checks verified Ian investor empty state, Ian draft trust position, Scott three draft positions, and preview exit. Private source/database paths were absent from production trace manifests.
+
+### Portfolio presentation correction
+
+Keep the existing Figma Portfolio aesthetic and layout as the investor-facing product. `RealInvestorPortfolio` now reuses the original Portfolio styles, Norden photograph, headline metrics, position/activity cards and document section, with amounts taken from authorized report records. Portfolio itself offers administrator-only Ian/Scott preview buttons; these explicitly show draft data without releasing it. Import, reconciliation and publishing stay in the separate admin workspace. Unsupported mock financial terms and unpublished company updates remain pending instead of being presented as real.
+
+### Company reports connected to source snapshots
+
+The original company-report design now reads the Norden Balance Sheet and Spending tabs from the imported immutable source snapshot associated with the authorized position report. Cash is $65,671.67, assets $864,404.67, liabilities $767,550.00, equity $96,854.67 and April 1–October 16 cash spending $148,181.33. Five display categories group the source spending lines without changing the total; percentages are derived and rounded. The mock monthly average is replaced with period spending rather than introducing an unsupported average.
+
+The page keeps draft/unaudited status and source caveats: computed cash awaits bank confirmation, net income is a balancing figure, omitted accruals remain omitted, and the $800 purpose is unconfirmed. It exposes company aggregates, not other investors’ capital-account or lender-level rows. Existing report authorization, preview binding, grant revocation and release rules apply on every load. Sutter and Reserve do not inherit Norden financials. Quarterly narrative/progress stays pending. Seven focused tests and production build passed; browser verification covered all three financial sections.
+
+## 16. Hosted storage transfer — completed October 19, 2026
+
+Applied migrations 019 and 020 to the existing hosted Supabase `land_club` schema (018 was already applied). The affected hosted tables were empty. Copied the existing local data without regenerating identities, report IDs, findings or audit history: 1 source snapshot, 3 entities, 2 people, 2 holders, 2 access links, 4 positions/terms, 2 loans, 9 events, 4 reports, 52 report lines, 10 schedule rows, 17 findings and 1 import batch. All 13 existing audit entries were preserved and a transfer audit entry added. No issued statements or uploaded investor documents existed to transfer. All four reports remain unreleased, and both prepared people remain unlinked to login accounts.
+
+Archived four original XLSX files in private `investor_source_files`, protected by RLS, browser-role revocations and an immutability trigger. Admin-only authenticated downloads are available under Original source spreadsheets. Checksums verified byte-for-byte. Active preview tokens were intentionally not transferred.
+
+The developer app now uses `DATABASE_URL` for investor data, just like the rest of the app. Offline PGlite is used only when no database URL is configured in development. Import review and calculation tools now load evidence from hosted source snapshots; they no longer require local spreadsheet files when connected. Mutations made locally through these screens now change the shared hosted records.
+
+Backups: `.data/backups/investor-transfer-2026-10-19T23-03-02-525Z/` contains a stopped-database physical copy, a portable local record export and the hosted pre-transfer state. Private backups stay ignored by Git and excluded from deployment. `scripts/transfer-investor-data.mjs` defaults to dry run, refuses nonempty target tables, applies migrations through the normal runner, transfers records in one transaction, and verifies every copied row plus evidence hashes before committing. Run `node --env-file=.env.local scripts/transfer-investor-data.mjs --verify` for hosted counts; do not repeat `--apply` against the populated target.
+
+Validation: focused SQL/source tests (7 passed), production build, hosted record-count/row/hash verification and browser verification of the hosted workspace. This transfer does not deploy the pending UI/code changes to the public website or release investor reports.
+
+### Dashboard-wide “View as” (October 19)
+
+Admins can choose Ian or Scott from the Profile menu. The switch creates an audited,
+30-minute server session bound to the authenticated admin, with an HttpOnly cookie.
+The normal dashboard routes now use the selected member's identity: home, property
+associations, Portfolio and company reports, personal/group documents and downloads,
+and read-only profile details. Navigation uses the same identity, hides admin tools,
+and displays a persistent exit banner. Switching refreshes the layout and resets
+member client state. An expired or invalid session fails closed until exited.
+
+Migration `021_dashboard_preview.sql` adds an explicit source-person → prepared-member
+link. `node --env-file=.env.local scripts/link-preview-members.mjs` validates the two
+reviewed links (dry run by default; `--apply` saves an audit entry). No names or emails
+are used to infer access at request time, and no property/document grants or login
+accounts are created. Scott currently has Norden Cross, Sutter Creek and Todos Santos
+associations. Ian is explicitly linked to Norden Cross with the investor property
+role at the user’s request. This association is stored in the hosted database and
+audited; his financial report access remains independently scoped in Portfolio.
+
+The Profile menu defaults to draft-inclusive reporting so administrators can inspect
+the current unreleased source data; the banner and report cards label that difference
+from the eventual investor-visible version. Existing Admin workspace controls still
+allow released-only previews. Account changes and admin mutations are denied while
+viewing another person; this does not create an authenticated session for that person.
+Profile photo endpoints cannot expose or edit the admin's photo during preview.
+
+Bookings remain a browser-only prototype outside preview. “View as” displays an
+explicit unavailable/empty state instead of sample stays; real booking persistence,
+availability and booking actions still need to be implemented. Following is also
+not yet backed by member records. Club events remain shared member content.
+
+Validation: production build; SQL tests for explicit identity links, conflicting
+accounts, removal of admin authority, report isolation/revocation; existing preview,
+member-document and group-document access tests; browser checks switching Scott → Ian
+→ admin, scoped documents, read-only profile/bookings, and denial of Ian's report
+while viewing Scott.
+
+### Automatic investment properties
+
+My Properties, its sidebar links and the Home property card now merge manual
+associations with properties derived from active investor-access grants and equity,
+loan or sweat-equity positions. These derived associations are evaluated on each
+request, deduplicated, and labeled Investor; they do not create manual membership
+rows. Disabled people and revoked grants stop contributing derived properties.
+Existing manual associations remain independent. This applies to both linked login
+accounts and prepared-member View as sessions, without relying on report publication.
+
+Migration `022_investment_property_links.sql` adds a project-level property mapping.
+Norden Cross and Sutter Creek have been mapped in the hosted database. New investors
+in those projects need no per-person property association. A new project must be
+mapped to its property once (or its position must have `property_id`); unmapped
+projects and the cash reserve are not fabricated into property listings. Property-shared documents also use these investment-derived property links, as
+described below.
+
+
+### Automatic investor document access
+
+The Documents list and direct group-document downloads now resolve investment-derived
+properties with the same helper as My Properties. A document shared with a matching
+property and the Investor audience is visible even without a manual member-property
+association or a separately assigned global Investor role. Property-wide documents
+(no role restriction) also apply. Investment-derived access does not grant owner,
+team, or other role-only audiences, nor access to unrelated properties. Existing
+manual and everyone audiences continue to work as before; personal document and
+financial report permissions remain separate.
+
+No document audiences are changed or files automatically published. Admins share a
+file once with its property and Investor audience. Current and future investors with
+active access then receive it automatically. Listing and downloading independently
+resolve current access; disabled identities and revoked investment grants no longer
+contribute derived access. SQL tests cover prepared previews, linked login accounts,
+listing/download parity, unrelated properties/roles, revocation and disabled people.
+
+### Private investor workbook extracts (October 19)
+
+Created and saved two static XLSX extracts in hosted `member_documents`, scoped to
+Ian's and Scott's explicitly linked member identities. Ian has Norden Cross equity;
+Scott has Norden Cross loan, Sutter Creek loan and reserve tabs. Every sheet labels
+October 16, 2026 figures as draft/unaudited and retains row-level source references.
+Scott's conflicting Sutter Creek dates are shown side by side as alternatives to
+one payment, with confirmation pending. Other investors' records, contact details,
+company-wide capital accounts and internal findings are excluded.
+
+These are user-authorized private document releases, not report approval or a
+change to financial report publication status. Existing full source files remain
+admin-only. XLSX files were generated and verified locally, then stored through a
+one-time audited database write; general file uploads still accept only the existing
+validated formats. Downloads use the existing private attachment endpoint. Ownership
+checks against the hosted repository verified own-file access and cross-member
+listing/download denial. Local deliverables are git-ignored under
+`outputs/investor-private-20261019/`; extraction/build/publication manifests remain
+in ignored `.data/investor-documents/`. These dated extracts do not update live.
+
+### Automatic private workbook refresh
+
+The two private extracts are now enrolled in `automatic_investor_documents` (migration
+023). Opening Documents or downloading an enrolled file resolves current person/holder
+access, loads the newest imported report for each accessible position, and hashes the
+scoped payload plus generator version. Changed content regenerates the values-only
+XLSX using the deployed ExcelJS dependency. Unchanged content is reused. The document
+ID and private download URL remain stable; the filename uses CURRENT_DRAFT, and each
+sheet retains its own source as-of date. Already-downloaded copies remain snapshots.
+
+This is request-time regeneration, not background polling or live interest accrual.
+It follows normalized report lines and schedules used by Portfolio. Raw source changes
+must first be imported into platform reports. It includes draft source reports by the
+user's explicit authorization for these private extracts; it does not release reports
+or statements. Full source workbooks, company-wide capital accounts, findings and
+contact lists are never copied into generated files. Schedule source rows may include
+alternative representations of one payment and are explicitly marked not to sum.
+
+Before an update, the previous file is preserved in `investor_document_versions` with
+its document version. Updates are serialized per document, source/access are rechecked
+after generation, and refreshes are audited. Revoked/disabled source identities return
+no generated document rather than serving stale bytes. Owner authorization occurs
+before regeneration and again before download. Existing manually uploaded files are
+unchanged. This policy is attached only to the explicitly enrolled Ian/Scott files.
+
+Deployment: run migrations, then
+`node --env-file=.env.local scripts/enable-automatic-investor-documents.mjs --apply`.
+Without `--apply`, enrollment is validated and rolled back. The script checks existing
+ownership and refuses conflicting mappings. Tests cover same-link refresh, unchanged
+cache reuse, source edits, latest-import selection, original version preservation,
+immutable history, linked login access, revoked/disabled access and cross-member denial.

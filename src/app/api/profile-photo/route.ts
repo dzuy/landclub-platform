@@ -1,3 +1,4 @@
+import {hasDashboardPreview} from '@/lib/dashboard-preview';
 import {authClient} from '@/lib/auth/client';
 import {clubUserAuthorized} from '@/lib/staff';
 import {photoStorage} from '@/lib/photo-object-storage';
@@ -7,6 +8,7 @@ import {hasSameOrigin} from '@/lib/request-origin';
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
 export async function GET(){
+ if(await hasDashboardPreview())return new Response(null,{status:404});
  try{
   const client=await authClient(),{data:{user},error}=await client.auth.getUser();
   if(error||!user||!await clubUserAuthorized(user))return new Response(null,{status:401});
@@ -16,6 +18,7 @@ export async function GET(){
  }catch{return new Response(null,{status:503});}
 }
 export async function POST(request:Request){
+ if(await hasDashboardPreview())return Response.json({error:'View as is read-only.'},{status:403});
  if(!hasSameOrigin(request))return Response.json({error:'Invalid upload origin.'},{status:403});
  try{
   const client=await authClient(),{data:{user},error}=await client.auth.getUser();

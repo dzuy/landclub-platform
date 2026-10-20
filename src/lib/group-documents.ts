@@ -1,3 +1,4 @@
+import {investedPropertyIds} from './invested-properties';
 import {auditActor,auditDocument} from './document-security';
 import {validateDocumentContent} from './document-content';
 import {randomUUID} from 'node:crypto';
@@ -10,15 +11,16 @@ export type DocumentAudience=z.infer<typeof audienceSchema>;
 export type GroupDocument={id:string;filename:string;byte_size:number;tags:string[];everyone:boolean;property_ids:string[];property_names:string[];roles:ClubRole[];version:number;created_at:string};
 export type GroupDocumentActor=DocumentActor & {roles:ClubRole[]};
 const fields=`d.id,d.filename,d.byte_size,d.tags,d.everyone,d.property_ids,d.roles,d.version,d.created_at,ARRAY(SELECT p.draft->>'name' FROM properties p WHERE p.id=ANY(d.property_ids) ORDER BY p.draft->>'name') AS property_names`;
-const matching=`(d.everyone OR ((cardinality(d.property_ids)=0 OR EXISTS(SELECT 1 FROM member_properties m WHERE m.user_id=$1::uuid AND m.property_id=ANY(d.property_ids))) AND (cardinality(d.roles)=0 OR d.roles && $2::text[])))`;
+const matching=`(d.everyone OR ((cardinality(d.property_ids)=0 OR EXISTS(SELECT 1 FROM member_properties m WHERE m.user_id=$1::uuid AND m.property_id=ANY(d.property_ids))) AND (cardinality(d.roles)=0 OR d.roles && $2::text[]))
+ OR (d.property_ids && $3::uuid[] AND (cardinality(d.roles)=0 OR 'investor'=ANY(d.roles))))`;
 export class GroupDocumentRepository{
  constructor(private db:Database){}
  private async checkProperties(db:Queryable,ids:string[]){if(ids.length&&(await db.query('SELECT id FROM properties WHERE id=ANY($1::uuid[])',[ids])).rows.length!==ids.length)throw new Error('One of the selected properties no longer exists.');}
  async listAdmin(actor:DocumentActor){if(!actor.admin)throw new Error('Admin access required.');return (await this.db.query<GroupDocument>(`SELECT ${fields} FROM group_documents d ORDER BY d.created_at DESC,d.id`)).rows;}
- async listForMember(actor:GroupDocumentActor){if(!z.uuid().safeParse(actor.id).success)return [];return (await this.db.query<GroupDocument>(`SELECT ${fields} FROM group_documents d WHERE ${matching} ORDER BY d.created_at DESC,d.id`,[z.uuid().safeParse(actor.id).success?actor.id:null,actor.roles])).rows;}
+ async listForMember(actor:GroupDocumentActor){if(!z.uuid().safeParse(actor.id).success)return [];return (await this.db.query<GroupDocument>(`SELECT ${fields} FROM group_documents d WHERE ${matching} ORDER BY d.created_at DESC,d.id`,[actor.id,actor.roles,await investedPropertyIds(this.db,actor.id)])).rows;}
  async download(id:string,actor:GroupDocumentActor){
   z.uuid().parse(id);if(!actor.admin&&!z.uuid().safeParse(actor.id).success)return null;
-  const doc=(await this.db.query<GroupDocument & {content:string}>(`SELECT ${fields},d.content FROM group_documents d WHERE ${actor.admin?'d.id=$1::uuid':`${matching} AND d.id=$3::uuid`}`,actor.admin?[id]:[actor.id,actor.roles,id])).rows[0]??null;
+  const doc=(await this.db.query<GroupDocument & {content:string}>(`SELECT ${fields},d.content FROM group_documents d WHERE ${actor.admin?'d.id=$1::uuid':`${matching} AND d.id=$4::uuid`}`,actor.admin?[id]:[actor.id,actor.roles,await investedPropertyIds(this.db,actor.id),id])).rows[0]??null;
   const allowed=!!doc;await auditDocument(this.db,actor.id,'group_documents',id,allowed?'download_authorized':'download_denied');return allowed?doc:null;
  }
 

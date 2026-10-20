@@ -3,7 +3,7 @@ import {clubIdentity} from './staff';
 import {currentUser} from './auth/identity';
 export const privateHeaders={'Cache-Control':'private, no-store','Vary':'Cookie','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Cross-Origin-Resource-Policy':'same-origin'};
 export function documentJson(body:unknown,status=200){return Response.json(body,{status,headers:privateHeaders});}
-export async function documentActor(){const actor=await clubIdentity();if(!actor)return null;const user=await currentUser();return {...actor,id:user?.id||actor.id};}
+export async function documentActor(){const actor=await clubIdentity();if(!actor||actor.preview?.expired)return null;if(actor.preview)return actor;const user=await currentUser();return {...actor,id:user?.id||actor.id};}
 export async function limitedBody(request:Request,limit:number){
  const reader=request.body?.getReader();if(!reader)throw new Error('Missing body');
  const chunks:Uint8Array[]=[];let size=0;

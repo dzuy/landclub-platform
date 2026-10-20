@@ -53,3 +53,40 @@ test('an audience cannot accidentally default to everyone or accept arbitrary us
  assert.equal(audienceSchema.safeParse({memberId:randomUUID()}).success,false);
  assert.equal(audienceSchema.safeParse({everyone:false,propertyIds:[],roles:['prospect']}).success,true);
 });
+
+test('investment-derived property audiences apply to lists and downloads without granting unrelated roles or properties',async()=>{
+ const db=new PGlite(),adapter=embeddedDatabase(db),admin:GroupDocumentActor={id:'test-admin',admin:true,roles:['admin']};
+ const investor:GroupDocumentActor={id:randomUUID(),admin:false,roles:['member']};
+ try{
+ const properties=new PropertyRepository(adapter);await properties.initialize();
+ const farm=await properties.create(seeds[0],admin.id),coast=await properties.create({...seeds[0],slug:'other-investment-property'},admin.id);
+ await new MemberPropertyRepository(adapter).initialize();await securitySchema(db);
+ await db.exec('CREATE TABLE prepared_members(id uuid PRIMARY KEY,auth_user_id uuid)');
+ for(const name of ['018_investor_reporting.sql','019_investor_operations.sql','021_dashboard_preview.sql','022_investment_property_links.sql'])await db.exec(await readFile(new URL(`../migrations/${name}`,import.meta.url),'utf8'));
+ const person=randomUUID(),holder=randomUUID(),entity=randomUUID();
+ await db.query('INSERT INTO prepared_members VALUES($1,NULL)',[investor.id]);
+ await db.query('INSERT INTO report_people(id,prepared_member_id) VALUES($1,$2)',[person,investor.id]);
+ await db.query("INSERT INTO investment_holders(id,name) VALUES($1,'Trust')",[holder]);
+ await db.query("INSERT INTO investment_entities(id,name,property_id) VALUES($1,'Farm',$2)",[entity,farm.id]);
+ await db.query("INSERT INTO investor_access(person_id,holder_id,granted_by) VALUES($1,$2,'test')",[person,holder]);
+ await db.query("INSERT INTO investment_positions(id,holder_id,entity_id,project_name,name,kind) VALUES($1,$2,$3,'Farm','Equity','equity')",[randomUUID(),holder,entity]);
+ const repo=new GroupDocumentRepository(adapter),bytes=Buffer.from('Synthetic investor document');
+ const make=(name:string,propertyIds:string[],roles:string[])=>repo.upload(name,bytes,[],{everyone:false,propertyIds,roles},admin);
+ const allowed=await make('farm-investors.txt',[farm.id],['investor']);
+ const propertyWide=await make('farm-all-members.txt',[farm.id],[]);
+ const ownerOnly=await make('farm-owners.txt',[farm.id],['owner']);
+ const other=await make('coast-investors.txt',[coast.id],['investor']);
+ const globalOwners=await make('owners.txt',[],['owner']);
+ assert.deepEqual((await repo.listForMember(investor)).map(d=>d.id).sort(),[allowed.id,propertyWide.id].sort());
+ assert.ok(await repo.download(allowed.id,investor));
+ for(const doc of [ownerOnly,other,globalOwners])assert.equal(await repo.download(doc.id,investor),null);
+ assert.equal(await repo.download(allowed.id,{...investor,id:randomUUID()}),null);
+ const linked=randomUUID();await db.query('UPDATE prepared_members SET auth_user_id=$1',[linked]);
+ assert.equal(await repo.download(allowed.id,investor),null);
+ const account={...investor,id:linked};assert.ok(await repo.download(allowed.id,account));
+ await db.query('UPDATE report_people SET disabled_at=now()');assert.equal(await repo.download(allowed.id,account),null);
+ await db.query('UPDATE report_people SET disabled_at=NULL');
+ await db.query('UPDATE investor_access SET revoked_at=now()');
+ assert.deepEqual(await repo.listForMember(account),[]);assert.equal(await repo.download(allowed.id,account),null);
+ }finally{await db.close();}
+});
