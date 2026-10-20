@@ -1,4 +1,5 @@
 import 'server-only';
+import {InvestmentTermsRepository} from './investment-terms-repository';
 import {requireStaff} from './staff';
 import {investorPlatformStore} from './investor-platform-store';
 import {InvestorReportRepository} from './investor-reports';
@@ -15,6 +16,8 @@ export async function loadMemberInvestorDetail(memberId:string){
  const repo=new InvestorReportRepository(store.db);
  const reports=(await Promise.all(ids.map(r=>repo.get(r.id,actor)))).filter(r=>r!==null);
  const statements=(await store.db.query<{id:string;report_id:string;edition:number;captured_at:string}>('SELECT s.id,s.report_id,s.edition,s.captured_at::text FROM investor_statement_snapshots s JOIN investor_reports r ON r.id=s.report_id JOIN investment_positions p ON p.id=r.position_id JOIN investor_access a ON a.holder_id=p.holder_id WHERE a.person_id=$1 ORDER BY s.captured_at DESC',[person.id])).rows;
- return {person,grants,reports,statements};
+ const termsRepo=new InvestmentTermsRepository(store.db);
+ const termPositions=await termsRepo.ready()?await termsRepo.memberPositions(memberId,actor):[];
+ return {person,grants,reports,statements,termPositions};
 }
 export type MemberInvestorDetail=Awaited<ReturnType<typeof loadMemberInvestorDetail>>;

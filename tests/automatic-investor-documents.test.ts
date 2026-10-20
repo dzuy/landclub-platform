@@ -46,5 +46,10 @@ test('private workbooks refresh in place, preserve history, choose latest report
  await pg.query('UPDATE report_people SET disabled_at=NULL');
  const linked=randomUUID();await pg.query("UPDATE prepared_members SET auth_user_id=$1,status='invited'",[linked]);assert.ok(await repo.download(document,{id:linked,admin:false}));
  assert.equal(await repo.download(document,other),null);
+ const current=(await repo.list(member,{id:'admin',admin:true}))[0];
+ await repo.remove(document,current.version,{id:'admin',admin:true});
+ assert.deepEqual(await repo.list(member,{id:'admin',admin:true}),[]);
+ assert.equal(await repo.download(document,{id:linked,admin:false}),null);
+ assert.equal((await pg.query('SELECT * FROM investor_document_versions')).rows.length,3,'Deletion preserves immutable workbook history');
  }finally{await pg.close();}
 });

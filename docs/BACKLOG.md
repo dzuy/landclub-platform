@@ -1,6 +1,35 @@
 # Land Club Platform — Backlog
 
-Last updated: 2026-10-19
+Last updated: 2026-10-20
+
+## Pause / handoff — October 20, 2026
+
+**Land Club is paused while the user shifts to Substrate.** Resume from [the current handoff](LANDCLUB-HANDOFF-2026-10-20.md). This section supersedes older implementation statuses below; historical items remain for context.
+
+### Completed foundations
+
+- [x] Property Save and Exit with autosave/error guards; neutral missing imagery.
+- [x] Document display names/notes and member document aggregation; preserve original filenames, versions and access. User's document deletion edits retained.
+- [x] Investment-specific agreement attachment, draft/review/confirm/history and separate transactions; supported simple Actual/365 calculation engine. Unconfirmed/unsupported terms remain unavailable.
+- [x] Existing real admin auth and audited View As preserved, including prepared investors; signed-out avatar hidden.
+- [x] Sharing derives from explicit source ownership, across properties. Delegated viewing, generic role/access flags and mixed selections cannot authorize onward sharing.
+- [x] Actual-admin on-behalf invite/revoke with target/session validation, specific confirmations and separate actor/target audit fields.
+- [x] Terms opens inside the member drawer with Back/context and unsaved guards. Sharing is right-side content, last under Portfolio, with simplified copy and no redundant header links.
+- [x] Migrations 026 and 027 actually applied and verified in hosted Supabase `land_club`; 001–025 were already applied. No financial terms, owner-grant rows or real invitations were created during this work.
+- [x] Sharing mail template/configuration preflight, provider idempotency and failure/duplicate protections implemented and mock-tested. **Live delivery is not configured.**
+
+### Concrete remaining work
+
+- [ ] **EMAIL-01 — Transactional delivery:** inspect existing Supabase SMTP provider/sender, reuse approved credential if possible; otherwise approve exact provider, verified sender and restricted sending credential before configuration. No new account, credential, DNS or paid plan was created. Then obtain approval for a harmless live test to the user's verified admin address (no investment data/token). Owner: technical admin TBD.
+- [ ] **DEPLOY-01 — Hosted acceptance:** follow the main-push deployment and verify `/investment-access/accept` (404 before this handoff). Test an existing-account acceptance journey after delivery is configured; GET/email scanners must not accept invitations. No additional migrations authorized. Owner: engineering.
+- [ ] **AUTH-01 — New recipients:** design invitation-only onboarding compatible with Supabase public signup currently disabled. Do not enable public signup silently. Confirm callback allowlist and existing/new-account flows. Owner: engineering + product approval.
+- [ ] **TERMS-01 — Agreement extraction:** select/approve provider, credentials and document-processing policy; implement extraction with evidence references and mandatory human review. Current manual entry is not automatic extraction. Owner: engineering + product.
+- [ ] **TERMS-02 — Real agreements and terms:** collect executed agreements and verified transactions; review/confirm each investment deliberately. No terms activated during implementation. Equity, compound interest, alternative day counts, conditions and historical corrections remain unsupported for automatic accrual. Owner: investment operations TBD.
+- [ ] **QA-01 — Real account walkthrough:** use real admin sign-in and Ian/Scott View As; verify drawer forward/back/close/reopen/unsaved edits, property visibility, document metadata/aggregation, sidebar/mobile layout, own vs delegated sharing, session expiry and correct target auditing. Automated tests passed; authenticated visual QA was blocked by unavailable IAB. Owner: user/engineering.
+- [ ] **OPS-01 — Ian/Scott launch:** verify identity links, source ownership, investment documents, balances/terms and visible reports; decide when ready and who sends their invitations (**Nate or Jill, owner TBD**). They remain prepared/unlinked and were not invited by this work. Do not release reports or activate financial terms as part of deployment.
+- [ ] **DESIGN-01 — Che / public content:** obtain Che's Figma direction and approved public/property content; reconcile before public design/content work. This handoff did not implement public designs. Owner: Che + content owner TBD.
+
+No permission to send mail, create credentials, change auth/security settings, release reports or activate financial terms is implied by resuming this backlog.
 
 ## Current implementation backlog
 

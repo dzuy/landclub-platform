@@ -1,3 +1,4 @@
+import {sharedReportPredicate} from './investment-sharing';
 import {nordenCompanyReport} from './investor-company-report';
 import {z} from 'zod';
 import type {Database} from './database';
@@ -22,9 +23,9 @@ function identity(actor:ReportActor):[boolean,string|null]|null{
  return z.uuid().safeParse(actor.id).success?[false,actor.id]:null;
 }
 export class InvestorReportRepository{
- constructor(private db:Database,private scope:{person:boolean;draft:boolean;subjectId?:string}={person:false,draft:false}){}
+ constructor(private db:Database,private scope:{person:boolean;draft:boolean;subjectId?:string;shared?:boolean}={person:false,draft:false}){}
  private identity(actor:ReportActor){return this.scope.subjectId?identity(actor?{id:this.scope.subjectId,admin:false}:null):identity(actor);}
- private get predicate(){return this.scope.person?allowed.replace('person.auth_user_id=$2::uuid','person.id=$2::uuid').replace('r.released_at IS NOT NULL',this.scope.draft?'TRUE':'r.released_at IS NOT NULL'):allowed;}
+ private get predicate(){if(this.scope.shared)return sharedReportPredicate;return this.scope.person?allowed.replace('person.auth_user_id=$2::uuid','person.id=$2::uuid').replace('r.released_at IS NOT NULL',this.scope.draft?'TRUE':'r.released_at IS NOT NULL'):allowed;}
  async isReady(){
   const result=await this.db.query<{ready:boolean}>(`SELECT bool_and(to_regclass(name) IS NOT NULL) AS ready FROM unnest($1::text[]) AS names(name)`,[['investor_reports','investment_positions','investment_holders','investor_access','report_people','investor_report_lines','investor_report_schedules','investor_report_findings','investor_report_documents']]);
   return result.rows[0]?.ready===true;
@@ -48,6 +49,7 @@ export class InvestorReportRepository{
   return {...report,lines,schedules,documents,findings};
  }
  async company(id:string,actor:ReportActor){
+  if(this.scope.shared)return null; // Company source snapshots can contain unrelated holdings.
   const who=this.identity(actor);if(!who||!z.uuid().safeParse(id).success)return null;
   const result=await this.db.query<{payload:unknown}>(`SELECT snapshot.payload ${joins} JOIN investment_entities entity ON entity.id=p.entity_id JOIN investor_source_snapshots snapshot ON snapshot.id=r.snapshot_id WHERE ${this.predicate} AND r.id=$3::uuid AND entity.source_id='ENT-NC'`,[...who,id]);
   if(!result.rows[0])return null;

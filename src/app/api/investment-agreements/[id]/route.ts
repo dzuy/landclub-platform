@@ -1,0 +1,4 @@
+import {requireStaff} from '@/lib/staff';
+import {investorPlatformDatabase} from '@/lib/investor-platform-db';
+import {InvestmentTermsRepository} from '@/lib/investment-terms-repository';
+export async function GET(_:Request,{params}:{params:Promise<{id:string}>}){try{const actor=await requireStaff(),doc=await new InvestmentTermsRepository(await investorPlatformDatabase()).download((await params).id,actor);if(!doc)return new Response('Not found',{status:404});return new Response(new Uint8Array(doc.content),{headers:{'Content-Type':'application/octet-stream','Content-Disposition':'attachment; filename="agreement.pdf"','Cache-Control':'private, no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':"sandbox; default-src 'none'"}});}catch{return new Response('Not found',{status:404});}}

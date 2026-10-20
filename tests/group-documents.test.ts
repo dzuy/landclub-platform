@@ -90,3 +90,19 @@ test('investment-derived property audiences apply to lists and downloads without
  assert.deepEqual(await repo.listForMember(account),[]);assert.equal(await repo.download(allowed.id,account),null);
  }finally{await db.close();}
 });
+
+test('editing group labels preserves audience and revocation on admin member lists',async()=>{
+ const pg=new PGlite(),db=embeddedDatabase(pg),admin={id:'admin',admin:true,roles:['admin'] as ['admin']},member={id:randomUUID(),admin:false,roles:['prospect'] as ['prospect']};
+ try{
+  const properties=new PropertyRepository(db);await properties.initialize();const property=await properties.create(seeds[0],admin.id);
+  const associations=new MemberPropertyRepository(db);await associations.initialize();await associations.save(member.id,property.id,['prospect'],admin);await securitySchema(pg);
+  const repo=new GroupDocumentRepository(db),doc=await repo.upload('source.txt',Buffer.from('fixture'),[],{everyone:false,propertyIds:[property.id],roles:['prospect']},admin);
+  await repo.upload('admin-only.txt',Buffer.from('fixture'),[],{everyone:false,propertyIds:[],roles:['admin']},admin);
+  const saved=await repo.updateMetadata(doc.id,1,{displayName:'Property guide',notes:'Shared context',tags:[]},admin);
+  assert.deepEqual(saved.property_ids,doc.property_ids);assert.deepEqual(saved.roles,doc.roles);assert.equal(saved.everyone,false);assert.equal(saved.filename,'source.txt');assert.equal(saved.version,2);
+  assert.deepEqual((await repo.listForMember(member)).map(d=>d.id),[doc.id]);
+  assert.equal((await repo.download(doc.id,member))?.content,Buffer.from('fixture').toString('base64'));
+  await assert.rejects(repo.updateMetadata(doc.id,1,{displayName:'Stale',notes:'',tags:[]},admin),/changed/);
+  await associations.remove(member.id,property.id,1,admin);assert.deepEqual(await repo.listForMember(member),[]);
+ }finally{await pg.close();}
+});

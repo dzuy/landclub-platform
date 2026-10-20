@@ -11,7 +11,7 @@ export async function initializeDocumentSecurity(){
  if(!state.documentSecurityReady)state.documentSecurityReady=(async()=>{
   await preparedMemberStore();await memberPropertyStore();await new InvitationRepository(database()).initialize();
   await database().transaction(async tx=>{
-   for(const file of ['012_member_documents.sql','013_group_documents.sql','017_document_audit.sql']){
+   for(const file of ['012_member_documents.sql','013_group_documents.sql','017_document_audit.sql','024_document_metadata.sql','025_document_deletion.sql']){
     const sql=await readFile(path.join(process.cwd(),'migrations',file),'utf8');
     for(const statement of sql.split(file.startsWith('017')?'-- statement-break':';').filter(s=>s.trim()))await tx.query(statement);
    }

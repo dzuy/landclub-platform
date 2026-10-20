@@ -1,4 +1,5 @@
 'use server';
+import {localPreviewSignInAllowed} from '@/lib/local-access';
 import {PREVIEW_COOKIE} from '@/lib/dashboard-preview';
 import {redirect} from 'next/navigation';
 import {cookies,headers} from 'next/headers';
@@ -38,4 +39,11 @@ export async function signOut(){
  if(authConfigured()){const {error}=await (await authClient()).auth.signOut({scope:'local'});if(error)throw new Error('Sign-out failed. Please try again.');}
  (await cookies()).set('land-club-local-signed-out','1',{httpOnly:true,sameSite:'lax',secure:process.env.NODE_ENV==='production',path:'/'});
  redirect('/signin');
+}
+
+export async function enterLocalPreview(){
+ const h=await headers();
+ if(!localPreviewSignInAllowed(process.env.NODE_ENV,process.env.LAND_CLUB_LOCAL_STAFF,h.get('host')||'',process.env.DATABASE_URL,authConfigured()))throw new Error('Local preview access is unavailable.');
+ (await cookies()).delete('land-club-local-signed-out');
+ redirect('/dashboard/properties');
 }

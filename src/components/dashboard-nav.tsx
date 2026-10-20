@@ -27,7 +27,7 @@ export function DashboardNav({showAdminTools,properties,portfolio}:{showAdminToo
  const [collapsed,setCollapsed]=useState({properties:false,portfolio:false});
  const [hash,setHash]=useState('');
  useEffect(()=>{
-  try{const saved=JSON.parse(localStorage.getItem('land-club:nav-collapse')||'{}');setCollapsed({properties:saved?.properties===true,portfolio:saved?.portfolio===true});}catch{/* Navigation works without browser storage. */}
+  try{const saved=JSON.parse(localStorage.getItem('land-club:nav-collapse')||'{}');setCollapsed({properties:saved?.properties===true,portfolio:!path.startsWith('/investment-access')&&saved?.portfolio===true});}catch{/* Navigation works without browser storage. */}
   const readHash=()=>setHash(window.location.hash);readHash();
   window.addEventListener('hashchange',readHash);
   return ()=>window.removeEventListener('hashchange',readHash);
@@ -55,12 +55,12 @@ export function DashboardNav({showAdminTools,properties,portfolio}:{showAdminToo
     const expanded=group?!collapsed[group]:false;
     const subnavId=`dashboard-${group}-subnav`;
     return <div className={group?'dashboard-nav-group':undefined} key={href}>
-     <div className="dashboard-nav-row"><Link href={href} aria-current={(group?path.startsWith(href):path===href)?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name={icon}/><span>{label}</span></Link>{group&&<button type="button" className="dashboard-group-toggle" aria-label={`${expanded?'Collapse':'Expand'} ${label}`} aria-expanded={expanded} aria-controls={subnavId} onClick={()=>toggleGroup(group)}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d={expanded?'m5 7 5 5 5-5':'m7 5 5 5-5 5'}/></svg></button>}</div>
-     {group&&<div id={subnavId} className="dashboard-property-subnav" hidden={!expanded||!items.length}>{items.map(item=>{
+     <div className="dashboard-nav-row"><Link href={href} aria-current={group==='portfolio'&&path.startsWith('/investment-access')?'location':(group?path.startsWith(href):path===href)?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name={icon}/><span>{label}</span></Link>{group&&<button type="button" className="dashboard-group-toggle" aria-label={`${expanded?'Collapse':'Expand'} ${label}`} aria-expanded={expanded} aria-controls={subnavId} onClick={()=>toggleGroup(group)}><svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d={expanded?'m5 7 5 5 5-5':'m7 5 5 5-5 5'}/></svg></button>}</div>
+     {group&&<div id={subnavId} className="dashboard-property-subnav" hidden={!expanded||(group!=='portfolio'&&!items.length)}>{items.map(item=>{
       const destination=group==='properties'?`/dashboard/my-properties/${item.id}`:`/dashboard/portfolio#position-${item.id}`;
       const active=group==='properties'?path===destination:path==='/dashboard/portfolio'&&(hash===`#position-${item.id}`||(!hash&&item.id===portfolio[0]?.id));
       return <a key={item.id} href={destination} aria-current={active?'page':undefined} onClick={()=>setOpen(false)}><span>{item.name}</span></a>;
-     })}</div>}
+     })}{group==='portfolio'&&<Link href="/investment-access" aria-current={path.startsWith('/investment-access')?'page':undefined} onClick={()=>setOpen(false)}><span>Investment sharing</span></Link>}</div>}
     </div>;
    })}{showAdminTools&&<><div className="dashboard-nav-divider"/><div className="eyebrow">ADMIN TOOLS</div><Link href="/dashboard/members" aria-current={path.startsWith('/dashboard/members')?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="members"/><span>Members</span></Link><Link href="/dashboard/properties" aria-current={path.startsWith('/dashboard/properties')?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="content"/><span>Properties</span></Link><Link href="/dashboard/manage-documents" aria-current={path==='/dashboard/manage-documents'?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="documents"/><span>Documents</span></Link><Link href="/dashboard/manage-events" aria-current={path==='/dashboard/manage-events'?'page':undefined} onClick={()=>setOpen(false)}><NavIcon name="events"/><span>Events</span></Link></>}</nav>
   </div>

@@ -1,3 +1,4 @@
+import type {calculateTerms} from '@/lib/investment-terms';
 import {PortfolioItemSwitcher} from './portfolio-item-switcher';
 import Link from 'next/link';
 import type {ReactNode} from 'react';
@@ -21,7 +22,7 @@ function Note({children}:{children:ReactNode}){return <p className={s.note}>{chi
 function date(value:string|null){return value?new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'}).format(new Date(`${value}T00:00:00Z`)):'Date pending';}
 function money(value:string|null,currency:string){return value===null?'Not yet available':reportAmount(value,currency).replace(/^USD /,'$');}
 function activity(line:ReportLine){const raw=line.label.split(' · ')[1]??line.label;return ({'capital contribution':'Investment funded','return of capital':'Principal returned','loan funding':'Loan funded','interest payment':'Interest paid','loan payment':'Loan payment','reserve deposit':'Reserve deposit'} as Record<string,string>)[raw]??raw.charAt(0).toUpperCase()+raw.slice(1);}
-export function RealInvestorPortfolio({name,reports,base='/dashboard/portfolio',downloadBase='/api/investor-reports',preview=false,statements=[],previewToken}:{name:string;reports:InvestorReport[];base?:string;downloadBase?:string;preview?:boolean;statements?:{id:string;report_id:string;edition:number}[];previewToken?:string}){
+export function RealInvestorPortfolio({name,reports,base='/dashboard/portfolio',downloadBase='/api/investor-reports',preview=false,statements=[],previewToken,accruals={}}:{accruals?:Record<string,ReturnType<typeof calculateTerms>|null>;name:string;reports:InvestorReport[];base?:string;downloadBase?:string;preview?:boolean;statements?:{id:string;report_id:string;edition:number}[];previewToken?:string}){
  return <div className={s.portfolio} data-investor-portfolio>
  <nav className={s.breadcrumb} aria-label="Breadcrumb"><Link href="/dashboard"><img src={`${assets}back.svg`} alt=""/> Dashboard</Link><span>/</span><span>Your portfolio</span></nav>
  <div className={s.heading}><h1>Your portfolio</h1>{name&&<span className={s.mock}>{name}</span>}</div>
@@ -43,6 +44,7 @@ export function RealInvestorPortfolio({name,reports,base='/dashboard/portfolio',
  <Rows rows={[[r.kind==='equity'?'Invested through':'Account holder',r.holder_name]]}/>
  <a className={s.primary} href={`/dashboard/portfolio/reports/${r.id}${previewToken?`?preview=${previewToken}`:''}`}>Company reports and updates →</a>
  </section>
+ <Card title="Calculated accrual">{accruals[r.id]?.available?<><Rows rows={Object.entries(accruals[r.id]!).filter(([key])=>['asOf','principal','accrued','paid','unpaid','prepaid'].includes(key)).map(([key,value])=>[key,String(value)])}/><Note>Confirmed simple Actual/365 loan terms. Accrued is not paid or currently payable. Source-dated figures above are preserved separately.</Note></>:<Note>{accruals[r.id]&&!accruals[r.id]!.available?(accruals[r.id] as {reason:string}).reason:'Pending confirmed terms and released calculation access.'}</Note>}</Card>
  <div className={s.grid}>
  <Card title="Your position"><Rows rows={values.filter(l=>!['commitment amount','amount'].includes(l.label)).map(l=>[labels[l.label]??l.label,money(l.amount,r.currency)])}/><Note>These are the reported figures at {date(r.as_of)}, not a live balance.</Note></Card>
  <Card title="Activity">{transactions.length?<Rows rows={transactions.map(l=>[<>{activity(l)}<Note>{date(l.effective_date)}{l.basis==='internal_transfer'?' · Transfer between your investments':''}{l.basis==='non_cash'?' · Non-cash':''}</Note></>,money(l.amount,r.currency)])}/>:<Note>No activity has been supplied for this position yet.</Note>}{transactions.length>0&&<Note>Activity is taken from the supplied records. Payment confirmation is still being reviewed.</Note>}</Card>

@@ -38,7 +38,7 @@ test('audit migration preserves legacy bytes and audiences with immediate author
   for(const file of ['012_member_documents.sql','013_group_documents.sql'])await pg.exec(await readFile(new URL('../migrations/'+file,import.meta.url),'utf8'));
   const id=randomUUID();await pg.query("INSERT INTO group_documents(id,filename,byte_size,content,everyone,uploaded_by) VALUES($1,'old.docx',3,'b2xk',true,'admin')",[id]);
   const before=(await pg.query('SELECT * FROM group_documents')).rows;
-  await securitySchema(pg);assert.deepEqual((await pg.query('SELECT * FROM group_documents')).rows,before);
+  await securitySchema(pg);assert.deepEqual((await pg.query('SELECT * FROM group_documents')).rows,before.map(row=>({...row as object,display_name:'',notes:'',deleted_at:null})));
   const db=embeddedDatabase(pg),repo=new GroupDocumentRepository(db),admin={id:randomUUID(),admin:true,roles:['admin'] as const};
   assert.equal((await repo.download(id,{...admin,roles:['admin']}))?.content,'b2xk');
   await repo.update(id,1,[],{everyone:false,propertyIds:[],roles:['investor']},admin);

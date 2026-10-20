@@ -17,6 +17,17 @@ export async function PATCH(request:Request,{params}:{params:Promise<{id:string}
  if(!hasSameOrigin(request))return documentJson({error:'Invalid request origin.'},403);
  try{
   const {id}=await params;const input=JSON.parse((await limitedBody(request,16384)).toString());
-  const document=await (await memberDocumentStore()).updateTags(id,input.version,input.tags,actor);return documentJson({document});
- }catch{return documentJson({error:'Tags could not be saved. Refresh and try again.'},400);}
+  const document=await (await memberDocumentStore()).updateMetadata(id,input.version,input,actor);return documentJson({document});
+ }catch{return documentJson({error:'Document details could not be saved. Refresh and try again.'},400);}
+}
+
+export async function DELETE(request:Request,{params}:{params:Promise<{id:string}>}){
+ const actor=await documentActor();if(!actor?.admin)return documentJson({error:'Admin access required.'},403);
+ if(!hasSameOrigin(request))return documentJson({error:'Invalid request origin.'},403);
+ try{
+  const {id}=await params;
+  const input=z.object({version:z.number().int().positive(),confirmed:z.literal(true)}).parse(JSON.parse((await limitedBody(request,1024)).toString()));
+  await (await memberDocumentStore()).remove(id,input.version,actor);
+  return documentJson({deleted:true});
+ }catch{return documentJson({error:'Document could not be deleted. Refresh and try again.'},400);}
 }

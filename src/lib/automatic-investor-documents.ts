@@ -72,7 +72,7 @@ export async function generateInvestorWorkbook(data:Payload){
 export async function refreshInvestorDocument(db:Database,id:string):Promise<'ordinary'|'available'|'unavailable'>{
  if(!(await db.query<{ready:boolean}>("SELECT to_regclass('automatic_investor_documents') IS NOT NULL AS ready")).rows[0]?.ready)return 'ordinary';
  return db.transaction(async tx=>{
-  const b=(await tx.query<Binding>(`SELECT a.*,d.member_id,d.version,d.filename,d.content FROM automatic_investor_documents a JOIN member_documents d ON d.id=a.document_id WHERE a.document_id=$1 FOR UPDATE OF a,d`,[id])).rows[0];
+  const b=(await tx.query<Binding>(`SELECT a.*,d.member_id,d.version,d.filename,d.content FROM automatic_investor_documents a JOIN member_documents d ON d.id=a.document_id WHERE a.document_id=$1 AND d.deleted_at IS NULL FOR UPDATE OF a,d`,[id])).rows[0];
   if(!b)return 'ordinary';
   const data=await payload(tx,b);if(!data)return 'unavailable';
   const digest=hash(data);if(digest===b.content_hash)return 'available';

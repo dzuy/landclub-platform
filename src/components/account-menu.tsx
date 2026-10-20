@@ -39,6 +39,8 @@ export function AccountMenu({authenticated=true,photoUrl,previewPeople,previewPe
     };
   }, []);
 
+  if(!authenticated)return null;
+
   return (
     <details ref={menuRef} className="account-menu">
       <summary aria-label="Open profile menu">

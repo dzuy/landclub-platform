@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {clubUserRoles} from '@/lib/staff';
 import {hasSameOrigin} from '@/lib/request-origin';
 import {groupDocumentStore} from '@/lib/group-document-store';
 import {memberDocumentStore} from '@/lib/member-document-store';
@@ -16,7 +17,14 @@ export async function GET(request:Request){
  if(requested&&!z.uuid().safeParse(id).success)return documentJson({error:'Invalid member.'},400);
  try{
   const personal=z.uuid().safeParse(id).success?await (await memberDocumentStore()).list(id,actor):[];
-  const groups=requested?[]:await (await groupDocumentStore()).listForMember(actor);
+  let target=actor;
+  if(requested&&actor.admin){
+   const prepared=await (await preparedMemberStore()).get(id);
+   const targetId=prepared?.status==='invited'&&prepared.auth_user_id?prepared.auth_user_id:id;
+   const roles=prepared&&prepared.status!=='invited'?prepared.roles:await clubUserRoles(await managedMember(targetId));
+   target={...actor,id:targetId,roles,admin:false};
+  }
+  const groups=await (await groupDocumentStore()).listForMember(target);
   const documents=[...personal,...groups.map(doc=>({...doc,group:true,member_id:''}))].sort((a,b)=>new Date(b.created_at).getTime()-new Date(a.created_at).getTime());
   return documentJson({documents});
  }catch{return documentJson({error:'Unable to load documents. Please try again.'},500);}

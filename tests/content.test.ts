@@ -43,3 +43,9 @@ test('editor saves update active pages atomically while drafts stay private',asy
   assert.equal(privateEdit.published,null);assert.equal((await repo.publicList()).length,0);
  }finally{await db.close();}
 });
+
+test('local preview re-entry is unavailable with hosted data or configured authentication',async()=>{
+ const {localPreviewSignInAllowed:allowed}=await import('../src/lib/local-access');
+ assert.equal(allowed('development','1','127.0.0.1:3000',undefined,false),true);
+ for(const args of [ ['production','1','127.0.0.1:3000',undefined,false], ['development','1','example.com',undefined,false], ['development','0','127.0.0.1:3000',undefined,false], ['development','1','127.0.0.1:3000','postgres://configured',false], ['development','1','127.0.0.1:3000',undefined,true] ] as const)assert.equal(allowed(args[0],args[1],args[2],args[3],args[4]),false);
+});

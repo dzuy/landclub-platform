@@ -11,7 +11,7 @@ export async function investorPlatformDatabase():Promise<Database>{
   await mkdir(path.join(process.cwd(),'.data'),{recursive:true});
   const db=embeddedDatabase(new PGlite(path.join(process.cwd(),'.data','investor-platform')));
   await db.query('CREATE TABLE IF NOT EXISTS properties(id uuid PRIMARY KEY)');
-  for(const name of ['018_investor_reporting.sql','019_investor_operations.sql','020_investor_source_files.sql','021_dashboard_preview.sql','022_investment_property_links.sql']){
+  for(const name of ['018_investor_reporting.sql','019_investor_operations.sql','020_investor_source_files.sql','021_dashboard_preview.sql','022_investment_property_links.sql','026_investment_reviewed_terms.sql','027_investment_sharing.sql']){
    const sql=await readFile(path.join(process.cwd(),'migrations',name),'utf8');
    await db.transaction(async tx=>{for(const s of sql.split('-- statement-break').filter(s=>s.trim()))await tx.query(s);});
   }

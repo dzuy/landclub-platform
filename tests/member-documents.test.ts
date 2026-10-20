@@ -58,3 +58,19 @@ test('document validation rejects oversized, empty, executable and disguised fil
  assert.throws(()=>documentTagsSchema.parse(['x'.repeat(101)]));
  assert.throws(()=>documentTagsSchema.parse(Array.from({length:31},(_,i)=>String(i))));
 });
+
+test('document labels and notes preserve original bytes, ownership and optimistic versions',async()=>{
+ const pg=new PGlite(),db=embeddedDatabase(pg),admin={id:'admin',admin:true},owner={id:randomUUID(),admin:false};
+ try{
+  await new PreparedMemberRepository(db).initialize();await securitySchema(pg);
+  const repo=new MemberDocumentRepository(db),doc=await repo.upload(owner.id,'original.txt',Buffer.from('fixture'),[],admin);
+  const metadata={displayName:'Friendly name',notes:'Optional context',tags:['Test']};
+  await assert.rejects(repo.updateMetadata(doc.id,1,metadata,owner),/Admin/);
+  const saved=await repo.updateMetadata(doc.id,1,metadata,admin);
+  assert.equal(saved.display_name,'Friendly name');assert.equal(saved.notes,'Optional context');assert.equal(saved.filename,'original.txt');assert.equal(saved.version,2);assert.equal(saved.member_id,owner.id);
+  assert.equal((await repo.download(doc.id,owner))?.content,Buffer.from('fixture').toString('base64'));
+  await assert.rejects(repo.updateMetadata(doc.id,1,metadata,admin),/changed/);
+  await assert.rejects(repo.updateMetadata(doc.id,2,{...metadata,notes:'x'.repeat(4001)},admin));
+  assert.equal((await repo.updateMetadata(doc.id,2,{displayName:'',notes:'',tags:[]},admin)).display_name,'');
+ }finally{await pg.close();}
+});

@@ -7,9 +7,10 @@ import type {Database} from './database';
 
 export const MAX_DOCUMENT_BYTES=20*1024*1024;
 export const documentTagsSchema=z.array(z.string().trim().min(1).max(100)).max(30).transform(tags=>[...new Map(tags.map(tag=>[tag.toLowerCase(),tag])).values()]);
-export type MemberDocument={group?:boolean;property_names?:string[];id:string;member_id:string;filename:string;byte_size:number;tags:string[];version:number;created_at:string};
+export const documentMetadataSchema=z.object({displayName:z.string().trim().max(200),notes:z.string().trim().max(4000),tags:documentTagsSchema});
+export type MemberDocument={group?:boolean;property_names?:string[];id:string;member_id:string;filename:string;display_name?:string;notes?:string;byte_size:number;tags:string[];version:number;created_at:string};
 export type DocumentActor={id:string;admin:boolean};
-const fields='d.id,d.member_id,d.filename,d.byte_size,d.tags,d.version,d.created_at';
+const fields='d.id,d.member_id,d.filename,d.display_name,d.notes,d.byte_size,d.tags,d.version,d.created_at';
 // Prepared-member files follow only the explicitly linked account, never email or tags.
 const owned=`(d.member_id=$1::uuid OR EXISTS(SELECT 1 FROM prepared_members p WHERE p.id=d.member_id AND p.auth_user_id=$1::uuid AND p.status='invited'))`;
 export function documentFilename(name:string){return name.split(/[\\/]/).pop()!.replace(/[\x00-\x1f\x7f]/g,'').trim().slice(0,200);}
@@ -34,22 +35,43 @@ export function validateDocument(name:string,bytes:Uint8Array){
 }
 export class MemberDocumentRepository{
  constructor(private db:Database){}
+ async remove(id:string,version:number,actor:DocumentActor){
+  if(!actor.admin)throw new Error('Admin access required.');
+  z.uuid().parse(id);z.number().int().positive().parse(version);
+  await this.db.transaction(async tx=>{
+   await auditActor(tx,actor.id);
+   const result=await tx.query('UPDATE member_documents SET deleted_at=now(),version=version+1 WHERE id=$1 AND version=$2 AND deleted_at IS NULL RETURNING id',[id,version]);
+   if(!result.rows.length)throw new Error('Document changed or was already deleted. Refresh and try again.');
+   await auditDocument(tx,actor.id,'member_documents',id,'delete');
+  });
+ }
+
+ async updateMetadata(id:string,version:number,input:unknown,actor:DocumentActor){
+  if(!actor.admin)throw new Error('Admin access required.');
+  z.uuid().parse(id);z.number().int().positive().parse(version);
+  const data=documentMetadataSchema.parse(input);
+  return this.db.transaction(async tx=>{await auditActor(tx,actor.id);
+   const changed=await tx.query('UPDATE member_documents SET display_name=$1,notes=$2,tags=$3,version=version+1 WHERE id=$4 AND version=$5 AND deleted_at IS NULL RETURNING id',[data.displayName,data.notes,data.tags,id,version]);
+   if(!changed.rows.length)throw new Error('Document changed. Refresh before editing.');
+   return (await tx.query<MemberDocument>(`SELECT ${fields} FROM member_documents d WHERE d.id=$1`,[id])).rows[0];
+  });
+ }
  async list(memberId:string,actor:DocumentActor){
   if(!actor.admin&&actor.id!==memberId)throw new Error('Access denied.');z.uuid().parse(memberId);
-  const before=(await this.db.query<{id:string}>(`SELECT d.id FROM member_documents d WHERE ${owned}`,[memberId])).rows;
+  const before=(await this.db.query<{id:string}>(`SELECT d.id FROM member_documents d WHERE d.deleted_at IS NULL AND ${owned}`,[memberId])).rows;
   const allowed:string[]=[];
   for(const doc of before)if(await refreshInvestorDocument(this.db,doc.id)!=='unavailable')allowed.push(doc.id);
-  return (await this.db.query<MemberDocument>(`SELECT ${fields} FROM member_documents d WHERE ${owned} AND d.id=ANY($2::uuid[]) ORDER BY d.created_at DESC,d.id`,[memberId,allowed])).rows;
+  return (await this.db.query<MemberDocument>(`SELECT ${fields} FROM member_documents d WHERE d.deleted_at IS NULL AND ${owned} AND d.id=ANY($2::uuid[]) ORDER BY d.created_at DESC,d.id`,[memberId,allowed])).rows;
  }
  async download(id:string,actor:DocumentActor){
   z.uuid().parse(id);
   if(!actor.admin&&!z.uuid().safeParse(actor.id).success)return null;
   const predicate=actor.admin?'d.id=$1::uuid':`${owned} AND d.id=$2::uuid`;
-  const authorized=(await this.db.query<{id:string}>(`SELECT d.id FROM member_documents d WHERE ${predicate}`,actor.admin?[id]:[actor.id,id])).rows.length>0;
+  const authorized=(await this.db.query<{id:string}>(`SELECT d.id FROM member_documents d WHERE d.deleted_at IS NULL AND (${predicate})`,actor.admin?[id]:[actor.id,id])).rows.length>0;
   if(!authorized||await refreshInvestorDocument(this.db,id)==='unavailable'){
    await auditDocument(this.db,actor.id,'member_documents',id,'download_denied');return null;
   }
-  const doc=(await this.db.query<MemberDocument & {content:string}>(`SELECT ${fields},d.content FROM member_documents d WHERE ${predicate}`,actor.admin?[id]:[actor.id,id])).rows[0]??null;
+  const doc=(await this.db.query<MemberDocument & {content:string}>(`SELECT ${fields},d.content FROM member_documents d WHERE d.deleted_at IS NULL AND (${predicate})`,actor.admin?[id]:[actor.id,id])).rows[0]??null;
   const allowed=!!doc;
   await auditDocument(this.db,actor.id,'member_documents',id,allowed?'download_authorized':'download_denied');
   return allowed?doc:null;
@@ -63,7 +85,7 @@ export class MemberDocumentRepository{
   if(!actor.admin)throw new Error('Admin access required.');
   z.uuid().parse(id);z.number().int().positive().parse(version);const parsed=documentTagsSchema.parse(tags);
   return this.db.transaction(async tx=>{await auditActor(tx,actor.id);
-  const row=(await tx.query<MemberDocument>(`UPDATE member_documents AS d SET tags=$1,version=version+1 WHERE id=$2 AND version=$3 RETURNING ${fields}`,[parsed,id,version])).rows[0];
+  const row=(await tx.query<MemberDocument>(`UPDATE member_documents AS d SET tags=$1,version=version+1 WHERE id=$2 AND version=$3 AND deleted_at IS NULL RETURNING ${fields}`,[parsed,id,version])).rows[0];
   if(!row)throw new Error('This document changed. Refresh before editing its tags.');return row;});
  }
 }
