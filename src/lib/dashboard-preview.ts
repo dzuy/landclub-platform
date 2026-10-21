@@ -1,4 +1,5 @@
 import 'server-only';
+import {MemberPreviewRepository} from './member-preview';
 import {cookies} from 'next/headers';
 import {cache} from 'react';
 import {investorPlatformStore} from './investor-platform-store';
@@ -9,6 +10,7 @@ export async function hasDashboardPreview(){return (await cookies()).has(PREVIEW
 export const dashboardPreview=cache(async (actor:{id:string;admin:boolean})=>{
  const token=(await cookies()).get(PREVIEW_COOKIE)?.value;if(!token)return null;
  if(!actor.admin)return {valid:false as const};
+ if(token.startsWith('member:')){const ctx=await new MemberPreviewRepository(database()).preview(token,actor);return ctx?{...ctx,valid:true as const}:{valid:false as const};}
  const ctx=await (await investorPlatformStore()).preview(token,actor);if(!ctx)return {valid:false as const};
  const identity=await previewMemberIdentity(database(),ctx.person);
  return identity?{...ctx,...identity,valid:true as const}:{valid:false as const};

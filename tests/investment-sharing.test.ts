@@ -1,3 +1,5 @@
+import {randomUUID} from 'node:crypto';
+import {MemberInvestmentRepository} from '../src/lib/member-investments';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {InvitationRepository} from '../src/lib/invitations';
@@ -187,5 +189,24 @@ test('uncertain delivery remains failed and repeated submission cannot send a du
   await assert.rejects(()=>f.repo.invite(f.owner,f.fresh.email,[f.positions[0]],timeout));
   assert.equal(sends,1);const list=await f.repo.list(f.owner);assert.equal(list.length,1);assert.equal(list[0].status,'failed');assert.equal(list[0].delivery_state,'failed');
   assert.equal((await f.shared.list(who(f.fresh))).length,0);
+ }finally{await f.pg.close();}
+});
+
+test('administrative property selections cannot unlock reports or re-share delegated holdings, including mixed batches',async()=>{
+ const f=await sharingFixture();try{
+  const selections=new MemberInvestmentRepository(f.db);await selections.initialize();
+  const property=randomUUID();await f.db.query("INSERT INTO properties(id,draft) VALUES($1,'{}')",[property]);
+  await f.db.query('UPDATE investment_positions SET property_id=$1',[property]);
+  for(const user of [f.existing,f.outsider])await selections.save(user.id,[{kind:'property',id:property}],0,{id:'fixture-admin',admin:true});
+  assert.deepEqual(await f.ordinary.list(who(f.outsider)),[]);
+  assert.equal(await f.ordinary.get(f.reports[0],who(f.existing)),null);
+  assert.deepEqual(await f.repo.owned(f.outsider),[]);
+  await f.repo.invite(f.owner,f.existing.email,[f.positions[0]],f.capture);await f.repo.accept(f.existing,f.mail[0].token);
+  assert.ok(await f.shared.get(f.reports[0],who(f.existing)));
+  assert.deepEqual((await f.repo.owned(f.existing)).map(p=>p.id),[f.positions[2]]);
+  for(const ids of [[f.positions[0]],[f.positions[2],f.positions[0]]])await assert.rejects(()=>f.repo.invite(f.existing,f.fresh.email,ids,f.capture));
+  assert.equal(f.mail.length,1,'Denied re-sharing must not send mail');
+  assert.equal((await f.db.query('SELECT * FROM investor_access')).rows.length,2);
+  assert.equal((await f.db.query('SELECT * FROM investment_account_owners')).rows.length,0);
  }finally{await f.pg.close();}
 });

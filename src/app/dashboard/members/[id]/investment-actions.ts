@@ -13,7 +13,7 @@ export async function saveMemberInvestments(userId:string,input:unknown,version:
   if(!prepared)await managedMember(userId);
   const repo=await memberInvestmentStore();
   const selection=prepared?await drafts.edit(userId,tx=>new MemberInvestmentRepository({...tx,transaction:work=>work(tx)}).save(userId,input,version,actor)):await repo.save(userId,input,version,actor);
-  revalidatePath('/dashboard/members');revalidatePath(`/dashboard/members/${userId}`);revalidatePath('/dashboard/profile');
+  revalidatePath('/dashboard/members');revalidatePath(`/dashboard/members/${userId}`);revalidatePath('/dashboard/profile');revalidatePath('/dashboard','layout');
   return {selection};
  }catch(error){const message=error instanceof Error?error.message:'';return {error:message.startsWith('Investments changed')||message.startsWith('A selected property')?message:'Unable to save investments. Check your admin access, refresh, and try again.'};}
 }

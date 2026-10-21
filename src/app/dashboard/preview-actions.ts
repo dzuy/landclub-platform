@@ -1,4 +1,6 @@
  'use server';
+import {MemberPreviewRepository} from '@/lib/member-preview';
+import {database} from '@/lib/database';
 import {cookies} from 'next/headers';
 import {redirect} from 'next/navigation';
 import {revalidatePath} from 'next/cache';
@@ -9,14 +11,15 @@ export async function switchDashboardPreview(form:FormData){
  const actor=await authenticatedIdentity();if(!actor?.admin)throw new StaffAccessError();
  const jar=await cookies(),store=await investorPlatformStore(),old=jar.get(PREVIEW_COOKIE)?.value;
  const person=String(form.get('person')||'');
- const token=person?await store.beginPreview(person,form.get('mode')==='draft'?'draft':'investor',actor):null;
- if(old)await store.endPreview(old,actor);
+ const members=new MemberPreviewRepository(database());
+ const token=person.startsWith('member:')?await members.begin(person.slice(7),actor):person?await store.beginPreview(person,form.get('mode')==='draft'?'draft':'investor',actor):null;
+ if(old)await (old.startsWith('member:')?members.end(old,actor):store.endPreview(old,actor));
  if(token)jar.set(PREVIEW_COOKIE,token,{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/'});
  else jar.delete(PREVIEW_COOKIE);
  revalidatePath('/','layout');redirect('/dashboard');
 }
 export async function stopDashboardPreview(){
  const actor=await authenticatedIdentity(),jar=await cookies(),token=jar.get(PREVIEW_COOKIE)?.value;
- if(actor?.admin&&token)await(await investorPlatformStore()).endPreview(token,actor);
+ if(actor?.admin&&token)await (token.startsWith('member:')?new MemberPreviewRepository(database()).end(token,actor):(await investorPlatformStore()).endPreview(token,actor));
  jar.delete(PREVIEW_COOKIE);revalidatePath('/','layout');redirect('/dashboard');
 }
