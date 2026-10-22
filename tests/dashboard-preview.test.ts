@@ -53,10 +53,12 @@ function fixture(){return [{filename:'synthetic.xlsx',tabs:[
 test('member-only View As lists linked members without financial identities and binds audited sessions to the admin',async()=>{
  const pg=new PGlite();try{
   const db=embeddedDatabase(pg);await pg.exec(preparedMembersMigration);
-  await pg.exec(`CREATE TABLE user_roles(user_id uuid,role text,created_at timestamptz DEFAULT now());CREATE TABLE report_people(id uuid,prepared_member_id uuid,auth_user_id uuid);
+  await pg.exec(`CREATE TABLE user_roles(user_id uuid,role text,created_at timestamptz DEFAULT now());CREATE TABLE report_people(id uuid,prepared_member_id uuid,auth_user_id uuid,disabled_at timestamptz);
+   CREATE SCHEMA auth;CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,raw_user_meta_data jsonb DEFAULT '{}',email_confirmed_at timestamptz,is_anonymous boolean DEFAULT false,banned_until timestamptz);
    CREATE TABLE investor_operations_audit(id uuid,actor_id text,person_id uuid,action text,resource_id text,created_at timestamptz DEFAULT now())`);
   const {MemberPreviewRepository}=await import('../src/lib/member-preview');const repo=new MemberPreviewRepository(db);
   const member=randomUUID(),user=randomUUID(),admin={id:randomUUID(),admin:true};
+  await db.query("INSERT INTO auth.users(id,email,email_confirmed_at) VALUES($1,'member@example.test',now())",[user]);
   await db.query("INSERT INTO prepared_members(id,email,info,roles,status,auth_user_id,created_by) VALUES($1,'member@example.test',$2,ARRAY['member','admin'],'invited',$3,'fixture')",[member,{displayName:'Member without financial records'},user]);
   await db.query("INSERT INTO user_roles(user_id,role) VALUES($1,'member'),($1,'admin')",[user]);
   assert.deepEqual(await repo.options(admin),[{id:`member:${member}`,display_name:'Member without financial records'}]);
@@ -70,6 +72,46 @@ test('member-only View As lists linked members without financial identities and 
   assert.equal((await db.query('SELECT * FROM report_people')).rows.length,0);
   await repo.end(token,admin);assert.equal(await repo.preview(token,admin),null);
   const expired=await repo.begin(member,admin);await db.query("UPDATE investor_operations_audit SET created_at=now()-interval '31 minutes' WHERE action='preview.member.start'");assert.equal(await repo.preview(expired,admin),null);
-  const removed=await repo.begin(member,admin);await db.query('DELETE FROM user_roles');assert.equal(await repo.preview(removed,admin),null);
+  const removed=await repo.begin(member,admin);await db.query('DELETE FROM user_roles');assert.deepEqual((await repo.preview(removed,admin))?.roles,[]);
+  await db.query('DELETE FROM prepared_members');assert.equal(await repo.preview(removed,admin),null);
+ }finally{await pg.close();}
+});
+
+test('all admins can preview prepared profiles and roleless accounts without creating identities or borrowing permissions',async()=>{
+ const pg=new PGlite();try{
+  const db=embeddedDatabase(pg);await pg.exec(preparedMembersMigration);
+  await pg.exec(`CREATE TABLE user_roles(user_id uuid,role text,created_at timestamptz DEFAULT now());
+   CREATE TABLE report_people(id uuid,prepared_member_id uuid,auth_user_id uuid,disabled_at timestamptz);
+   CREATE SCHEMA auth;CREATE TABLE auth.users(id uuid PRIMARY KEY,email text,raw_user_meta_data jsonb DEFAULT '{}',email_confirmed_at timestamptz,is_anonymous boolean DEFAULT false,banned_until timestamptz);
+   CREATE TABLE investor_operations_audit(id uuid,actor_id text,person_id uuid,action text,resource_id text,created_at timestamptz DEFAULT now())`);
+  const {MemberPreviewRepository}=await import('../src/lib/member-preview');const repo=new MemberPreviewRepository(db);
+  const draft=randomUUID(),linked=randomUUID(),account=randomUUID(),standalone=randomUUID();
+  await db.query("INSERT INTO prepared_members(id,email,info,roles,created_by) VALUES($1,'prepared@example.test',$2,ARRAY['investor','admin'],'fixture')",[draft,{displayName:'Prepared investor',homeRegion:'Stored region'}]);
+  await db.query("INSERT INTO auth.users(id,email,email_confirmed_at,raw_user_meta_data) VALUES($1,'linked@example.test',now(),$3),($2,'standalone@example.test',now(),$4)",[account,standalone,{display_name:'Linked account',roles:['admin']},{display_name:'Standalone',home_region:'Account region',roles:['admin']}]);
+  await db.query("INSERT INTO prepared_members(id,email,info,roles,status,auth_user_id,created_by) VALUES($1,'linked@example.test',$2,ARRAY['admin'],'invited',$3,'fixture')",[linked,{displayName:'Linked profile'},account]);
+  const admins=[{id:'admin-nate-fixture',admin:true},{id:'admin-jill-fixture',admin:true}];
+  for(const admin of admins){
+   const options=await repo.options(admin);assert.equal(options.length,3);assert.equal(options.filter(p=>p.id===`member:${linked}`).length,1);assert.ok(options.some(p=>p.id===`member:${standalone}`));
+   for(const target of [draft,linked,standalone]){
+    const token=await repo.begin(target,admin),preview=await repo.preview(token,admin);
+    assert.ok(preview);assert.deepEqual(preview.roles,[]);assert.equal(preview.person.id,'00000000-0000-0000-0000-000000000000');
+    assert.equal(preview.memberId,target===linked?account:target);
+    assert.equal(await repo.preview(token,{id:'another-admin',admin:true}),null);
+    assert.equal(await repo.preview(token,{...admin,admin:false}),null);
+    assert.equal(await repo.preview(token.slice(0,-1)+'z',admin),null);
+    if(target===draft){assert.equal(preview.person.auth_user_id,null);assert.match(preview.notice,/no login/);assert.equal(preview.profile.homeRegion,'Stored region');}
+    else{assert.match(preview.notice,/no assigned club roles/);}
+    await repo.end(token,admin);assert.equal(await repo.preview(token,admin),null);
+   }
+  }
+  await assert.rejects(()=>repo.begin(draft,{id:account,admin:false}),/Admin/);
+  await assert.rejects(()=>repo.options({id:account,admin:false}),/Admin/);
+  await assert.rejects(()=>repo.begin(randomUUID(),admins[0]),/unavailable/);
+  assert.equal((await db.query('SELECT * FROM auth.users')).rows.length,2);
+  assert.equal((await db.query('SELECT * FROM prepared_members')).rows.length,2);
+  assert.equal((await db.query('SELECT * FROM user_roles')).rows.length,0);
+  assert.equal((await db.query('SELECT * FROM report_people')).rows.length,0);
+  const audits=(await db.query<{actor_id:string;person_id:string}>("SELECT actor_id,person_id FROM investor_operations_audit WHERE action='preview.member.start'")).rows;
+  assert.equal(audits.length,6);assert.deepEqual(new Set(audits.map(a=>a.actor_id)),new Set(admins.map(a=>a.id)));
  }finally{await pg.close();}
 });

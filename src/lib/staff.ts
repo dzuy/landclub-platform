@@ -26,13 +26,13 @@ export const authenticatedIdentity=cache(async function(){
  const user=await currentUser(),roles=await clubUserRoles(user);if(!user||!roles.length)return null;
  return {id:user.id,name:user.email||'Land Club member',local:false,admin:roles.includes('admin'),roles};
 });
-export type ClubIdentity={id:string;name:string;local:boolean;admin:boolean;roles:ClubRole[];preview?:{personId:string;mode:'investor'|'draft';expired?:boolean;memberTargetId?:string};profile?:{displayName?:string;homeRegion?:string;contactPhone?:string}};
+export type ClubIdentity={id:string;name:string;local:boolean;admin:boolean;roles:ClubRole[];preview?:{personId:string;mode:'investor'|'draft';expired?:boolean;memberTargetId?:string;notice?:string};profile?:{displayName?:string;homeRegion?:string;contactPhone?:string}};
 export const clubIdentity=cache(async function():Promise<ClubIdentity|null>{
  const actor=await authenticatedIdentity();if(!actor)return null;
  const preview=await dashboardPreview(actor);
  if(!preview)return actor;
  if(!preview.valid)return {id:'00000000-0000-0000-0000-000000000000',name:'Preview unavailable',local:false,admin:false,roles:[],preview:{personId:'',mode:'investor',expired:true}};
- return {id:preview.memberId,name:preview.person.display_name,local:false,admin:false,roles:preview.roles,profile:preview.profile,preview:{personId:preview.person.id,mode:preview.mode,memberTargetId:'memberTargetId' in preview?preview.memberTargetId:undefined}};
+ return {id:preview.memberId,name:preview.person.display_name,local:false,admin:false,roles:preview.roles,profile:preview.profile,preview:{personId:preview.person.id,mode:preview.mode,memberTargetId:'memberTargetId' in preview?preview.memberTargetId:undefined,notice:'notice' in preview?preview.notice:undefined}};
 });
 export async function staffIdentity(){const actor=await clubIdentity();return actor?.admin?{...actor,admin:true as const}:null;}
 export async function requireStaff(){const actor=await staffIdentity();if(!actor)throw new StaffAccessError();return actor;}
