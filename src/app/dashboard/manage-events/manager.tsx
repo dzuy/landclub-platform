@@ -1,4 +1,6 @@
 'use client';
+import {eventLocalDate as localDate,eventLocalInstant} from '@/lib/event-local-time';
+import {EventDateTime} from '@/components/event-date-time';
 import {EventImageEditor} from '@/components/event-image-editor';
 import {PageHeading} from '@/components/page-heading';
 import {useEffect,useRef,useState,useTransition} from 'react';
@@ -11,7 +13,7 @@ import styles from './events.module.css';
 const empty={imageUrl:'',imageAlt:'',title:'',description:'',start:'',end:'',location:'',meetingUrl:'',status:'scheduled' as 'scheduled'|'cancelled'|'archived'};
 type Column='image'|'title'|'startsAt'|'location'|'status'|'edit';
 const columns:TableColumn<Column>[]=[{key:'image',label:'Photo',width:96,min:80,sortable:false},{key:'title',label:'Title',width:240,min:140},{key:'startsAt',label:'Date & time',width:230,min:160},{key:'location',label:'Location',width:200,min:120},{key:'status',label:'Status',width:120,min:100},{key:'edit',label:'Edit',width:70,min:70,sortable:false}];
-function localDate(iso:string){const d=new Date(iso);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+
 function statusName(status:string){return status[0].toUpperCase()+status.slice(1);}
 function EditIcon(){return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6L16 3Z"/><path d="m13 6 5 5"/></svg>;}
 
@@ -28,14 +30,14 @@ function EventDrawer({event,onClose,onSaved}:{event:ClubEvent|null;onClose:()=>v
  function isOutside(e:React.PointerEvent<HTMLDialogElement>|React.MouseEvent<HTMLDialogElement>){const r=e.currentTarget.getBoundingClientRect();return e.target===e.currentTarget&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom);}
  return <dialog ref={dialog} className={`member-drawer${closing?' is-closing':''}`} aria-labelledby="event-drawer-title" onCancel={e=>{e.preventDefault();close();}} onPointerDown={e=>{outside.current=isOutside(e);}} onPointerCancel={()=>{outside.current=false;}} onClick={e=>{if(outside.current&&isOutside(e))close();outside.current=false;}}>
   <header className="member-drawer-heading"><h1 id="event-drawer-title">{event?'Edit event':'New event'}</h1><button type="button" className="secondary" aria-label="Close event details" disabled={pending||imageBusy} autoFocus onClick={close}>×</button></header>
-  <div className="member-drawer-body"><form className={styles.form} onSubmit={e=>{e.preventDefault();setError('');startTransition(async()=>{try{const result=await saveEvent({imageUrl:form.imageUrl,imageAlt:form.imageAlt,title:form.title,description:form.description,location:form.location,meetingUrl:form.meetingUrl,status:form.status,startsAt:new Date(form.start).toISOString(),endsAt:new Date(form.end).toISOString(),timeZone},event?.id,event?.version);if(result.error){setError(result.error);return;}if(result.event)onSaved(result.event);}catch{setError('Unable to save. Check the dates and try again.');}});}}>
+  <div className="member-drawer-body"><form className={styles.form} onSubmit={e=>{e.preventDefault();setError('');startTransition(async()=>{try{const result=await saveEvent({imageUrl:form.imageUrl,imageAlt:form.imageAlt,title:form.title,description:form.description,location:form.location,meetingUrl:form.meetingUrl,status:form.status,startsAt:eventLocalInstant(form.start),endsAt:eventLocalInstant(form.end),timeZone},event?.id,event?.version);if(result.error){setError(result.error);return;}if(result.event)onSaved(result.event);}catch{setError('Unable to save. Check the dates and try again.');}});}}>
 
    {error&&<p role="alert" className="cms-error">{error}</p>}
    <fieldset disabled={pending||imageBusy} className={styles.fields}>
     <label>Title<input required maxLength={150} value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></label>
     <label>Description<textarea required maxLength={10000} rows={5} value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></label>
-    <label>Start<input required type="datetime-local" value={form.start} onChange={e=>setForm({...form,start:e.target.value})}/></label>
-    <label>End<input required type="datetime-local" value={form.end} onChange={e=>setForm({...form,end:e.target.value})}/></label>
+    <EventDateTime label="Start" value={form.start} onChange={start=>setForm({...form,start})}/>
+    <EventDateTime label="End" value={form.end} onChange={end=>setForm({...form,end})}/>
     <p className="muted">Times are entered in {timeZone}.</p>
     <label>Location<input required maxLength={300} placeholder="Venue and address, or Online" value={form.location} onChange={e=>setForm({...form,location:e.target.value})}/></label>
     <label>Meeting or event link (optional)<input type="url" placeholder="https://" value={form.meetingUrl} onChange={e=>setForm({...form,meetingUrl:e.target.value})}/></label>
