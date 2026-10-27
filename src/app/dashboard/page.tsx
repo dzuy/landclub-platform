@@ -13,5 +13,5 @@ export default async function Page(){
  const reportStore=await investorReportStore();
  const reports=await reportStore.isReady()?await reportStore.list({...actor,admin:false}):[];
  const upcoming=homeEvents(events);
- return <MemberHome reports={reports} name={name||actor.name||''} properties={properties} events={upcoming}/>;
+ return <MemberHome memberId={actor.id} reports={reports} name={name||actor.name||''} properties={properties} events={upcoming}/>;
 }
