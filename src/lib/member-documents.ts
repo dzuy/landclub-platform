@@ -76,10 +76,10 @@ export class MemberDocumentRepository{
   await auditDocument(this.db,actor.id,'member_documents',id,allowed?'download_authorized':'download_denied');
   return allowed?doc:null;
  }
- async upload(memberId:string,name:string,bytes:Uint8Array,tags:unknown,actor:DocumentActor){
+ async upload(memberId:string,name:string,bytes:Uint8Array,tags:unknown,actor:DocumentActor,metadata:{displayName:string;notes:string}={displayName:'',notes:''}){
   if(!actor.admin)throw new Error('Admin access required.');
-  z.uuid().parse(memberId);const filename=validateDocument(name,bytes),parsed=documentTagsSchema.parse(tags);await validateDocumentContent(filename,bytes);
-  return (await this.db.query<MemberDocument>(`INSERT INTO member_documents AS d(id,member_id,filename,byte_size,content,tags,uploaded_by) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING ${fields}`,[randomUUID(),memberId,filename,bytes.length,Buffer.from(bytes).toString('base64'),parsed,actor.id])).rows[0];
+  z.uuid().parse(memberId);const filename=validateDocument(name,bytes),parsed=documentTagsSchema.parse(tags),details=documentMetadataSchema.parse({...metadata,tags:parsed});await validateDocumentContent(filename,bytes);
+  return (await this.db.query<MemberDocument>(`INSERT INTO member_documents AS d(id,member_id,filename,byte_size,content,tags,uploaded_by,display_name,notes) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING ${fields}`,[randomUUID(),memberId,filename,bytes.length,Buffer.from(bytes).toString('base64'),parsed,actor.id,details.displayName,details.notes])).rows[0];
  }
  async updateTags(id:string,version:number,tags:unknown,actor:DocumentActor){
   if(!actor.admin)throw new Error('Admin access required.');

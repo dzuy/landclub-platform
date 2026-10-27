@@ -13,11 +13,11 @@ test('private documents persist, isolate members and allow only admins to upload
  try{
   await new PreparedMemberRepository(adapter).initialize();await securitySchema(db);
   const repo=new MemberDocumentRepository(adapter),bytes=Buffer.from('Synthetic private document for tests only');
-  const doc=await repo.upload(alice.id,'statement.txt',bytes,['Property: Test Farm','Role: Investor','Tax 2026'],admin);
-  assert.equal('content' in doc,false);assert.ok(await repo.download(doc.id,admin));
+  const doc=await repo.upload(alice.id,'statement.txt',bytes,['Property: Test Farm','Role: Investor','Tax 2026'],admin,{displayName:'Quarterly report',notes:'Synthetic upload notes'});
+  assert.equal(doc.display_name,'Quarterly report');assert.equal(doc.notes,'Synthetic upload notes');assert.equal('content' in doc,false);assert.ok(await repo.download(doc.id,admin));
 
   const reloaded=new MemberDocumentRepository(adapter);
-  assert.equal((await reloaded.list(alice.id,alice)).length,1);
+  assert.equal((await reloaded.list(alice.id,alice))[0].display_name,'Quarterly report');assert.equal((await reloaded.list(alice.id,alice))[0].notes,'Synthetic upload notes');assert.equal((await reloaded.list(alice.id,alice)).length,1);
   assert.equal((await reloaded.list(bob.id,bob)).length,0);
   await assert.rejects(reloaded.list(alice.id,bob),/Access denied/);
   assert.equal(await reloaded.download(doc.id,bob),null);

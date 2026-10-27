@@ -1,26 +1,26 @@
 'use client';
-import {useEffect,useState,useSyncExternalStore,useTransition} from 'react';
+import {useEffect,useRef,useState,useTransition} from 'react';
 import {useDetailSaveStatus} from '@/components/detail-save-status';
-import {MemberInfoAutosave} from '@/lib/member-info-autosave';
+import {formatPhone} from '@/lib/phone-format';
 import {propertyRoleValues,propertyRoleLabels,type PropertyRole,type MemberProperty,type MemberInfo} from '@/lib/member-properties';
 import {saveMemberInfo,saveMemberProperty} from './actions';
 import {PropertyPicker} from './property-picker';
 import styles from '../members.module.css';
 import tableStyles from '@/components/data-table.module.css';
 export function MemberInfoEditor({userId,email,initial,onSaveBeforeClose,onUnsavedChange}:{userId:string;email:string;initial:MemberInfo;onSaveBeforeClose?:(save:(()=>Promise<boolean>)|null)=>void;onUnsavedChange?:(unsaved:boolean)=>void}){
- const [autosave]=useState(()=>new MemberInfoAutosave(initial,info=>saveMemberInfo(userId,info)));
- const {info,saved,pending,error}=useSyncExternalStore(autosave.subscribe,autosave.getSnapshot,autosave.getSnapshot);
- const dirty=autosave.dirty;
+ const [info,setInfo]=useState(initial),[saved,setSaved]=useState(initial),[pending,setPending]=useState(false),[error,setError]=useState(''),[phoneFocused,setPhoneFocused]=useState(false);
+ const dirty=JSON.stringify(info)!==JSON.stringify(saved);
+ const [leavePrompt,setLeavePrompt]=useState(false),leaveDialog=useRef<HTMLDialogElement>(null),leaveResolve=useRef<((leave:boolean)=>void)|null>(null);
+ function answerLeave(leave:boolean){leaveResolve.current?.(leave);leaveResolve.current=null;setLeavePrompt(false);}
+ useEffect(()=>{if(leavePrompt)leaveDialog.current?.showModal();},[leavePrompt]);
  useDetailSaveStatus(error?'error':pending?'saving':dirty?'unsaved':saved!==initial?'saved':'');
- useEffect(()=>{onSaveBeforeClose?.(()=>autosave.flush());return()=>onSaveBeforeClose?.(null);},[autosave,onSaveBeforeClose]);
+ useEffect(()=>{onSaveBeforeClose?.(async()=>{if(pending)return false;if(!dirty)return true;return new Promise<boolean>(resolve=>{leaveResolve.current=resolve;setLeavePrompt(true);});});return()=>onSaveBeforeClose?.(null);},[dirty,pending,onSaveBeforeClose]);
  useEffect(()=>{onUnsavedChange?.(dirty||pending);},[dirty,pending,onUnsavedChange]);
- useEffect(()=>{
-  const guard=(event:BeforeUnloadEvent)=>{if(autosave.dirty){event.preventDefault();event.returnValue='';}};
-  window.addEventListener('beforeunload',guard);
-  return()=>{window.removeEventListener('beforeunload',guard);autosave.cancel();void autosave.flush();};
- },[autosave]);
- return <form className="form dashboard-form" onSubmit={event=>{event.preventDefault();void autosave.flush();}} onBlur={()=>{if(autosave.dirty)void autosave.flush();}}><fieldset className="member-detail-fields"><label>Name<input required maxLength={100} value={info.displayName} onChange={e=>autosave.edit({...info,displayName:e.target.value})}/></label><div className={styles.memberEmail}><span>Email</span><span>{email}</span></div><label>Home region<input maxLength={100} value={info.homeRegion} onChange={e=>autosave.edit({...info,homeRegion:e.target.value})}/></label><label>Contact phone<input type="tel" maxLength={50} value={info.contactPhone} onChange={e=>autosave.edit({...info,contactPhone:e.target.value})}/></label></fieldset>{(error||pending||dirty)&&<div className="row-actions"><span className="muted" role="status" aria-live="polite">{error?'Changes not saved':pending?'Saving…':dirty?'Waiting to save…':''}</span>{error&&<button type="button" className="secondary" disabled={pending} onClick={()=>void autosave.flush()}>Retry</button>}</div>}{error&&<p role="alert" className="cms-error">{error}</p>}</form>;
+ useEffect(()=>{const guard=(event:BeforeUnloadEvent)=>{if(dirty||pending){event.preventDefault();event.returnValue='';}};window.addEventListener('beforeunload',guard);return()=>window.removeEventListener('beforeunload',guard);},[dirty,pending]);
+ async function save(){if(pending)return;setPending(true);setError('');try{const result=await saveMemberInfo(userId,info);if(result.error)setError(result.error);else setSaved(info);}catch{setError('Unable to save. Your edits are still here. Please retry.');}finally{setPending(false);}}
+ return <form className="form dashboard-form" onSubmit={event=>{event.preventDefault();void save();}}>{leavePrompt&&<dialog ref={leaveDialog} className="cms-confirm" aria-labelledby="member-unsaved-title" onCancel={event=>{event.preventDefault();answerLeave(false);}}><h2 id="member-unsaved-title">Discard unsaved member information?</h2><p>Your changes have not been saved.</p><div className="row-actions"><button type="button" className="secondary" autoFocus onClick={()=>answerLeave(false)}>Stay and edit</button><button type="button" onClick={()=>answerLeave(true)}>Discard changes</button></div></dialog>}<fieldset className="member-detail-fields" disabled={pending}><label>Name<input required maxLength={100} value={info.displayName} onChange={e=>setInfo({...info,displayName:e.target.value})}/></label><div className={styles.memberEmail}><span>Email</span><span>{email}</span></div><label>Home region<input maxLength={100} value={info.homeRegion} onChange={e=>setInfo({...info,homeRegion:e.target.value})}/></label><label>Contact phone<input type="tel" maxLength={50} value={phoneFocused?info.contactPhone:formatPhone(info.contactPhone)} onFocus={()=>setPhoneFocused(true)} onBlur={()=>setPhoneFocused(false)} onChange={e=>setInfo({...info,contactPhone:e.target.value})}/></label></fieldset><div className="member-save-actions"><span className="muted" role="status">{error?'Changes not saved':pending?'Saving…':dirty?'Unsaved changes':saved!==initial?'Changes saved':''}</span>{dirty&&<button type="button" className="secondary" disabled={pending} onClick={()=>{setInfo(saved);setError('');}}>Cancel</button>}<button disabled={pending||!dirty}>{pending?'Saving…':'Save'}</button></div>{error&&<p role="alert" className="cms-error">{error}</p>}</form>;
 }
+
 export function MemberProperties({userId,initial,properties}:{userId:string;initial:MemberProperty[];properties:{id:string;name:string}[]}){
  const [rows,setRows]=useState(initial);const [propertyId,setPropertyId]=useState('');const [roles,setRoles]=useState<PropertyRole[]>(['prospect']);const [error,setError]=useState('');const [pending,start]=useTransition();
  useDetailSaveStatus(error?'error':pending?'saving':rows!==initial?'saved':'');

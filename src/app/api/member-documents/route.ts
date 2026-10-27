@@ -3,7 +3,7 @@ import {clubUserRoles} from '@/lib/staff';
 import {hasSameOrigin} from '@/lib/request-origin';
 import {groupDocumentStore} from '@/lib/group-document-store';
 import {memberDocumentStore} from '@/lib/member-document-store';
-import {MAX_DOCUMENT_BYTES,documentTagsSchema,validateDocument} from '@/lib/member-documents';
+import {MAX_DOCUMENT_BYTES,documentTagsSchema,documentMetadataSchema,validateDocument} from '@/lib/member-documents';
 import {documentActor,documentJson,limitedBody} from '@/lib/member-document-http';
 import {managedMember} from '@/lib/managed-member';
 import {preparedMemberStore} from '@/lib/prepared-member-store';
@@ -38,11 +38,12 @@ export async function POST(request:Request){
   const memberId=z.uuid().parse(form.get('memberId')),file=form.get('file');
   if(!(file instanceof File))return documentJson({error:'Choose a document.'},400);
   const tags=documentTagsSchema.parse(JSON.parse(String(form.get('tags')||'[]')));
+  const metadata=documentMetadataSchema.parse({displayName:String(form.get('displayName')||''),notes:String(form.get('notes')||''),tags});
   const content=new Uint8Array(await file.arrayBuffer());
   try{validateDocument(file.name,content);}catch(error){return documentJson({error:(error as Error).message},400);}
   const prepared=await (await preparedMemberStore()).get(memberId);
   if(!prepared)await managedMember(memberId);
-  const document=await (await memberDocumentStore()).upload(memberId,file.name,content,tags,actor);
+  const document=await (await memberDocumentStore()).upload(memberId,file.name,content,tags,actor,metadata);
   return documentJson({document},201);
  }catch{return documentJson({error:'Upload failed. Check the file, tags and member, then try again.'},400);}
 }

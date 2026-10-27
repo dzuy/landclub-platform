@@ -29,7 +29,7 @@ function EventDrawer({event,onClose,onSaved}:{event:ClubEvent|null;onClose:()=>v
  return <dialog ref={dialog} className={`member-drawer${closing?' is-closing':''}`} aria-labelledby="event-drawer-title" onCancel={e=>{e.preventDefault();close();}} onPointerDown={e=>{outside.current=isOutside(e);}} onPointerCancel={()=>{outside.current=false;}} onClick={e=>{if(outside.current&&isOutside(e))close();outside.current=false;}}>
   <header className="member-drawer-heading"><h1 id="event-drawer-title">{event?'Edit event':'New event'}</h1><button type="button" className="secondary" aria-label="Close event details" disabled={pending||imageBusy} autoFocus onClick={close}>×</button></header>
   <div className="member-drawer-body"><form className={styles.form} onSubmit={e=>{e.preventDefault();setError('');startTransition(async()=>{try{const result=await saveEvent({imageUrl:form.imageUrl,imageAlt:form.imageAlt,title:form.title,description:form.description,location:form.location,meetingUrl:form.meetingUrl,status:form.status,startsAt:new Date(form.start).toISOString(),endsAt:new Date(form.end).toISOString(),timeZone},event?.id,event?.version);if(result.error){setError(result.error);return;}if(result.event)onSaved(result.event);}catch{setError('Unable to save. Check the dates and try again.');}});}}>
-   <div className={styles.save}><button disabled={pending||imageBusy||!!event&&!dirty}>{pending?'Saving…':'Save Event'}</button></div>
+
    {error&&<p role="alert" className="cms-error">{error}</p>}
    <fieldset disabled={pending||imageBusy} className={styles.fields}>
     <label>Title<input required maxLength={150} value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></label>
@@ -42,6 +42,7 @@ function EventDrawer({event,onClose,onSaved}:{event:ClubEvent|null;onClose:()=>v
     <label>Status<select value={form.status} onChange={e=>setForm({...form,status:e.target.value as typeof form.status})}><option value="scheduled">Scheduled — visible to members</option><option value="cancelled">Cancelled — visible with cancellation notice</option><option value="archived">Archived — hidden from members</option></select></label>
     <EventImageEditor disabled={pending} url={form.imageUrl} alt={form.imageAlt} title={form.title} description={form.description} location={form.location} start={form.start} timeZone={timeZone} onBusy={setImageBusy} onChange={(imageUrl,imageAlt)=>setForm(current=>({...current,imageUrl,imageAlt}))}/>
    </fieldset>
+   <div className={styles.save}><button disabled={pending||imageBusy||!!event&&!dirty}>{pending?'Saving…':'Save Event'}</button></div>
   </form></div>
  </dialog>;
 }

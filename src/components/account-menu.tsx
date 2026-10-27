@@ -50,6 +50,7 @@ export function AccountMenu({authenticated=true,photoUrl,previewPeople,previewPe
         </svg>}</span>
       </summary>
       <div className="account-menu-panel">
+        {authenticated&&<Link href="/dashboard" aria-current={pathname==='/dashboard'?'page':undefined} onClick={()=>{if(menuRef.current)menuRef.current.open=false;}}>Dashboard</Link>}
         {authenticated&&<Link href="/dashboard/profile" aria-current={pathname==='/dashboard/profile'?'page':undefined} onClick={()=>{if(menuRef.current)menuRef.current.open=false;}}>Profile &amp; Settings</Link>}
         {previewPeople&&<form action={switchDashboardPreview}><PreviewSelect people={previewPeople} selected={previewPersonId}/><input type="hidden" name="mode" value="draft"/></form>}
         {authenticated?<form action={signOut}><button className="account-menu-signout">Sign out</button></form>:<a href="/signin">Sign in</a>}
