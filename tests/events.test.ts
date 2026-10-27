@@ -13,12 +13,16 @@ test('event lifecycle, member visibility, admin enforcement and conflicting save
  assert.equal((await repo.list()).length,0);
  const event=await repo.save(input,admin);
  assert.equal((await repo.list())[0].details.title,input.title);
+ assert.equal((await repo.get(event.id))?.details.title,input.title);
+ assert.equal(await repo.get('invalid'),null);
  await assert.rejects(()=>repo.save({...input,title:'Unauthorized'}, {id:'member',admin:false},event.id,event.version),/Only admins/);
  const cancelled=await repo.save({...input,status:'cancelled'},admin,event.id,event.version);
  assert.equal((await repo.list())[0].details.status,'cancelled');
+ assert.equal((await repo.get(event.id))?.details.status,'cancelled');
  await assert.rejects(()=>repo.save(input,admin,event.id,event.version),/changed in another window/);
  const archived=await repo.save({...input,status:'archived'},admin,event.id,cancelled.version);
  assert.equal((await repo.list()).length,0);assert.equal((await repo.list(true)).length,1);
+ assert.equal(await repo.get(event.id),null);
  await repo.save(input,admin,event.id,archived.version);
  assert.equal((await repo.list()).length,1);
  const rls=await db.query<{relrowsecurity:boolean}>("SELECT relrowsecurity FROM pg_class WHERE oid='events'::regclass");assert.equal(rls.rows[0].relrowsecurity,true);

@@ -62,7 +62,7 @@ export function EventManager({initial}:{initial:ClubEvent[]}){
     <td><button className={styles.title} onClick={()=>setSelected(event)}>{event.details.title}</button></td>
     <td><time dateTime={event.details.startsAt}>{new Intl.DateTimeFormat('en-US',{dateStyle:'medium',timeStyle:'short',timeZone:event.details.timeZone}).format(new Date(event.details.startsAt))}</time><small className={styles.zone}>{event.details.timeZone}</small></td>
     <td>{event.details.location}</td><td><span className={`badge ${styles[event.details.status]}`}>{statusName(event.details.status)}</span></td>
-    <td><button className={styles.edit} aria-label={`Edit ${event.details.title}`} onClick={()=>setSelected(event)}><EditIcon/></button></td>
+    <td><button className={styles.edit} aria-label={`Edit ${event.details.title}`} onClick={()=>setSelected(event)}><EditIcon/></button>{event.details.status!=='archived'&&<Link href={`/dashboard/events/${event.id}`} aria-label={`Open Event: ${event.details.title}`}>Open Event</Link>}</td>
    </tr>)}{!visible.length&&<tr><td colSpan={columns.length}>{events.length?'No events match your search.':'No events yet.'}</td></tr>}
   </DataTable>
   {selected!==undefined&&<EventDrawer key={selected?.id||'new'} event={selected} onClose={()=>setSelected(undefined)} onSaved={event=>{setEvents(rows=>[...rows.filter(row=>row.id!==event.id),event]);setSelected(undefined);setMessage('Event saved.');router.refresh();}}/>}

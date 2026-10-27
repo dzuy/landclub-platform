@@ -19,6 +19,10 @@ export class EventRepository{
  constructor(private db:Database){}
  async initialize(){await this.db.query(`CREATE TABLE IF NOT EXISTS events (id uuid PRIMARY KEY,details jsonb NOT NULL,version integer NOT NULL DEFAULT 1,created_by text NOT NULL,updated_by text NOT NULL,created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now())`);}
  async list(includeArchived=false){return (await this.db.query<ClubEvent>(`SELECT id,details,version FROM events ${includeArchived?'':"WHERE details->>'status' <> 'archived'"} ORDER BY details->>'startsAt'`)).rows;}
+ async get(id:string){
+  if(!z.uuid().safeParse(id).success)return null;
+  return (await this.db.query<ClubEvent>("SELECT id,details,version FROM events WHERE id=$1 AND details->>'status' <> 'archived'",[id])).rows[0]??null;
+ }
  async save(input:unknown,actor:{id:string;admin:boolean},id?:string,version?:number){
   if(!actor.admin)throw new Error('Only admins can manage events.');
   const details=eventSchema.parse(input);
