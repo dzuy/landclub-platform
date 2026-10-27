@@ -43,7 +43,7 @@ export async function signOut(){
 
 export async function enterLocalPreview(){
  const h=await headers();
- if(!localPreviewSignInAllowed(process.env.NODE_ENV,process.env.LAND_CLUB_LOCAL_STAFF,h.get('host')||'',process.env.DATABASE_URL,authConfigured()))throw new Error('Local preview access is unavailable.');
+ if(!localPreviewSignInAllowed(process.env.NODE_ENV,process.env.LAND_CLUB_LOCAL_STAFF,h.get('host')||'',process.env.DATABASE_URL,authConfigured(),process.env.LAND_CLUB_LOCAL_PORT))throw new Error('Local preview access is unavailable.');
  (await cookies()).delete('land-club-local-signed-out');
  redirect('/dashboard/properties');
 }

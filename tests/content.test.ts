@@ -49,3 +49,14 @@ test('local preview re-entry is unavailable with hosted data or configured authe
  assert.equal(allowed('development','1','127.0.0.1:3000',undefined,false),true);
  for(const args of [ ['production','1','127.0.0.1:3000',undefined,false], ['development','1','example.com',undefined,false], ['development','0','127.0.0.1:3000',undefined,false], ['development','1','127.0.0.1:3000','postgres://configured',false], ['development','1','127.0.0.1:3000',undefined,true] ] as const)assert.equal(allowed(args[0],args[1],args[2],args[3],args[4]),false);
 });
+
+
+test('custom local preview port preserves development, loopback and credential guards',async()=>{
+ const {localStaffAllowed,localPreviewSignInAllowed}=await import('../src/lib/local-access');
+ assert.equal(localStaffAllowed('development','1','127.0.0.1:3030','3030'),true);
+ assert.equal(localStaffAllowed('development','1','localhost:3030','3030'),true);
+ for(const [mode,flag,host,port] of [['production','1','localhost:3030','3030'],['development','0','localhost:3030','3030'],['development','1','localhost:3000','3030'],['development','1','app.land.club:3030','3030'],['development','1','localhost:3030.attacker.test','3030'],['development','1','localhost:65536','65536'],['development','1','localhost:0','0'],['development','1','localhost:3030','.*']])assert.equal(localStaffAllowed(mode,flag,host,port),false);
+ assert.equal(localPreviewSignInAllowed('development','1','localhost:3030',undefined,false,'3030'),true);
+ assert.equal(localPreviewSignInAllowed('development','1','localhost:3030','postgres://example',false,'3030'),false);
+ assert.equal(localPreviewSignInAllowed('development','1','localhost:3030',undefined,true,'3030'),false);
+});

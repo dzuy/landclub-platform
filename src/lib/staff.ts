@@ -21,7 +21,7 @@ export async function clubUserAuthorized(user:AuthUser|null){return (await clubU
 export async function staffUserAuthorized(user:AuthUser|null){return (await clubUserRoles(user)).includes('admin');}
 export const authenticatedIdentity=cache(async function(){
  const h=await headers();
- if(localStaffAllowed(process.env.NODE_ENV,process.env.LAND_CLUB_LOCAL_STAFF,h.get('host')||'')&&(await cookies()).get('land-club-local-signed-out')?.value!=='1')return {id:'local-developer',name:'Local editor',local:true,admin:true as const,roles:['member','admin'] as ClubRole[]};
+ if(localStaffAllowed(process.env.NODE_ENV,process.env.LAND_CLUB_LOCAL_STAFF,h.get('host')||'',process.env.LAND_CLUB_LOCAL_PORT)&&(await cookies()).get('land-club-local-signed-out')?.value!=='1')return {id:'local-developer',name:'Local editor',local:true,admin:true as const,roles:['member','admin'] as ClubRole[]};
  if(!authConfigured())return null;
  const user=await currentUser(),roles=await clubUserRoles(user);if(!user||!roles.length)return null;
  return {id:user.id,name:user.email||'Land Club member',local:false,admin:roles.includes('admin'),roles};
