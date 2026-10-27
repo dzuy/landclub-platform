@@ -17,8 +17,8 @@ export function MemberHome({name,properties,events,reports=[]}:{name:string;prop
    </Link></section>;}):<section className={styles.card} aria-labelledby="home-properties"><h2 id="home-properties">Your properties</h2><div className={styles.empty}><p>Properties linked to your membership will appear here.</p><Link className={styles.textLink} href="/properties">Explore properties →</Link></div></section>}
    <section className={styles.card} aria-labelledby="home-portfolio">
     <h2 id="home-portfolio">Your portfolio</h2>
-    {reports.length?<><p className={styles.caption}>{reports.length} investment{reports.length===1?'':'s'}</p><dl className={styles.balances}>{reports.map(report=><div key={report.id}><dt><Link href={`/dashboard/portfolio#position-${report.id}`}>{report.project_name}</Link><small> · {report.kind}</small></dt><dd>{report.released_at?'Report available':'Draft report'}</dd></div>)}</dl><p className={styles.pending}>View your portfolio for balances, activity and company reports.</p></>:<p className={styles.pending}>Your investment information will appear here when it is ready to share.</p>}
-    <Link className={styles.button} href="/dashboard/portfolio">See more</Link>
+    {reports.length?<><p className={styles.caption}>{reports.length} investment{reports.length===1?'':'s'}</p><dl className={styles.balances}>{reports.map(report=><div key={report.id}><dt><Link href={`/dashboard/portfolio#position-${report.id}`}>{report.project_name}</Link><small> · {report.kind}</small></dt><dd>{report.released_at?'Report available':'Draft report'}</dd></div>)}</dl><p className={styles.pending}>View your portfolio for balances, activity and company reports.</p></>:<p className={styles.pending}>You don’t have any investments yet. Your investments and related documents will appear here.</p>}
+    {reports.length>0&&<Link className={styles.button} href="/dashboard/portfolio">See more</Link>}
    </section>
   </div>
   <section className={styles.card} aria-labelledby="home-following">

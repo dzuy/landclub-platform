@@ -26,7 +26,7 @@ export function RealInvestorPortfolio({name,reports,base='/dashboard/portfolio',
  return <div className={s.portfolio} data-investor-portfolio>
  <nav className={s.breadcrumb} aria-label="Breadcrumb"><Link href="/dashboard"><img src={`${assets}back.svg`} alt=""/> Dashboard</Link><span>/</span><span>Your portfolio</span></nav>
  <div className={s.heading}><h1>Your portfolio</h1>{name&&<span className={s.mock}>{name}</span>}</div>
- {!reports.length&&<Card title="Your investments"><Note>Your investment information will appear here when it is ready to share.</Note></Card>}
+ {!reports.length&&<Card title="You don’t have any investments yet."><Note>Your investments and related documents will appear here.</Note></Card>}
  <PortfolioItemSwitcher items={reports.map(r=>{
  const values=r.lines.filter(l=>l.section==='position'),find=(...names:string[])=>{for(const name of names){const line=values.find(l=>l.label===name);if(line)return line.amount;}return null;};
  const metrics:[string,string|null][]=r.kind==='equity'?[
