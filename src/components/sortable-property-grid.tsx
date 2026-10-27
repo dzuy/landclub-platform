@@ -7,7 +7,7 @@ import {SortableContext,arrayMove,rectSortingStrategy,sortableKeyboardCoordinate
 import {CSS} from '@dnd-kit/utilities';
 import type {MemberPropertyDetail} from '@/lib/member-property-presentation';
 import {propertyCardOrder} from '@/lib/property-card-order';
-import {usePropertyCardOrder} from './use-property-card-order';
+import {useSharedPropertyCardOrder} from './property-card-order-provider';
 import {MemberPropertyCard} from './member-property-card';
 import styles from './member-property-card.module.css';
 
@@ -21,10 +21,12 @@ function SortableCard({detail,disabled,reducedMotion}:{detail:MemberPropertyDeta
  </div>;
 }
 
-export function SortablePropertyGrid({properties,memberId,children}:{properties:MemberPropertyDetail[];memberId:string;children?:ReactNode}){
+export function SortablePropertyGrid({properties,children}:{properties:MemberPropertyDetail[];children?:ReactNode}){
  const contextId=useId();
  const [ready,setReady]=useState(false),[activeId,setActiveId]=useState<string|null>(null),[reducedMotion,setReducedMotion]=useState(false);
- const preference=usePropertyCardOrder(memberId,properties.map(p=>p.id),!!activeId);
+ const preference=useSharedPropertyCardOrder();
+ const {setDragging}=preference;
+ useEffect(()=>()=>setDragging(false),[setDragging]);
  const ids=useMemo(()=>propertyCardOrder(properties.map(p=>p.id),preference.order),[properties,preference.order]);
  const byId=new Map(properties.map(p=>[p.id,p]));
  const active=activeId?byId.get(activeId):undefined;
@@ -34,13 +36,13 @@ export function SortablePropertyGrid({properties,memberId,children}:{properties:
   const query=matchMedia('(prefers-reduced-motion: reduce)');const update=()=>setReducedMotion(query.matches);update();query.addEventListener('change',update);return()=>query.removeEventListener('change',update);
  },[]);
  function finish({active,over}:DragEndEvent){
-  setActiveId(null);
+  setActiveId(null);setDragging(false);
   if(!over||active.id===over.id)return;
   const from=ids.indexOf(String(active.id)),to=ids.indexOf(String(over.id));if(from<0||to<0)return;
   const next=arrayMove(ids,from,to);void preference.save(next);
  }
  const name=(id:string|number)=>byId.get(String(id))?.property.name||'Property';
- return <DndContext id={contextId} sensors={sensors} collisionDetection={closestCenter} onDragStart={({active})=>{setActiveId(String(active.id));}} onDragEnd={finish} onDragCancel={()=>setActiveId(null)} accessibility={{screenReaderInstructions:{draggable:'To reorder a property, press Space. Use the arrow keys to move it, then press Space to drop. Press Escape to cancel.'},announcements:{onDragStart:({active})=>`Picked up ${name(active.id)}.`,onDragOver:({active,over})=>over?`${name(active.id)}, position ${ids.indexOf(String(over.id))+1} of ${ids.length}.`:undefined,onDragEnd:({active,over})=>over?`${name(active.id)} dropped at position ${ids.indexOf(String(over.id))+1} of ${ids.length}.`:'Reordering cancelled.',onDragCancel:()=> 'Reordering cancelled. Original order restored.'}}}>
+ return <DndContext id={contextId} sensors={sensors} collisionDetection={closestCenter} onDragStart={({active})=>{setActiveId(String(active.id));setDragging(true);}} onDragEnd={finish} onDragCancel={()=>{setActiveId(null);setDragging(false);}} accessibility={{screenReaderInstructions:{draggable:'To reorder a property, press Space. Use the arrow keys to move it, then press Space to drop. Press Escape to cancel.'},announcements:{onDragStart:({active})=>`Picked up ${name(active.id)}.`,onDragOver:({active,over})=>over?`${name(active.id)}, position ${ids.indexOf(String(over.id))+1} of ${ids.length}.`:undefined,onDragEnd:({active,over})=>over?`${name(active.id)} dropped at position ${ids.indexOf(String(over.id))+1} of ${ids.length}.`:'Reordering cancelled.',onDragCancel:()=> 'Reordering cancelled. Original order restored.'}}}>
   <SortableContext items={ids} strategy={rectSortingStrategy}>
    <div className={styles.grid}>{ids.map(id=><SortableCard key={id} detail={byId.get(id)!} disabled={!ready||!preference.ready||preference.saving||preference.readOnly||ids.length<2} reducedMotion={reducedMotion}/>)}{children}</div>
   </SortableContext>

@@ -28,7 +28,7 @@ export function usePropertyCardOrder(memberId:string,propertyIds:string[],draggi
  const load=useCallback(async()=>{
   if(busy.current||active.current)return;
   try{
-   const data=await readPreference();if(!mounted.current||busy.current||active.current||dirty.current)return;
+   const data=await readPreference();if(!mounted.current||busy.current||active.current||dirty.current||data.version<version.current)return;
    version.current=data.version;setOrder(data.order);setReadOnly(!!data.readOnly);setReady(true);setError('');
   }catch(e){if(mounted.current)setError(e instanceof Error?e.message:'Unable to load property order.');}
  },[]);

@@ -8,6 +8,6 @@ export default async function MyPropertiesPage(){
  const properties=await memberPropertyDetails(actor.id);
  return <>
   <PageHeading title="Properties"/>
-  {properties.length?<SortablePropertyGrid key={actor.id} properties={properties} memberId={actor.id}/>:<section className="panel member-properties-empty"><h2>Your properties will appear here.</h2><p>You’re not associated with a property yet. Once a Land Club administrator adds one to your account, its overview and navigation link will show here.</p></section>}
+  {properties.length?<SortablePropertyGrid key={actor.id} properties={properties}/>:<section className="panel member-properties-empty"><h2>Your properties will appear here.</h2><p>You’re not associated with a property yet. Once a Land Club administrator adds one to your account, its overview and navigation link will show here.</p></section>}
  </>;
 }

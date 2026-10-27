@@ -9,7 +9,7 @@ export function MemberHome({name,properties,events,reports=[],memberId}:{memberI
  const firstName=name&&!name.includes('@')?name.trim().split(/\s+/)[0]:'';
  return <div className={styles.home} data-dashboard-home>
   <h1>{firstName?`Welcome back, ${firstName}`:'Welcome back'}</h1>
-  <SortablePropertyGrid key={memberId} properties={properties} memberId={memberId}>
+  <SortablePropertyGrid key={memberId} properties={properties}>
    {!properties.length&&<section className={styles.card} aria-labelledby="home-properties"><h2 id="home-properties">Your properties</h2><div className={styles.empty}><p>Properties linked to your membership will appear here.</p><Link className={styles.textLink} href="/properties">Explore properties →</Link></div></section>}
    <section className={styles.card} aria-labelledby="home-portfolio">
     <h2 id="home-portfolio">Your portfolio</h2>
