@@ -1,3 +1,4 @@
+import {DocumentLink} from './document-link';
 import type {calculateTerms} from '@/lib/investment-terms';
 import {PortfolioItemSwitcher} from './portfolio-item-switcher';
 import Link from 'next/link';
@@ -52,7 +53,7 @@ export function RealInvestorPortfolio({name,reports,base='/dashboard/portfolio',
  <section id={`reports-${r.id}`} className={s.card}><h2>Company reports and updates</h2>{norden?<><Note>Cash, balance sheet and spending from Nathan’s October 16 company report.</Note><Link className={s.primary} href={`/dashboard/portfolio/reports/${r.id}${previewToken?`?preview=${previewToken}`:''}`}>View company reports →</Link></>:<Note>A company financial report has not been supplied for this investment yet.</Note>}</section>
  </div>
  <Card title="Statements and documents">{r.documents.length===0&&statements.filter(v=>v.report_id===r.id).length===0&&<Note>Your statements and signed documents will appear here when available.</Note>}
- {r.documents.map(d=><p key={d.id}><a className={s.updateLink} href={preview?`${downloadBase}/${r.id}?document=${d.id}`:`/api/investor-report-documents/${d.id}`}>{d.filename}<span>Download →</span></a></p>)}
+ {r.documents.map(d=><p key={d.id}><DocumentLink className={s.updateLink} href={preview?`${downloadBase}/${r.id}?document=${d.id}`:`/api/investor-report-documents/${d.id}`} filename={d.filename}/></p>)}
  {statements.filter(v=>v.report_id===r.id).map(v=><p key={v.id}><a href={`/api/investor-statements/${v.id}${previewToken?`?preview=${previewToken}`:''}`}>Statement data · edition {v.edition} (JSON)</a></p>)}
  <details className={s.document}><summary>Download investment data<span>CSV / JSON</span></summary><Note><a href={`${downloadBase}/${r.id}?download=csv`}>Download CSV</a> · <a href={`${downloadBase}/${r.id}?download=json`}>Download JSON</a></Note><Note>Data exports are not signed statements or tax documents.</Note></details>
  {preview&&<details className={s.document}><summary>Admin: data review notes<span>{r.findings.filter(f=>f.status==='pending').length} pending</span></summary>{r.findings.map(f=><Note key={f.id}>{f.description}{f.resolution&&<> Resolution: {f.resolution}</>}</Note>)}</details>}

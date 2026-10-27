@@ -1,4 +1,5 @@
- 'use client';
+'use client';
+import {DocumentLink} from './document-link';
 import {useEffect,useRef,useState} from 'react';
 import type {LeaveGuard} from './investment-terms-detail';
 import {termsAction} from '@/app/dashboard/members/[id]/terms/[position]/actions';
@@ -21,7 +22,7 @@ export function InvestmentTermsEditor({member,position,initial,initialAgreements
  return <div className={styles.editor}><p>Each investment has its own reviewed terms. Imported balances remain unchanged. Accrued interest is not a payment or an amount currently payable.</p>
  <h2>Agreement</h2><p role="status">Extraction not configured. Upload a private PDF, then manually enter terms with page/section references. No document is sent to an AI provider.</p>
  <form onSubmit={e=>{e.preventDefault();void run('upload',new FormData(e.currentTarget));}}><input onChange={()=>setAttachmentDirty(true)} aria-label="Agreement PDF" type="file" name="file" accept="application/pdf" required/><button disabled={pending||synthetic}>Attach agreement</button></form>
- {agreements.map(a=><p key={a.id}><a href={`/api/investment-agreements/${a.id}`}>{a.filename}</a></p>)}
+ {agreements.map(a=><p key={a.id}><DocumentLink href={`/api/investment-agreements/${a.id}`} filename={a.filename}/></p>)}
  <h2>Terms</h2><fieldset disabled={pending} className={styles.fields}>
  {([['kind','Investment type',['loan','equity']],['method','Accrual method',['simple','compound']],['dayCount','Day-count convention',['Actual/365','Actual/360','30/360']],['frequency','Compounding frequency',['none','monthly','quarterly','annually']]] as const).map(([key,label,options])=><label key={key}>{label}<select value={terms[key]??''} onChange={e=>change(key,e.target.value||null)}><option value="">Not supplied</option>{options.map(o=><option key={o}>{o}</option>)}</select></label>)}
  {([['principal','Opening funded principal / contributed amount','text'],['currency','Currency (ISO code)','text'],['start','Accrual start','date'],['effective','Terms effective date','date'],['rateBps','Annual rate (basis points; 100 = 1%)','number'],['maturity','Maturity / end date (blank if none)','date']] as const).map(([key,label,type])=><label key={key}>{label}<input type={type} value={terms[key]??''} onChange={e=>change(key,key==='rateBps'?(e.target.value===''?null:Number(e.target.value)):key==='maturity'?(e.target.value||null):(e.target.value||null))}/></label>)}
