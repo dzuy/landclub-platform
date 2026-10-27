@@ -32,3 +32,20 @@ test('event validation rejects invalid schedules, links, time zones and empty co
  for(const change of [{endsAt:input.startsAt},{meetingUrl:'javascript:alert(1)'},{timeZone:'not-a-zone'},{title:' '},{description:''}])assert.equal(eventSchema.safeParse({...input,...change}).success,false);
  assert.equal(eventSchema.safeParse(input).success,true);
 });
+
+test('event deletion requires admin and current version, removes archived events and rejects repeat deletion',async()=>{
+ const db=new PGlite();try{
+  const repo=new EventRepository(embeddedDatabase(db)),admin={id:'admin',admin:true};await repo.initialize();
+  const event=await repo.save(input,admin),other=await repo.save({...input,title:'Keep this event'},admin);
+  await assert.rejects(()=>repo.delete(event.id,event.version,{id:'member',admin:false}),/Only admins/);
+  await assert.rejects(()=>repo.delete('invalid',event.version,admin));
+  await assert.rejects(()=>repo.delete(event.id,0,admin));
+  const edited=await repo.save({...input,status:'archived'},admin,event.id,event.version);
+  await assert.rejects(()=>repo.delete(event.id,event.version,admin),/changed or was already deleted/);
+  assert.equal((await repo.list(true)).length,2);
+  await repo.delete(event.id,edited.version,admin);
+  assert.equal(await repo.get(event.id),null);
+  assert.deepEqual((await repo.list(true)).map(e=>e.id),[other.id]);
+  await assert.rejects(()=>repo.delete(event.id,edited.version,admin),/changed or was already deleted/);
+ }finally{await db.close();}
+});

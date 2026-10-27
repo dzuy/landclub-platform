@@ -23,6 +23,12 @@ export class EventRepository{
   if(!z.uuid().safeParse(id).success)return null;
   return (await this.db.query<ClubEvent>("SELECT id,details,version FROM events WHERE id=$1 AND details->>'status' <> 'archived'",[id])).rows[0]??null;
  }
+ async delete(id:string,version:number,actor:{id:string;admin:boolean}){
+  if(!actor.admin)throw new Error('Only admins can manage events.');
+  z.uuid().parse(id);z.number().int().positive().parse(version);
+  const row=(await this.db.query<{id:string}>('DELETE FROM events WHERE id=$1 AND version=$2 RETURNING id',[id,version])).rows[0];
+  if(!row)throw new Error('This event changed or was already deleted. Reload before deleting.');
+ }
  async save(input:unknown,actor:{id:string;admin:boolean},id?:string,version?:number){
   if(!actor.admin)throw new Error('Only admins can manage events.');
   const details=eventSchema.parse(input);

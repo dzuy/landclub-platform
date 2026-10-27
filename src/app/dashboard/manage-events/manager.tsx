@@ -8,7 +8,7 @@ import Link from 'next/link';
 import {useRouter} from 'next/navigation';
 import type {ClubEvent} from '@/lib/events';
 import {DataTable,type TableColumn} from '@/components/data-table';
-import {saveEvent} from './actions';
+import {saveEvent,deleteEvent} from './actions';
 import styles from './events.module.css';
 const empty={imageUrl:'',imageAlt:'',title:'',description:'',start:'',end:'',location:'',meetingUrl:'',status:'scheduled' as 'scheduled'|'cancelled'|'archived'};
 type Column='image'|'title'|'startsAt'|'location'|'status'|'edit';
@@ -17,16 +17,21 @@ const columns:TableColumn<Column>[]=[{key:'image',label:'Photo',width:96,min:80,
 function statusName(status:string){return status[0].toUpperCase()+status.slice(1);}
 function EditIcon(){return <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="m16 3 5 5-12 12-6 1 1-6L16 3Z"/><path d="m13 6 5 5"/></svg>;}
 
-function EventDrawer({event,onClose,onSaved}:{event:ClubEvent|null;onClose:()=>void;onSaved:(event:ClubEvent)=>void}){
+function EventDrawer({event,onClose,onSaved,onDeleted}:{event:ClubEvent|null;onClose:()=>void;onSaved:(event:ClubEvent)=>void;onDeleted:(id:string)=>void}){
  const [initial]=useState(()=>event?{imageUrl:event.details.imageUrl||'',imageAlt:event.details.imageAlt||'',title:event.details.title,description:event.details.description,start:localDate(event.details.startsAt),end:localDate(event.details.endsAt),location:event.details.location,meetingUrl:event.details.meetingUrl,status:event.details.status}:empty);
  const [form,setForm]=useState(initial),[error,setError]=useState(''),[pending,startTransition]=useTransition(),[closing,setClosing]=useState(false);
- const [imageBusy,setImageBusy]=useState(false);
+ const [imageBusy,setImageBusy]=useState(false),[deleting,setDeleting]=useState(false),[confirmDelete,setConfirmDelete]=useState(false);
  const [timeZone]=useState(()=>Intl.DateTimeFormat().resolvedOptions().timeZone);
  const dialog=useRef<HTMLDialogElement>(null),outside=useRef(false);const dirty=JSON.stringify(form)!==JSON.stringify(initial);
  useEffect(()=>{const modal=dialog.current!,previous=document.activeElement as HTMLElement|null,overflow=document.body.style.overflow;modal.showModal();document.body.style.overflow='hidden';return()=>{modal.close();document.body.style.overflow=overflow;previous?.focus();};},[]);
  useEffect(()=>{if(!dirty)return;const guard=(event:BeforeUnloadEvent)=>{event.preventDefault();event.returnValue='';};window.addEventListener('beforeunload',guard);return()=>window.removeEventListener('beforeunload',guard);},[dirty]);
  useEffect(()=>{if(!closing)return;const timer=setTimeout(onClose,window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:220);return()=>clearTimeout(timer);},[closing,onClose]);
  function close(){if(pending||imageBusy)return;if(dirty&&!confirm('Discard unsaved event changes?'))return;setClosing(true);}
+ function remove(){
+  if(!event||pending||imageBusy)return;
+  setError('');setDeleting(true);
+  startTransition(async()=>{try{const result=await deleteEvent(event.id,event.version);if(result.error){setError(result.error);return;}if(result.deleted)onDeleted(event.id);}catch{setError('Unable to delete this event. Please try again.');}finally{setDeleting(false);}});
+ }
  function isOutside(e:React.PointerEvent<HTMLDialogElement>|React.MouseEvent<HTMLDialogElement>){const r=e.currentTarget.getBoundingClientRect();return e.target===e.currentTarget&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom);}
  return <dialog ref={dialog} className={`member-drawer${closing?' is-closing':''}`} aria-labelledby="event-drawer-title" onCancel={e=>{e.preventDefault();close();}} onPointerDown={e=>{outside.current=isOutside(e);}} onPointerCancel={()=>{outside.current=false;}} onClick={e=>{if(outside.current&&isOutside(e))close();outside.current=false;}}>
   <header className="member-drawer-heading"><h1 id="event-drawer-title">{event?'Edit event':'New event'}</h1><button type="button" className="secondary" aria-label="Close event details" disabled={pending||imageBusy} autoFocus onClick={close}>×</button></header>
@@ -44,7 +49,7 @@ function EventDrawer({event,onClose,onSaved}:{event:ClubEvent|null;onClose:()=>v
     <label>Status<select value={form.status} onChange={e=>setForm({...form,status:e.target.value as typeof form.status})}><option value="scheduled">Scheduled — visible to members</option><option value="cancelled">Cancelled — visible with cancellation notice</option><option value="archived">Archived — hidden from members</option></select></label>
     <EventImageEditor disabled={pending} url={form.imageUrl} alt={form.imageAlt} title={form.title} description={form.description} location={form.location} start={form.start} timeZone={timeZone} onBusy={setImageBusy} onChange={(imageUrl,imageAlt)=>setForm(current=>({...current,imageUrl,imageAlt}))}/>
    </fieldset>
-   <div className={styles.save}><button disabled={pending||imageBusy||!!event&&!dirty}>{pending?'Saving…':'Save Event'}</button></div>
+   <div className={styles.save}>{event&&confirmDelete&&<div className={styles.deleteConfirm} role="alert"><p>Delete “{event.details.title}”? This permanently removes the event and any unsaved changes. This cannot be undone.</p><div className="row-actions"><button type="button" className="secondary" disabled={pending} onClick={()=>setConfirmDelete(false)}>Keep event</button><button type="button" className="property-danger" disabled={pending||imageBusy} onClick={remove}>{deleting?'Deleting…':'Permanently delete event'}</button></div></div>}{event&&!confirmDelete&&<button type="button" className={`secondary ${styles.delete}`} disabled={pending||imageBusy} onClick={()=>setConfirmDelete(true)}>Delete event</button>}<button disabled={pending||imageBusy||!!event&&!dirty}>{pending&&!deleting?'Saving…':'Save Event'}</button></div>
   </form></div>
  </dialog>;
 }
@@ -67,6 +72,6 @@ export function EventManager({initial}:{initial:ClubEvent[]}){
     <td><button className={styles.edit} aria-label={`Edit ${event.details.title}`} onClick={()=>setSelected(event)}><EditIcon/></button>{event.details.status!=='archived'&&<Link href={`/dashboard/events/${event.id}`} aria-label={`Open Event: ${event.details.title}`}>Open Event</Link>}</td>
    </tr>)}{!visible.length&&<tr><td colSpan={columns.length}>{events.length?'No events match your search.':'No events yet.'}</td></tr>}
   </DataTable>
-  {selected!==undefined&&<EventDrawer key={selected?.id||'new'} event={selected} onClose={()=>setSelected(undefined)} onSaved={event=>{setEvents(rows=>[...rows.filter(row=>row.id!==event.id),event]);setSelected(undefined);setMessage('Event saved.');router.refresh();}}/>}
+  {selected!==undefined&&<EventDrawer key={selected?.id||'new'} event={selected} onDeleted={id=>{setEvents(rows=>rows.filter(row=>row.id!==id));setSelected(undefined);setMessage('Event deleted.');router.refresh();}} onClose={()=>setSelected(undefined)} onSaved={event=>{setEvents(rows=>[...rows.filter(row=>row.id!==event.id),event]);setSelected(undefined);setMessage('Event saved.');router.refresh();}}/>}
  </>;
 }

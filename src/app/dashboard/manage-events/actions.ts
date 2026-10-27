@@ -12,3 +12,11 @@ export async function saveEvent(input:unknown,id?:string,version?:number):Promis
   return {event};
  }catch(error){if(error instanceof StaffAccessError)return {error:'Only admins can manage events.'};if(error instanceof Error&&error.message.startsWith('This event changed'))return {error:error.message};return {error:'Unable to save this event. Please try again.'};}
 }
+
+export async function deleteEvent(id:string,version:number):Promise<{deleted?:boolean;error?:string}>{
+ try{
+  const actor=await requireStaff();await (await eventStore()).delete(id,version,actor);
+  revalidatePath('/dashboard');revalidatePath('/dashboard/events');revalidatePath('/dashboard/manage-events');revalidatePath(`/dashboard/events/${id}`);
+  return {deleted:true};
+ }catch(error){if(error instanceof StaffAccessError)return {error:'Only admins can manage events.'};if(error instanceof Error&&error.message.startsWith('This event changed'))return {error:error.message};return {error:'Unable to delete this event. Please try again.'};}
+}
