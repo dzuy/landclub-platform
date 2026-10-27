@@ -1,4 +1,5 @@
 'use client';
+import {uploadPropertyPhoto} from '@/lib/photo-upload';
 import {photoThumbnailUrl} from '@/lib/photo-thumbnail-url';
 import {useEffect,useRef,useState} from 'react';
 import {MAX_PHOTO_BYTES,PHOTO_SIZE_LABEL} from '@/lib/photo-policy';
@@ -27,9 +28,8 @@ export function PropertyPhotos({propertyId,draft,onChange,onUploadingChange}:{pr
    for(const [index,file] of files.entries()){
     setMessage(`Uploading ${index+1} of ${files.length}…`);
     if(!/\.(jpe?g|png|webp|gif)$/i.test(file.name)||file.size>MAX_PHOTO_BYTES){errors.push(`${file.name}: unsupported format or over ${PHOTO_SIZE_LABEL}`);continue;}
-    const form=new FormData();form.set('propertyId',propertyId);form.set('file',file);
-    try{const response=await fetch('/api/property-photos',{method:'POST',body:form});const result=await response.json();if(!response.ok)throw new Error(result.error||'Upload failed');
-     const current=latest.current;const media=[...current.media,{id:result.id,role:'gallery' as const,kind:'image' as const,url:result.url,alt:file.name.slice(0,300),caption:'',state:'Actual' as const}];
+    try{const result=await uploadPropertyPhoto(propertyId,file);
+     const current=latest.current;if(current.media.some(photo=>photo.url===result.url)){added++;continue;}const media=[...current.media,{id:result.id,role:'gallery' as const,kind:'image' as const,url:result.url,alt:file.name.slice(0,300),caption:'',state:'Actual' as const}];
      latest.current={...current,media};onChange({media});added++;
     }catch(error){errors.push(`${file.name}: ${error instanceof Error?error.message:'Upload failed'}`);}
    }

@@ -1,3 +1,4 @@
+import {hasSameOrigin} from '@/lib/request-origin';
 import {z} from 'zod';
 import {PHOTO_SIZE_LABEL} from '@/lib/photo-policy';
 import {requireStaff,StaffAccessError} from '@/lib/staff';
@@ -8,7 +9,7 @@ export const runtime='nodejs';
 export async function POST(request:Request){
  try{
   await requireStaff();
-  if(request.headers.get('origin')!==new URL(request.url).origin)return Response.json({error:'Invalid upload origin.'},{status:403});
+  if(!hasSameOrigin(request))return Response.json({error:'Invalid upload origin.'},{status:403});
   const reader=request.body?.getReader();if(!reader)return Response.json({error:'No photo supplied.'},{status:400});
   const chunks:Uint8Array[]=[];let size=0;
   for(;;){const {done,value}=await reader.read();if(done)break;size+=value.length;if(size>MAX_PHOTO_BYTES+65536){await reader.cancel();return Response.json({error:`Photo exceeds ${PHOTO_SIZE_LABEL}.`},{status:413});}chunks.push(value);}

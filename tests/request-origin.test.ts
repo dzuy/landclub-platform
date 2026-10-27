@@ -11,3 +11,9 @@ test('rejects missing, malformed, cross-site and spoofed forwarded origins',()=>
  }
  assert.equal(hasSameOrigin(new Request('http://localhost:3000/api/member-documents',{headers:{Origin:'http://localhost:3000'}})),false);
 });
+test('property photo uploads allow same browser origin through an internal Next URL only',()=>{
+ const request=new Request('https://internal-next/api/property-photos',{method:'POST',headers:{Host:'club.example',Origin:'https://club.example'}});
+ assert.notEqual(request.headers.get('origin'),new URL(request.url).origin,'old property-photo comparison rejects this legitimate request');
+ assert.equal(hasSameOrigin(request),true);
+ assert.equal(hasSameOrigin(new Request(request,{headers:{Host:'club.example',Origin:'https://attacker.example','X-Forwarded-Host':'attacker.example'}})),false);
+});
