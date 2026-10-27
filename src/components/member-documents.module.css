@@ -5,7 +5,7 @@
 .tableWrap{margin:0 0 20px}
 .documentTable{width:100%;min-width:400px;line-height:1.5}
 .documentTable thead th{padding:14px 16px;font-size:12px;color:var(--ink)}
-.documentTable th:first-child{width:65%}
+.documentTable th:first-child{width:55%}
 .documentTable .actionsColumn{width:100px}
 .documentName a{font-size:14px;font-weight:600;overflow-wrap:anywhere;text-decoration:underline;text-underline-offset:3px}
 .documentName small{display:block;overflow-wrap:anywhere;font-size:12px;color:var(--muted);margin-top:4px}
@@ -34,3 +34,5 @@
 .documents .tableActions .iconButton{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:6px;border:0;border-radius:4px;background:transparent;color:var(--ink);vertical-align:middle}.documents .iconButton:hover{background:#e8e8dc}.documents .iconButton:focus-visible{outline:2px solid var(--forest);outline-offset:2px}
 
 .iconButton svg{width:18px;height:18px;flex:none}
+
+.documentTable .downloadColumn{width:110px;white-space:nowrap}.downloadColumn a{font-size:14px;text-decoration:underline;text-underline-offset:3px}
