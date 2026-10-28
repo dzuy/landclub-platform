@@ -1,21 +1,18 @@
 import Link from 'next/link';
-import type {ReportSummary} from '@/lib/investor-reports';
+import {HomePortfolioCard} from './home-portfolio-card';
+import type {InvestorReport} from '@/lib/investor-reports';
 import {SortablePropertyGrid} from './sortable-property-grid';
 import type {MemberPropertyDetail} from '@/lib/member-property-access';
 import type {ClubEvent} from '@/lib/events';
 import styles from './member-home.module.css';
 
-export function MemberHome({name,properties,events,reports=[],memberId}:{memberId:string;name:string;properties:MemberPropertyDetail[];events:ClubEvent[];reports?:ReportSummary[]}){
+export function MemberHome({name,properties,events,reports=[],memberId}:{memberId:string;name:string;properties:MemberPropertyDetail[];events:ClubEvent[];reports?:InvestorReport[]}){
  const firstName=name&&!name.includes('@')?name.trim().split(/\s+/)[0]:'';
  return <div className={styles.home} data-dashboard-home>
   <h1>{firstName?`Welcome back, ${firstName}`:'Welcome back'}</h1>
   <SortablePropertyGrid key={memberId} properties={properties}>
    {!properties.length&&<section className={styles.card} aria-labelledby="home-properties"><h2 id="home-properties">Your properties</h2><div className={styles.empty}><p>Properties linked to your membership will appear here.</p><Link className={styles.textLink} href="/properties">Explore properties →</Link></div></section>}
-   <section className={styles.card} aria-labelledby="home-portfolio">
-    <h2 id="home-portfolio">Your portfolio</h2>
-    {reports.length?<><p className={styles.caption}>{reports.length} investment{reports.length===1?'':'s'}</p><dl className={styles.balances}>{reports.map(report=><div key={report.id}><dt><Link href={`/dashboard/portfolio#position-${report.id}`}>{report.project_name}</Link><small> · {report.kind}</small></dt><dd>{report.released_at?'Report available':'Draft report'}</dd></div>)}</dl><p className={styles.pending}>View your portfolio for balances, activity and company reports.</p></>:<p className={styles.pending}>You don’t have any investments yet. Your investments and related documents will appear here.</p>}
-    {reports.length>0&&<Link className={styles.button} href="/dashboard/portfolio">See more</Link>}
-   </section>
+   {reports.length?reports.map(report=><HomePortfolioCard key={report.id} report={report}/>):<section className={styles.card} aria-labelledby="home-portfolio"><h2 id="home-portfolio">Your portfolio</h2><p className={styles.pending}>You don’t have any investments yet. Your investments and related documents will appear here.</p></section>}
   </SortablePropertyGrid>
   <section className={styles.card} aria-labelledby="home-following">
    <h2 id="home-following">Properties You’re Following</h2>
