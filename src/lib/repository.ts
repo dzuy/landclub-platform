@@ -23,6 +23,7 @@ export class PropertyRepository{
  async initialize(){for(const statement of migration.split(';').filter(s=>s.trim()))await this.db.query(statement);}
  async list(){return (await this.db.query<PropertyRecord>('SELECT * FROM properties ORDER BY updated_at DESC')).rows.map(normalize);}
  async get(id:string){const p=(await this.db.query<PropertyRecord>('SELECT * FROM properties WHERE id=$1',[id])).rows[0];return p?normalize(p):null;}
+ async publishedProperties(){return (await this.db.query<{id:string;published:PropertyDraft}>('SELECT id,published FROM properties WHERE published IS NOT NULL ORDER BY published_at DESC')).rows.map(row=>({id:row.id,property:publicDraft(row.published)}));}
  async publicList(){return (await this.db.query<{published:PropertyDraft}>('SELECT published FROM properties WHERE published IS NOT NULL ORDER BY published_at DESC')).rows.map(r=>publicDraft(r.published));}
  async publicBySlug(slug:string){const p=(await this.db.query<{published:PropertyDraft}>("SELECT published FROM properties WHERE published->>'slug'=$1",[slug])).rows[0]?.published;return p?publicDraft(p):null;}
  async history(id:string){return (await this.db.query<{id:string;action:string;actor:string;version:number;created_at:string}>('SELECT id,action,actor,version,created_at FROM property_revisions WHERE property_id=$1 ORDER BY created_at DESC LIMIT 30',[id])).rows;}

@@ -4,7 +4,7 @@ import {usePathname} from 'next/navigation';
 import {useEffect, useState} from 'react';
 
 type IconName='dashboard'|'money'|'properties'|'bookings'|'documents'|'events'|'profile'|'members'|'content';
-const links:[string,string,IconName][]=[['Dashboard','/dashboard','dashboard'],['My Properties','/dashboard/my-properties','properties'],['Portfolio','/dashboard/portfolio','money'],['Bookings','/dashboard/bookings','bookings'],['Documents','/dashboard/documents','documents'],['Events','/dashboard/events','events']];
+const links:[string,string,IconName][]=[['Dashboard','/dashboard','dashboard'],['My Properties','/dashboard/my-properties','properties'],['Investments','/dashboard/portfolio','money'],['Bookings','/dashboard/bookings','bookings'],['Documents','/dashboard/documents','documents'],['Events','/dashboard/events','events']];
 
 function NavIcon({name}:{name:IconName}){
  const shapes={

@@ -1,4 +1,5 @@
 import 'server-only';
+import {propertyFollowStore} from './property-follow-store';
 import {database} from './database';
 import {investedPropertyIds,mergePropertyRoles} from './invested-properties';
 import {cache} from 'react';
@@ -12,10 +13,11 @@ export type {MemberPropertyDetail} from './member-property-presentation';
 export {homePropertyPhoto as memberPropertyThumbnail} from './member-home';
 
 export const memberPropertyDetails=cache(async(userId:string):Promise<MemberPropertyDetail[]>=>{
- if(!z.uuid().safeParse(userId).success)return [];
- const [manual,invested,selections]=await Promise.all([(await memberPropertyStore()).list(userId),investedPropertyIds(database(),userId),(await memberInvestmentStore()).get(userId)]);
+ const follows=await (await propertyFollowStore()).list(userId);
  const propertyStore=await store();
- return memberPropertyPresentation(mergePropertyRoles(manual,invested),selections.entities,id=>propertyStore.get(id));
+ if(!z.uuid().safeParse(userId).success)return memberPropertyPresentation([],[],id=>propertyStore.get(id),follows);
+ const [manual,invested,selections]=await Promise.all([(await memberPropertyStore()).list(userId),investedPropertyIds(database(),userId),(await memberInvestmentStore()).get(userId)]);
+ return memberPropertyPresentation(mergePropertyRoles(manual,invested),selections.entities,id=>propertyStore.get(id),follows);
 });
 
 export async function memberPropertyDetail(userId:string,propertyId:string){

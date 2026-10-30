@@ -24,6 +24,7 @@ async function removeAccountData(tx:Queryable,userId:string){
   await tx.query('DELETE FROM member_documents WHERE member_id=ANY($1::uuid[])',[ids]);
   await tx.query('DELETE FROM member_properties WHERE user_id=ANY($1::uuid[])',[ids]);
   await tx.query('DELETE FROM member_investments WHERE user_id=ANY($1::uuid[])',[ids]);
+  if((await tx.query<{name:string|null}>("SELECT to_regclass('property_follows')::text AS name")).rows[0]?.name)await tx.query('DELETE FROM property_follows WHERE user_id=ANY($1::text[])',[ids]);
   await tx.query('DELETE FROM user_roles WHERE user_id=$1',[userId]);
   await tx.query('DELETE FROM prepared_members WHERE auth_user_id=$1',[userId]);
   await tx.query('DELETE FROM invitations WHERE auth_user_id=$1',[userId]);

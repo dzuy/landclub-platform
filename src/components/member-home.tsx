@@ -7,23 +7,24 @@ import {homePropertyPhoto} from '@/lib/member-home';
 import styles from './member-home.module.css';
 
 export function MemberHome({name,properties,events,reports=[]}:{name:string;properties:MemberPropertyDetail[];events:ClubEvent[];reports?:ReportSummary[]}){
+ const related=properties.filter(p=>p.roles.length||p.selectionOnly),following=properties.filter(p=>p.following);
  const firstName=name&&!name.includes('@')?name.trim().split(/\s+/)[0]:'';
  return <div className={styles.home} data-dashboard-home>
   <h1>{firstName?`Welcome back, ${firstName}`:'Welcome back'}</h1>
   <div className={styles.overview}>
-   {properties.length?properties.map(({id,property:p})=>{const photo=homePropertyPhoto(p);return <section className={styles.card} aria-label={p.name||'Your property'} key={id}><h2>Your property</h2><Link href={`/dashboard/my-properties/${id}`} className={styles.property}>
+   {related.length?related.map(({id,property:p})=>{const photo=homePropertyPhoto(p);return <section className={styles.card} aria-label={p.name||'Your property'} key={id}><h2>Your property</h2><Link href={`/dashboard/my-properties/${id}`} className={styles.property}>
     {photo?<img className={styles.propertyImage} src={photoThumbnailUrl(photo.src)} decoding="async" alt={photo.alt}/>:<div className={styles.noImage}>Property photography coming soon</div>}
     <h3>{p.name||'Untitled property'}</h3><p>{p.region||'Location to be confirmed'}</p><span className={styles.textLink}>View property →</span>
    </Link></section>;}):<section className={styles.card} aria-labelledby="home-properties"><h2 id="home-properties">Your properties</h2><div className={styles.empty}><p>Properties linked to your membership will appear here.</p><Link className={styles.textLink} href="/properties">Explore properties →</Link></div></section>}
    <section className={styles.card} aria-labelledby="home-portfolio">
-    <h2 id="home-portfolio">Your portfolio</h2>
-    {reports.length?<><p className={styles.caption}>{reports.length} investment{reports.length===1?'':'s'}</p><dl className={styles.balances}>{reports.map(report=><div key={report.id}><dt><Link href={`/dashboard/portfolio#position-${report.id}`}>{report.project_name}</Link><small> · {report.kind}</small></dt><dd>{report.released_at?'Report available':'Draft report'}</dd></div>)}</dl><p className={styles.pending}>View your portfolio for balances, activity and company reports.</p></>:<p className={styles.pending}>You don’t have any investments yet. Your investments and related documents will appear here.</p>}
+    <h2 id="home-portfolio">Your investments</h2>
+    {reports.length?<><p className={styles.caption}>{reports.length} investment{reports.length===1?'':'s'}</p><dl className={styles.balances}>{reports.map(report=><div key={report.id}><dt><Link href={`/dashboard/portfolio#position-${report.id}`}>{report.project_name}</Link><small> · {report.kind}</small></dt><dd>{report.released_at?'Report available':'Draft report'}</dd></div>)}</dl><p className={styles.pending}>View your investments for balances, activity and company reports.</p></>:<p className={styles.pending}>You don’t have any investments yet. Your investments and related documents will appear here.</p>}
     {reports.length>0&&<Link className={styles.button} href="/dashboard/portfolio">See more</Link>}
    </section>
   </div>
   <section className={styles.card} aria-labelledby="home-following">
    <h2 id="home-following">Properties You’re Following</h2>
-   <div className={styles.followingEmpty}><p>Property following is coming soon. Explore the places taking shape at Land Club.</p><Link className={styles.textLink} href="/properties">Browse properties →</Link></div>
+   <div className={styles.followingEmpty}>{following.length?<ul>{following.map(({id,property})=><li key={id}><Link className={styles.textLink} href={`/dashboard/my-properties/${id}`}>{property.name}</Link></li>)}</ul>:<p>Follow a property to keep it in your list.</p>}<Link className={styles.textLink} href="/dashboard/my-properties">Explore your properties →</Link></div>
   </section>
   <section aria-labelledby="home-membership" className={styles.membership}>
    <h2 id="home-membership">Your Membership</h2>

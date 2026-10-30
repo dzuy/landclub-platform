@@ -1,4 +1,5 @@
 import {z} from 'zod';
+import {usStates,countries} from './property-location-options';
 export const fieldStates=['Actual','Planned','Not yet determined'] as const;
 export const offeringStatuses=['Scouting','Coming Soon','Available','Fully Subscribed','Past Project'] as const;
 export const categories=['Mountains','Farms','Coast','Desert','Heritage','Unclassified'] as const;
@@ -6,7 +7,7 @@ const description=z.string().trim().max(6000);
 export function stated<T extends z.ZodType>(value:T){return z.object({value:value.nullable(),state:z.enum(fieldStates),notes:description.optional()}).superRefine((input,c)=>{const f=input as {state:string;value:unknown};if(f.state!=='Not yet determined'&&(f.value===null||f.value===''))c.addIssue({code:'custom',message:'A known or planned field needs a value.'});});}
 const count=z.number().int().nonnegative(), amount=z.number().nonnegative();
 export const factDefinitions={
- state:{label:'State / province',group:'Location',type:'text'},county:{label:'County',group:'Location',type:'text'},country:{label:'Country',group:'Location',type:'text'},elevation:{label:'Elevation (feet)',group:'Location',type:'number'},
+ state:{label:'State / province',group:'Location',options:usStates},county:{label:'County',group:'Location',type:'text'},country:{label:'Country',group:'Location',options:countries},elevation:{label:'Elevation (feet)',group:'Location',type:'number'},
  total_acres:{label:'Total acres',group:'The land',type:'number'},topography:{label:'Topography',group:'The land',options:['flat','rolling','steep','mixed']},tree_cover:{label:'Tree cover',group:'The land',type:'text'},water_features:{label:'Water features',group:'The land',type:'text'},views:{label:'Views',group:'The land',type:'text'},notable_natural_features:{label:'Notable natural features',group:'The land',type:'text'},adjacency:{label:'Adjacency',group:'The land',type:'text'},
  road_access:{label:'Road access',group:'Access & infrastructure',options:['paved','gravel','seasonal']},year_round_access:{label:'Year-round access',group:'Access & infrastructure',type:'boolean'},winter_access_notes:{label:'Winter access notes',group:'Access & infrastructure',type:'text'},power:{label:'Power',group:'Access & infrastructure',type:'text'},water_source:{label:'Water source',group:'Access & infrastructure',type:'text'},septic_sewer:{label:'Septic / sewer',group:'Access & infrastructure',type:'text'},connectivity:{label:'Connectivity',group:'Access & infrastructure',type:'text'},gated:{label:'Gated',group:'Access & infrastructure',type:'boolean'},
  development_stage:{label:'Development stage',group:"What’s there & what’s planned",options:['raw','entitled','permitted','under construction','built']},existing_structures:{label:'Existing structures',group:"What’s there & what’s planned",type:'text'},planned_structures:{label:'Planned structures',group:"What’s there & what’s planned",type:'text'},shared_amenities:{label:'Shared amenities',group:"What’s there & what’s planned",type:'text'},completion_timeline:{label:'Completion timeline',group:"What’s there & what’s planned",type:'text'},
@@ -18,7 +19,8 @@ export type FactKey=keyof typeof factDefinitions;
 export type FactDefinition={label:string;group:string;type?:string;options?:readonly string[]};
 const shape=Object.fromEntries(Object.entries(factDefinitions).map(([key,d])=>{
  const def:FactDefinition=d;
- const value=def.options?z.enum(def.options as [string,...string[]]):def.type==='number'?(key.includes('shares')?count:key==='elevation'?z.number():amount):def.type==='money'?amount:def.type==='boolean'?z.boolean():def.type==='tags'?z.array(z.string().trim().min(1).max(100)).max(40):description.min(1);
+ // Location and dues choices guide new entries while retaining previously saved text.
+ const value=['state','country','dues_frequency'].includes(key)?description.min(1):def.options?z.enum(def.options as [string,...string[]]):def.type==='number'?(key.includes('shares')?count:key==='elevation'?z.number():amount):def.type==='money'?amount:def.type==='boolean'?z.boolean():def.type==='tags'?z.array(z.string().trim().min(1).max(100)).max(40):description.min(1);
  return [key,stated(value).optional()];
 })) as unknown as Record<FactKey,z.ZodOptional<ReturnType<typeof stated>>>;
 export const factsSchema=z.object(shape).strict().transform(v=>v as PropertyFacts);

@@ -8,8 +8,8 @@ function Rows({rows}:{rows:[ReactNode,ReactNode][]}){return <dl className={s.row
 function Note({children}:{children:ReactNode}){return <p className={s.note}>{children}</p>}
 function Dot({name}:{name:string}){return <img className={s.dot} src={`${assets}${name}.svg`} alt=""/>}
 export function IanPortfolioMock(){return <div className={s.portfolio} data-investor-mock>
- <nav className={s.breadcrumb} aria-label="Breadcrumb"><Link href="/dashboard"><img src={`${assets}back.svg`} alt=""/> Dashboard</Link><span>/</span><span>Your portfolio</span></nav>
- <div className={s.heading}><h1>Your portfolio</h1><span className={s.mock}>Ian · Figma mock data</span></div>
+ <nav className={s.breadcrumb} aria-label="Breadcrumb"><Link href="/dashboard"><img src={`${assets}back.svg`} alt=""/> Dashboard</Link><span>/</span><span>Your investments</span></nav>
+ <div className={s.heading}><h1>Your investments</h1><span className={s.mock}>Ian · Figma mock data</span></div>
  <img className={s.hero} src={`${assets}norden-cross.png`} alt="Skiers on a snow-covered forest trail at Norden Cross"/>
  <section className={s.card}><div className={s.heading}><h2>Land Club Norden Cross LLC</h2><span className={s.chip}>Equity</span></div>
  <Note><strong>Member, Ownership Interest.</strong> Funded May 2, 2025. Figures as of Oct 16, 2026.</Note>

@@ -25,8 +25,8 @@ function money(value:string|null,currency:string){return value===null?'Not yet a
 function activity(line:ReportLine){const raw=line.label.split(' · ')[1]??line.label;return ({'capital contribution':'Investment funded','return of capital':'Principal returned','loan funding':'Loan funded','interest payment':'Interest paid','loan payment':'Loan payment','reserve deposit':'Reserve deposit'} as Record<string,string>)[raw]??raw.charAt(0).toUpperCase()+raw.slice(1);}
 export function RealInvestorPortfolio({name,reports,base='/dashboard/portfolio',downloadBase='/api/investor-reports',preview=false,statements=[],previewToken,accruals={}}:{accruals?:Record<string,ReturnType<typeof calculateTerms>|null>;name:string;reports:InvestorReport[];base?:string;downloadBase?:string;preview?:boolean;statements?:{id:string;report_id:string;edition:number}[];previewToken?:string}){
  return <div className={s.portfolio} data-investor-portfolio>
- <nav className={s.breadcrumb} aria-label="Breadcrumb"><Link href="/dashboard"><img src={`${assets}back.svg`} alt=""/> Dashboard</Link><span>/</span><span>Your portfolio</span></nav>
- <div className={s.heading}><h1>Your portfolio</h1>{name&&<span className={s.mock}>{name}</span>}</div>
+ <nav className={s.breadcrumb} aria-label="Breadcrumb"><Link href="/dashboard"><img src={`${assets}back.svg`} alt=""/> Dashboard</Link><span>/</span><span>Your investments</span></nav>
+ <div className={s.heading}><h1>Your investments</h1>{name&&<span className={s.mock}>{name}</span>}</div>
  {!reports.length&&<Card title="You don’t have any investments yet."><Note>Your investments and related documents will appear here.</Note></Card>}
  <PortfolioItemSwitcher items={reports.map(r=>{
  const values=r.lines.filter(l=>l.section==='position'),find=(...names:string[])=>{for(const name of names){const line=values.find(l=>l.label===name);if(line)return line.amount;}return null;};
