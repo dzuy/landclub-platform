@@ -12,11 +12,11 @@ export function PortfolioItemSwitcher({items}:{items:{id:string;label:string;con
  const active=items.find(item=>item.id===selected)??items[0];
  if(!active)return null;
  return <>
- <div className={s.portfolioSelect}><label htmlFor={controlId}>Investment</label><select id={controlId} value={active.id} onChange={event=>{
+ {items.length>1&&<div className={s.portfolioSelect}><label htmlFor={controlId}>Investment</label><select id={controlId} value={active.id} onChange={event=>{
   const id=event.target.value;setSelected(id);
   window.history.replaceState(window.history.state,'',`#position-${id}`);
   window.dispatchEvent(new HashChangeEvent('hashchange'));
- }} aria-controls={`${controlId}-panel`}>{items.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></div>
+ }} aria-controls={`${controlId}-panel`}>{items.map(item=><option key={item.id} value={item.id}>{item.label}</option>)}</select></div>}
  <div id={`${controlId}-panel`} role="region" aria-label={active.label} key={active.id}>{active.content}</div>
  </>;
 }

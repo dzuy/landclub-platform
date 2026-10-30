@@ -2,7 +2,7 @@
 import {useEffect,useRef,useState} from 'react';
 import styles from './document-link.module.css';
 /** Fetch through the existing private download endpoint; never create public file URLs. */
-export function DocumentLink({href,filename,label,className}:{href:string;filename:string;label?:string;className?:string}){
+export function DocumentLink({href,filename,label,className,showDownload=true}:{href:string;filename:string;label?:string;className?:string;showDownload?:boolean}){
  const viewable=/\.(pdf|png|jpe?g)$/i.test(filename),pdf=/\.pdf$/i.test(filename);
  const [open,setOpen]=useState(false),[page,setPage]=useState(1),[pages,setPages]=useState(1),[retry,setRetry]=useState(0),[status,setStatus]=useState(''),[image,setImage]=useState('');
  const dialog=useRef<HTMLDialogElement>(null),canvas=useRef<HTMLCanvasElement>(null),trigger=useRef<HTMLButtonElement>(null);
@@ -30,7 +30,7 @@ export function DocumentLink({href,filename,label,className}:{href:string;filena
   }catch(error){if(!disposed)setStatus(error instanceof Error?error.message:'Unable to display this document.');}}
   void load();return()=>{disposed=true;controller.abort();destroy?.();if(objectUrl)URL.revokeObjectURL(objectUrl);};
  },[open,href,filename,pdf,page,retry]);
- return <><span className={className}>{viewable?<button ref={trigger} type="button" className={styles.link} onClick={()=>{setPage(1);setPages(1);setOpen(true);}}>{label||filename}</button>:<a href={href} download={filename}>{label||filename}</a>}</span>{viewable&&<a className={styles.download} href={href} download={filename} aria-label={`Download ${label||filename}`}>Download</a>}
+ return <><span className={className}>{viewable?<button ref={trigger} type="button" className={styles.link} onClick={()=>{setPage(1);setPages(1);setOpen(true);}}>{label||filename}</button>:<a href={href} download={filename}>{label||filename}</a>}</span>{viewable&&showDownload&&<a className={styles.download} href={href} download={filename} aria-label={`Download ${label||filename}`}>Download</a>}
  {open&&<dialog ref={dialog} className={styles.viewer} aria-label={`View ${label||filename}`} onCancel={e=>{e.preventDefault();e.stopPropagation();setOpen(false);}} onKeyDown={e=>{if(e.key==='Escape')e.stopPropagation();}} onClick={e=>{if(e.target===e.currentTarget){const r=e.currentTarget.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)setOpen(false);}}}>
   <header><h2>{label||filename}</h2><button type="button" className="secondary" autoFocus onClick={()=>setOpen(false)}>Close document</button></header>
   <div className={styles.controls}><a href={href} download={filename}>Download original</a>{pdf&&<><button type="button" className="secondary" disabled={page<=1||status==='Loading document…'} onClick={()=>setPage(page-1)}>Previous page</button><span>Page {page} of {pages}</span><button type="button" className="secondary" disabled={page>=pages||status==='Loading document…'} onClick={()=>setPage(page+1)}>Next page</button></>}</div>

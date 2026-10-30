@@ -8,11 +8,11 @@ Automatic inclusion is derived from manual property roles and existing explicit 
 
 ## Local verification and migration
 
-Development without DATABASE_URL initializes `028_property_follows.sql` against the local embedded database. The isolated review server is `http://127.0.0.1:3033/dashboard/my-properties`; its records are synthetic. The local editor can exercise Follow and Unfollow. Profile menu → View as → QA Member demonstrates automatic roles, multiple roles, a legacy selection and an unpublished Guest/Prospect relationship. View As is read-only. Exit View as before trying mutations.
+Development without DATABASE_URL initializes `029_property_follows.sql` against the local embedded database. The isolated review server is `http://127.0.0.1:3033/dashboard/my-properties`; its records are synthetic. The local editor can exercise Follow and Unfollow. Profile menu → View as → QA Member demonstrates automatic roles, multiple roles, a legacy selection and an unpublished Guest/Prospect relationship. View As is read-only. Exit View as before trying mutations.
 
 ## Deployment prerequisite (not performed)
 
-Apply the existing repository migration runner through migration `028_property_follows.sql` in the intended database before starting the updated application. Do not run against production merely to review this branch. The new table has RLS enabled and no public policies. Application access uses the existing server database connection; no new client grants, credentials or security configuration are required. User IDs are stored as text to accommodate the existing local-developer identity and hosted auth UUIDs without introducing a dependency on a provider's auth schema. A property index supports future audience lookup, but this change does not send messages or subscribe users to notifications.
+Apply the existing repository migration runner through migration `029_property_follows.sql` in the intended database before starting the updated application. Do not run against production merely to review this branch. The new table has RLS enabled and no public policies. Application access uses the existing server database connection; no new client grants, credentials or security configuration are required. User IDs are stored as text to accommodate the existing local-developer identity and hosted auth UUIDs without introducing a dependency on a provider's auth schema. A property index supports future audience lookup, but this change does not send messages or subscribe users to notifications.
 
 ## Verification
 

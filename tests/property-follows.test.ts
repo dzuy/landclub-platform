@@ -19,7 +19,7 @@ test('explicit following is idempotent, isolated, published-only and never grant
  const pg=new PGlite();try{
   const db=embeddedDatabase(pg),properties=new PropertyRepository(db);await properties.initialize();
   await new MemberPropertyRepository(db).initialize();await pg.exec('CREATE TABLE prepared_members(id uuid PRIMARY KEY,auth_user_id uuid,status text)');
-  await migrate(pg,'028_property_follows.sql');await migrate(pg,'028_property_follows.sql');await securitySchema(pg);
+  await migrate(pg,'029_property_follows.sql');await migrate(pg,'029_property_follows.sql');await securitySchema(pg);
   const follow=new PropertyFollowRepository(db),member={id:randomUUID(),admin:false,roles:[]},other={...member,id:randomUUID()},admin={id:'test-admin',admin:true};
   let property=await properties.create({...seeds[0],offeringStatus:'Fully Subscribed'},admin.id);
   assert.deepEqual(await follow.list(member.id),[]);
@@ -46,7 +46,7 @@ test('automatic roles retain multiple labels, follow live grants, and legacy/gue
  const pg=new PGlite();try{
   const db=embeddedDatabase(pg),properties=new PropertyRepository(db);await properties.initialize();
   const members=new MemberPropertyRepository(db);await members.initialize();await pg.exec('CREATE TABLE prepared_members(id uuid PRIMARY KEY,auth_user_id uuid,status text)');
-  for(const file of ['028_property_follows.sql','018_investor_reporting.sql','019_investor_operations.sql','021_dashboard_preview.sql','022_investment_property_links.sql'])await migrate(pg,file);
+  for(const file of ['029_property_follows.sql','018_investor_reporting.sql','019_investor_operations.sql','021_dashboard_preview.sql','022_investment_property_links.sql'])await migrate(pg,file);
   const follow=new PropertyFollowRepository(db),member={id:randomUUID()},admin={id:'admin',admin:true},p=await properties.create(seeds[0],admin.id);
   for(const role of ['investor','owner','manager'] as const){
    await db.query('DELETE FROM member_properties');await members.save(member.id,p.id,[role,'guest'],admin);

@@ -1,3 +1,4 @@
+import {portfolioEvidence,type PortfolioEvidence} from './portfolio-evidence';
 import {sharedReportPredicate} from './investment-sharing';
 import {nordenCompanyReport} from './investor-company-report';
 import {z} from 'zod';
@@ -8,7 +9,7 @@ export type ReportSummary={id:string;title:string;as_of:string|null;review_state
 export type ReportLine={id:string;section:'summary'|'spending'|'position'|'transactions';label:string;amount:string|null;basis:'actual'|'projection'|'missing'|'reported'|'internal_transfer'|'non_cash'|'assumed'|'held';source_reference:string;effective_date:string|null};
 export type ReportSchedule={id:string;label:string;scheduled_date:string|null;confirmation:'pending'|'confirmed';source_reference:string;note:string};
 export type ReportFinding={id:string;source_reference:string;description:string;source_value:string|null;comparison_value:string|null;status:'pending'|'resolved';resolution:string|null};
-export type InvestorReport=ReportSummary & {narrative:string|null;source_reference:string;lines:ReportLine[];schedules:ReportSchedule[];findings:ReportFinding[];documents:{id:string;filename:string}[]};
+export type InvestorReport=ReportSummary & {portfolioEvidence?:PortfolioEvidence|null;narrative:string|null;source_reference:string;lines:ReportLine[];schedules:ReportSchedule[];findings:ReportFinding[];documents:{id:string;filename:string}[]};
 const joins='FROM investor_reports r JOIN investment_positions p ON p.id=r.position_id JOIN investment_holders h ON h.id=p.holder_id';
 // Actor comes only from server authentication. Never infer grants from emails, roles,
 // property membership or member_investments. Every child query repeats this predicate.
@@ -44,9 +45,11 @@ export class InvestorReportRepository{
   const schedules=(await this.db.query<ReportSchedule>(`SELECT s.id,s.label,s.scheduled_date::text,s.confirmation,s.source_reference,s.note FROM investor_report_schedules s WHERE s.report_id IN (SELECT r.id ${child}) ORDER BY s.source_reference,s.scheduled_date,s.id`,params)).rows;
   const documents=(await this.db.query<{id:string;filename:string}>(`SELECT d.id,d.filename FROM investor_report_documents d WHERE d.report_id IN (SELECT r.id ${child}) ORDER BY d.filename,d.id`,params)).rows;
   const findings=(await this.db.query<ReportFinding>(`SELECT f.id,f.source_reference,f.description,f.source_value,f.comparison_value,f.status,f.resolution FROM investor_report_findings f WHERE f.report_id IN (SELECT r.id ${child}) ORDER BY f.id`,params)).rows;
+  const evidence=this.scope.shared?undefined:(await this.db.query<{payload:unknown;source_id:string}>(`SELECT snapshot.payload,p.source_id ${joins} JOIN investor_source_snapshots snapshot ON snapshot.id=r.snapshot_id WHERE ${this.predicate} AND r.id=$3::uuid`,params)).rows[0];
+  const portfolio=evidence?portfolioEvidence(evidence.payload,evidence.source_id,report.as_of):null;
   // Recheck after child loads: a revocation during loading fails closed.
   if(!(await this.db.query(`SELECT r.id ${child}`,params)).rows.length)return null;
-  return {...report,lines,schedules,documents,findings};
+  return {...report,lines,schedules,documents,findings,portfolioEvidence:portfolio};
  }
  async company(id:string,actor:ReportActor){
   if(this.scope.shared)return null; // Company source snapshots can contain unrelated holdings.

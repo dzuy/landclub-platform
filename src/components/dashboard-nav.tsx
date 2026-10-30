@@ -1,10 +1,12 @@
 'use client';
 import Link from 'next/link';
+import {useSharedPropertyCardOrder} from './property-card-order-provider';
+import {propertyCardOrder} from '@/lib/property-card-order';
 import {usePathname} from 'next/navigation';
 import {useEffect, useState} from 'react';
 
 type IconName='dashboard'|'money'|'properties'|'bookings'|'documents'|'events'|'profile'|'members'|'content';
-const links:[string,string,IconName][]=[['Dashboard','/dashboard','dashboard'],['My Properties','/dashboard/my-properties','properties'],['Investments','/dashboard/portfolio','money'],['Bookings','/dashboard/bookings','bookings'],['Documents','/dashboard/documents','documents'],['Events','/dashboard/events','events']];
+const links:[string,string,IconName][]=[['Dashboard','/dashboard','dashboard'],['Properties','/dashboard/my-properties','properties'],['Investments','/dashboard/portfolio','money'],['Bookings','/dashboard/bookings','bookings'],['Documents','/dashboard/documents','documents'],['Events','/dashboard/events','events']];
 
 function NavIcon({name}:{name:IconName}){
  const shapes={
@@ -23,6 +25,9 @@ function NavIcon({name}:{name:IconName}){
 
 export function DashboardNav({showAdminTools,properties,portfolio}:{showAdminTools:boolean;properties:{id:string;name:string}[];portfolio:{id:string;name:string}[]}){
  const path=usePathname();
+ const {order}=useSharedPropertyCardOrder();
+ const propertiesById=new Map(properties.map(property=>[property.id,property]));
+ const orderedProperties=propertyCardOrder(properties.map(p=>p.id),order).map(id=>propertiesById.get(id)!);
  const [open,setOpen]=useState(false);
  const [collapsed,setCollapsed]=useState({properties:false,portfolio:false});
  const [hash,setHash]=useState('');
@@ -51,7 +56,7 @@ export function DashboardNav({showAdminTools,properties,portfolio}:{showAdminToo
   <div className="dashboard-sidebar-panel" id="dashboard-navigation">
    <nav aria-label="Your Land Club">{links.map(([label,href,icon])=>{
     const group=href==='/dashboard/my-properties'?'properties':href==='/dashboard/portfolio'?'portfolio':null;
-    const items=group==='properties'?properties:group==='portfolio'?portfolio:[];
+    const items=group==='properties'?orderedProperties:group==='portfolio'?portfolio:[];
     const expanded=group?!collapsed[group]:false;
     const subnavId=`dashboard-${group}-subnav`;
     return <div className={group?'dashboard-nav-group':undefined} key={href}>
